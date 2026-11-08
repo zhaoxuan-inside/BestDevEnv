@@ -1,9 +1,12 @@
 # env.sh — 环境变量契约（宪法 §6.1；唯一权威块，BestDevEnv/config 种子）
-# 由 ~/.zshrc / ~/.bashrc source；机器/站点差异不写死在本文件：
+# 由 ~/.zshrc / ~/.bashrc / ~/.profile / ~/.zshenv source；装载守卫防重复 source（PATH 增重）
+# 机器/站点差异不写死在本文件：
 #   锚点 → ① $DEV/docs/state/anchors.env（devenv state-env 由 ③ storage.toml 再生）
 #   网络 → ① $DEV/docs/state/network.env（devenv state-env 由 ③ network.toml 再生）
 #   机器数据 → hosts.toml（工程仓库，apply-config 单向同步）
 # 下方字面值均为 bootstrap 兜底（状态 env 缺失时生效，如全新机器 M2 之前/状态丢失）
+
+[ -n "${BDE_ENV_SH_LOADED:-}" ] && return 0 2>/dev/null || BDE_ENV_SH_LOADED=1
 
 # ── 三档锚点 ─────────────────────────────────────────────
 DEV="${DEV:-$HOME/DevEnv}"                               # ① 先定位状态正本所在

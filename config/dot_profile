@@ -1,0 +1,34 @@
+# ~/.profile: executed by the command interpreter for login shells.
+# This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
+# exists.
+# see /usr/share/doc/bash/examples/startup-files for examples.
+# the files are located in the bash-doc package.
+
+# the default umask is set in /etc/profile; for setting the umask
+# for ssh logins, install and configure the libpam-umask package.
+#umask 022
+
+# if running bash
+if [ -n "$BASH_VERSION" ]; then
+    # include .bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+	. "$HOME/.bashrc"
+    fi
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+
+. "$HOME/.local/bin/env"
+. "$HOME/DevEnv/cargo/env"
+
+# 开发环境契约（BestDevEnv）：非交互登录 shell（bash -lc/cron/ssh）也拿到锚点与 PATH
+# （.bashrc 对非交互 shell 头部早退，env.sh 必须在 .profile 兜底接入；装载守卫防重复）
+[ -f "$HOME/.config/devspace/env.sh" ] && . "$HOME/.config/devspace/env.sh"

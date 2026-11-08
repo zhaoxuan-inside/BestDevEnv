@@ -1,0 +1,3 @@
+# ~/.zshenv — 所有 zsh 上下文（含非交互 zsh -c/脚本）的环境契约入口（BestDevEnv）
+# env.sh 自带装载守卫；交互层 .zshrc 的 source 由此变为幂等 no-op
+[ -f "$HOME/.config/devspace/env.sh" ] && . "$HOME/.config/devspace/env.sh"
