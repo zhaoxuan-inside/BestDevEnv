@@ -5,6 +5,9 @@
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 
+# 平台边界：journalctl（systemd）/ df -BG（GNU）为 Linux 依赖——非 Linux 响亮拦截
+bde_require_linux || { echo "tidy 仅支持 Linux（journalctl/df -BG 依赖）"; exit 1; }
+
 bde_info "devenv tidy —— 可再生缓存清理（SAFE 清单）"
 _before="$(df -BG / 2>/dev/null | awk 'NR==2{gsub("G","",$4);print $4}')"
 

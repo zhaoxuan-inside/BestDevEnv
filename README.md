@@ -6,7 +6,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v0.16（**零遗留收尾**：config 备份通道 `devenv cfg snapshot`——③ 正本→工程 seed 快照→push 即异地备份，doctor「备份通道」项；rustup/cargo 收敛落地 ① DevEnv；home-map 注册表对齐收敛实况；devenv 分发器参数透传；doctor 20 项） |
+| 版本 | v0.18（**差异屏蔽缺口全量修复**：用户名/home 零写死——daemon.json `copy-expand` 锚点展开、user-dirs/npmrc/profile 锚点化；cfg-map 条件列 `os=`/`backend_*=` 非适用机器自动缺席；doctor 非 Linux 结构性条件化（fstab 持久化/mac 误判修复）；挂载对账便携化（mountpoint 缺失回退 mount 解析）；ubuntu.sh/ide.sh 模块级 OS 守卫；code-nm/out 按 probe symlink 能力分支；`devenv gen` 再生闭环；doctor 24 项） |
 | 日期 | 2026-11-08 |
 | 上游宪法 | devspace-design.md **v10.3**（位于 `/Share/Common/docs/dev-env/design.md`）；MCP/会话/Skill 统一为 §10.9 延伸、配置治理落实 §19.3，提请宪法增补 |
 | 适用范围 | **跨系统：Linux（Ubuntu/Arch）/ macOS / Windows 为目标**；Common/Local 为逻辑目录（本机盘/宿主机盘/云盘皆可为后端）。**当前生产实装 = Ubuntu 系**（ubuntu.sh）；Arch/Windows/macOS 为占位适配器（P2/P3 里程碑，实机验证后才算数） |
@@ -23,8 +23,7 @@
 3. **生成器**——生成 `AGENTS.md`（AI 协作统一指令）与**环境描述文档**（机器现状报告）。
 
 **边界**：只管环境，不碰业务仓库内容（宪法原则 7——环境与业务代码分离）。
-本仓库自身是业务代码，位于 `/home/hardstone/Share/Common/CodeSpace/BestDevEnv`
-（CodeSpace 为既有代码区；P4 归位时可平移至 `/Share/Common/code/`，迁移后以 git 远端为准）。
+本仓库自身住 `$COMMON/code/BestDevEnv`（逻辑锚点；实际挂载点由 ③ `storage.toml` 档案决定，跨机器/跨用户零写死）。
 
 ## 2. 设计哲学（需求 1：环境的搭建设计哲学）
 

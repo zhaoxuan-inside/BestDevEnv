@@ -44,6 +44,7 @@ if [ "${1:-}" = "--sizes" ]; then
         p="$HOME/$d"
         [ -d "$p" ] || continue
         sz="$(du -sh "$p" 2>/dev/null | cut -f1)"
+        # GNU find -printf 专属（mac/BSD 无此旗标）——--sizes 明细路径仅 Linux 支持
         lu="$(find "$p" -type f -printf '%TY-%Tm-%Td\n' 2>/dev/null | sort -r | head -1)"
         [ -z "$lu" ] && lu="-"
         printf "%-20s %-10s %-10s %s\n" "$d" "$sz" "$lu" "$cat"

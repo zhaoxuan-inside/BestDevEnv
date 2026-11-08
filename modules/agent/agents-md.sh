@@ -76,7 +76,6 @@ bde_tpl_render() {  # <模板内容> → stdout
     _c="${_c//@PHYSICAL@/$_PHYS_FULL}"
     _c="${_c//@PHYSICAL_BRIEF@/$_PHYS_BRIEF}"
     _c="${_c//@TOOLS_TABLE@/$_tools}"
-    _c="${_c//@RULES@/见上方放置规则与物理边界}"
     printf '%s' "$_c"
 }
 

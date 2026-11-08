@@ -45,9 +45,9 @@ else
     bde_pending "node 未安装且 mise 未就绪"
 fi
 
-# 3) npm 配置（.npmrc 由 config apply 下发：registry/cache/store → 共享盘）
+# 3) npm 配置（.npmrc 由 config apply 下发：registry/cache/store → 共享盘缓存区；路径为锚点变量，非字面量）
 if [ -f "$HOME/.npmrc" ]; then
-    bde_ok ".npmrc 就绪（registry/cache/store-dir → /Share/Common/cache/linux）"
+    bde_ok ".npmrc 就绪（registry/cache/store-dir → $COMMON/cache/linux）"
 else
     bde_pending ".npmrc 缺失（先完成 M1.5 apply-config）"
 fi

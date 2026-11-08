@@ -14,7 +14,9 @@ if command -v code >/dev/null 2>&1; then
     bde_ok "VS Code 已装：$(code --version 2>/dev/null | head -1)"
 else
     _deb="$(ls -t "$COMMON"/install/linux/code_*.deb 2>/dev/null | head -1)"
-    if [ -n "$_deb" ] && sudo -n dpkg -i "$_deb" >/dev/null 2>&1; then
+    if ! command -v dpkg >/dev/null 2>&1; then
+        bde_pending "VS Code 未装且本机无 dpkg（OS: $(bde_os_id)，非 Debian 系）——需对应 OS 适配器安装通道"
+    elif [ -n "$_deb" ] && sudo -n dpkg -i "$_deb" >/dev/null 2>&1; then
         bde_ok "VS Code 离线安装：$(basename "$_deb")"
     else
         bde_pending "VS Code 未装且离线 deb 不可用"
@@ -67,6 +69,8 @@ fi
 # ── 4) Antigravity（snap）──
 if command -v antigravity >/dev/null 2>&1; then
     bde_skip "antigravity 已装（snap）"
+elif ! command -v snap >/dev/null 2>&1; then
+    bde_pending "antigravity 安装跳过（本机无 snap——OS: $(bde_os_id)，非 Ubuntu 系走对应适配器或人工安装）"
 elif sudo -n snap install antigravity --classic >/dev/null 2>&1; then
     bde_ok "antigravity 安装（snap）"
 else
@@ -140,8 +144,10 @@ EOF
     # flutter 需求 → Android Studio（Google 系，走 snap，非 JetBrains API）
     for _l in "${_jb_langs[@]}"; do
         [ "$(echo "$_l" | tr -d ' ')" = "flutter" ] || continue
-        if command -v studio >/dev/null 2>&1 || snap list android-studio >/dev/null 2>&1; then
+        if command -v studio >/dev/null 2>&1 || { command -v snap >/dev/null 2>&1 && snap list android-studio >/dev/null 2>&1; }; then
             bde_skip "android-studio 已装（snap）"
+        elif ! command -v snap >/dev/null 2>&1; then
+            bde_pending "android-studio 安装跳过（本机无 snap——OS: $(bde_os_id)）；flutter 需求需人工安装 Android Studio"
         elif sudo -n snap install android-studio --classic >/dev/null 2>&1; then
             bde_ok "android-studio 安装（snap，flutter 需求推导）"
         else

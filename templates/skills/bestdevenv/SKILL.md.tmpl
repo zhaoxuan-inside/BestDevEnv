@@ -83,6 +83,7 @@ devenv orch status                              # 查进度与续做指引
 
 ## 子 Skill 维护（改模板 → 重新生成）
 
-模板：`$BDE/templates/skills/<name>/SKILL.md.tmpl`；正本由 `bash "$BDE/modules/agent/agents-md.sh"`
+模板：`$BDE/templates/skills/<name>/SKILL.md.tmpl`；正本由 `devenv gen`（即 `agents-md.sh`）
 统一再生，工具接线由 `bash "$BDE/modules/agent/runtime.sh"` 按注册表（runtimes.tsv）执行。
 勿手改正本，勿手改 `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽）下的链接。
+doctor「正本与模板同代（gen 指纹）」项红 = 改了模板未再生 → 跑 `devenv gen`。

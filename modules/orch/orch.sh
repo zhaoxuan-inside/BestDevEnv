@@ -46,6 +46,7 @@ case "${1:-}" in
         _f="$(_latest)"; [ -n "$_f" ] || { echo "无编排日志"; exit 1; }
         _num_ok "${2:-}" || { echo "用法: orch $1 <序号> <说明>"; exit 2; }
         _mark="x"; _tag="完成"; [ "$1" = "fail" ] && { _mark="!"; _tag="失败"; }
+        # GNU sed -i 专属（mac 需 'sed -i ''' 语法）——编排日志仅 Linux 机器维护
         sed -i "s|^- \[.\] ${2}\. |- [$_mark] ${2}. |" "$_f" \
             && printf -- "  ↳ %s（%s）: %s ｜ %s\n" "$_tag" "$(date '+%F %T')" "${3:-}" "$(_doctor)" >> "$_f"
         echo "步骤 ${2} 已记 $_tag"

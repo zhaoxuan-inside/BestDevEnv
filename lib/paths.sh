@@ -29,3 +29,17 @@ fi
 # 机器名小写归一（hosts.toml/storage.toml 机器段与进度文件统一按小写键匹配）
 BDE_MACHINE="$(printf '%s' "${BDE_MACHINE:-$(hostname)}" | tr '[:upper:]' '[:lower:]')"
 export SHARE COMMON LOCAL DEV BDE_MACHINE BDE_SHARE_STATE
+
+# 锚点变量展开（cfg-map copy-expand 机制用）：③ 共享正本里的 ${DEV}/${COMMON}/${LOCAL}/
+# ${SHARE}/${HOME} → 本机锚点值。用户名/主机差异永不住共享正本——机器数据只走锚点，
+# 换用户/换机器/换挂载点后同一份正本自然指向正确落位（home 由用户指定，不写死）。
+bde_expand_anchors() {  # <file> → stdout（展开后内容）
+    local _c
+    _c="$(<"$1")"
+    _c="${_c//'${DEV}'/$DEV}"
+    _c="${_c//'${COMMON}'/$COMMON}"
+    _c="${_c//'${LOCAL}'/$LOCAL}"
+    _c="${_c//'${SHARE}'/$SHARE}"
+    _c="${_c//'${HOME}'/$HOME}"
+    printf '%s\n' "$_c"
+}

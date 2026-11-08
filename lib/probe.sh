@@ -9,6 +9,7 @@
 
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
+source "$BDE_ROOT/lib/common.sh"   # bde_os_id/bde_cfg_cond_ok（cfg 漂移条件列）——含 include 守卫，重复 source 幂等
 
 BDE_PROBE_STATE_DIR="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}"
 
@@ -19,10 +20,21 @@ bde_templates_hash() {
         | xargs -0 sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1)
 }
 
+# —— 挂载判定（便携）：mountpoint 是 util-linux 命令，mac/BSD 没有——缺失时回退解析 mount 输出
+# （Linux 格式 "src on /path type …"；mac 格式 "src on /path (…"——" on <path> " 两端空格精确匹配，
+#  嵌套路径 /path/sub 不会误命中 /path）
+bde_is_mounted() {  # <path> → 0/1
+    if command -v mountpoint >/dev/null 2>&1; then
+        mountpoint -q "$1" 2>/dev/null && return 0 || return 1
+    fi
+    mount 2>/dev/null | grep -q " on $1 " && return 0 || return 1
+}
+
 # —— 存储持久化判定（按后端语义，不硬编码介质）——
 #   local        本机目录，天然持久
 #   passthrough  外部管理（已在位即视为受管）
 #   hgfs/nfs/smb 等 fstab 型后端：fstab 中存在该挂载点行 = 重启后自动恢复
+#   （fstab 是 Linux 机制——非 Linux 平台 doctor 不判此项，OS 条件化见 verify/doctor.sh）
 bde_persist_probe() {  # <backend> <mount> → 0/1
     case "$1" in
         local|passthrough) echo 1 ;;
@@ -81,8 +93,8 @@ bde_probe_collect() {
     # 存储后端事实（L0 解析层给出声明值；probe 另测实际形态供 doctor 对账"声明 vs 实际"）
     P_BACKEND_COMMON="${BDE_SCOPE_SHARED_BACKEND:-unknown}"
     P_BACKEND_HOST="${BDE_SCOPE_HOST_BACKEND:-unknown}"
-    P_MOUNTED_COMMON=0; mountpoint -q "$COMMON" 2>/dev/null && P_MOUNTED_COMMON=1
-    P_MOUNTED_HOST=0;   mountpoint -q "$LOCAL"   2>/dev/null && P_MOUNTED_HOST=1
+    P_MOUNTED_COMMON=0; bde_is_mounted "$COMMON" && P_MOUNTED_COMMON=1
+    P_MOUNTED_HOST=0;   bde_is_mounted "$LOCAL"  && P_MOUNTED_HOST=1
     P_PERSIST_COMMON="$(bde_persist_probe "$P_BACKEND_COMMON" "$COMMON")"
     P_PERSIST_HOST="$(bde_persist_probe "$P_BACKEND_HOST" "$LOCAL")"
     P_LAYER_COMMON="$(mount 2>/dev/null | grep -c " $COMMON ")"
@@ -124,20 +136,26 @@ bde_probe_collect() {
         P_RUNTIME_OK=1
     fi
 
-    # 配置治理漂移（M1.6：cfg-map 逐项；正本缺失不计漂移——只提示未收编）
+    # 配置治理漂移（M1.6：cfg-map 逐项；正本缺失不计漂移——只提示未收编；
+    # 条件不适用项本机缺席不计漂移；copy-expand/chezmoi .tmpl 按本机展开后比对——与 cfg.sh 同一套判定）
     P_CFG_DRIFT=0
     if [ -f "$BDE_ROOT/modules/cfg/cfg-map.tsv" ]; then
-        while IFS='|' read -r _cn _cc _cs _cd _cm _cr _cnote; do
+        while IFS='|' read -r _cn _cc _cs _cd _cm _cr _ccond _cnote; do
             [ -n "$_cn" ] || continue
             _cs="${_cs/#\$COMMON/$COMMON}"; _cd="${_cd/#\$HOME/$HOME}"
             [ -f "$_cs" ] || continue
+            bde_cfg_cond_ok "$_ccond" || continue
             case "$_cm" in
                 append)
                     while IFS= read -r _cl; do
                         [ -n "$_cl" ] || continue
                         grep -qF -- "$_cl" "$_cd" 2>/dev/null || { P_CFG_DRIFT=$((P_CFG_DRIFT+1)); break; }
                     done < "$_cs" ;;
-                *) [ -f "$_cd" ] && ! cmp -s "$_cs" "$_cd" && P_CFG_DRIFT=$((P_CFG_DRIFT+1)) ;;
+                *)
+                    [ -f "$_cd" ] || continue
+                    _es="$(bde_cfg_effective_src "$_cs" "$_cm")"
+                    [ -n "$_es" ] && ! cmp -s "$_es" "$_cd" && P_CFG_DRIFT=$((P_CFG_DRIFT+1))
+                    [[ "$_es" == "${TMPDIR:-/tmp}/bde-cfg-x."* ]] && rm -f "$_es" ;;
             esac
         done < <(grep -v '^[[:space:]#]' "$BDE_ROOT/modules/cfg/cfg-map.tsv" | grep -v '^[[:space:]]*$')
     fi

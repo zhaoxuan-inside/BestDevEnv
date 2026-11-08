@@ -2,7 +2,8 @@
 # verify/doctor.sh — L3 校验视图：消费 probe 事实逐项判定（宪法 §19.5 数据/视图分层）
 # 本文件不含任何采集逻辑；新增检查 = 在 CHECKS 表加一行（事实键 + 判定式）。
 # 后端无关：存储项按 probe 的 backend/persisted/expected 事实判定，不硬编码介质名词；
-# OS 条件化：Linux 专属项（inotify/XDG/IDE）仅在 Linux 系执行，非 Linux 不误报。
+# 挂载对账便携化：mountpoint（util-linux）缺失时回退 mount 输出解析（mac/BSD 可用）；
+# OS 条件化：Linux 专属项（持久化 fstab/IDE/XDG/inotify）仅在 Linux 系执行，非 Linux 不误报。
 # 用法：devenv doctor ｜ doctor.sh [--json]
 BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
@@ -27,8 +28,6 @@ is_linux = doc["os_id"] not in ("", "unknown", "darwin", "macos", "windows", "wi
 CHECKS = [
     ("Common 可写",                        f["common_writable"] == 1),
     ("Local 可写",                         f["local_writable"] == 1),
-    (f"存储已持久化（③ {st['backend_common']}）",  st["persisted_common"] == 1),
-    (f"存储已持久化（② {st['backend_host']}）",    st["persisted_host"] == 1),
     ("存储后端与实际形态一致（声明 vs 挂载）",
         (st["backend_common"] == "local") == (st["mounted_common"] == 0)
         and (st["backend_host"] == "local") == (st["mounted_host"] == 0)),
@@ -49,9 +48,13 @@ CHECKS = [
     (f"根盘余量 > 15G（现余 {free_mb/1024:.1f}G）", free_mb > 15 * 1024),
 ]
 
-# Linux 专属项（非 Linux 系自动缺席，不误报）
+# Linux 专属项（非 Linux 系自动缺席，不误报）：
+# - 持久化：fstab 是 Linux 机制（mac/win 无此概念，对应物为里程碑适配器）
+# - IDE/XDG/inotify：Linux 桌面开发栈专属
 if is_linux:
     CHECKS += [
+        (f"存储已持久化（③ {st['backend_common']}）",  st["persisted_common"] == 1),
+        (f"存储已持久化（② {st['backend_host']}）",    st["persisted_host"] == 1),
         ("IDE 就绪（code + settings + 语言档案）", f["ide_ready"] == 1),
         ("XDG 用户目录已重定向",                f["xdg_redirect"] == 1),
         ("inotify 上限已调高",                  f["inotify_ok"] == 1),

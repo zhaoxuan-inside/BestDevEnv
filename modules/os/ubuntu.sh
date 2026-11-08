@@ -5,6 +5,14 @@ source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 source "$BDE_ROOT/lib/ensure.sh"
 
+# 模块级 OS 自检（防御纵深：不依赖调用方 dispatch——单独执行本模块也绝不跑错包管理器）
+_bde_os="$(bde_os_id)"
+case "$_bde_os" in
+    ubuntu|debian|linuxmint) : ;;
+    *) bde_pending "ubuntu.sh 为 Debian 系适配器，当前 OS: $_bde_os——单独执行已拦截（apt 系命令未运行）；对应适配器见 modules/os/（arch.sh 为里程碑占位）"
+       return 0 2>/dev/null || exit 0 ;;
+esac
+
 bde_info "M1 系统基线与优化（Ubuntu）"
 
 # 1) 包索引（当日一次）

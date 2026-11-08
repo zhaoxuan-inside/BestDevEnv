@@ -29,7 +29,7 @@ bash "$BDE/modules/lang/node.sh"      # 或 python/rust/go/java/flutter/ai.sh
 
 ```bash
 BDE_TOOLS="claude-code,codex,zcode,arkcli" bash "$BDE/modules/agent/tools.sh"   # 幂等，已装只登记
-bash "$BDE/modules/agent/agents-md.sh"    # 再生 AGENTS.md + SKILL 正本
+devenv gen                                 # 再生 AGENTS.md + SKILL 正本（= bash "$BDE/modules/agent/agents-md.sh"）
 bash "$BDE/modules/agent/runtime.sh"      # Runtime 统一接线（记忆/Skill/MCP/会话，按 runtimes.tsv）
 bash "$BDE/modules/ide/ide.sh"            # VS Code 离线 deb + 扩展档案（BDE_LANGS）+ JetBrains 推导（--no-jetbrains 可跳过）
 ```

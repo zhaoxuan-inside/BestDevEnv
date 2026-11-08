@@ -127,9 +127,10 @@ case "\${1:-}" in
     cfg) shift; exec bash "\$BDE_ROOT/modules/cfg/cfg.sh" "\$@" ;;
     app) shift; exec bash "\$BDE_ROOT/modules/app/app.sh" "\$@" ;;
     svc) shift; exec bash "\$BDE_ROOT/modules/cfg/cfg.sh" --svc "\$@" ;;
+    gen) shift; exec bash "\$BDE_ROOT/modules/agent/agents-md.sh" "\$@" ;;
     state-env) shift; exec bash "\$BDE_ROOT/modules/dirs/state-env.sh" "\$@" ;;
     migrate-finish) shift; exec bash "\$BDE_ROOT/modules/dirs/migrate-finish.sh" "\$@" ;;
-    *) echo "用法: devenv doctor|report|tidy|map|orch|runtime|cfg|svc|state-env|migrate-finish"; exit 1 ;;
+    *) echo "用法: devenv doctor|report|tidy|map|orch|runtime|cfg|svc|gen|state-env|migrate-finish"; exit 1 ;;
 esac
 EOF
 chmod +x "$DEV/bin/devenv"
@@ -141,7 +142,7 @@ done
 printf "#!/usr/bin/env bash\n. \"\$HOME/.config/devspace/env.sh\" 2>/dev/null\nexec bash \"%s/modules/agent/runtime.sh\" \"\$@\"\n" "$BDE_ROOT" > "$DEV/bin/vibe"
 chmod +x "$DEV/bin/vibe"
 rm -f "$DEV/bin/env"   # 旧分发器除名（曾遮蔽 coreutils env——命名规范 §20.4）
-bde_ok "分发 code-open/close/nm/out + devenv（doctor/report/tidy/map/orch/cfg/app/state-env/runtime/migrate-finish）+ vibe；旧 env 已除名"
+bde_ok "分发 code-open/close/nm/out + devenv（doctor/report/tidy/map/orch/runtime/cfg/app/svc/gen/state-env/migrate-finish）+ vibe；旧 env 已除名"
 
 # 6) XDG 用户目录重定向 + home 兼容 symlink
 # user-dirs.dirs 正本已收编进 config 事实源（dot_config/user-dirs.dirs，chezmoi 再生；cfg-map 登记）——

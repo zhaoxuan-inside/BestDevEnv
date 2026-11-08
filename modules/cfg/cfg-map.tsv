@@ -1,14 +1,17 @@
 # cfg-map.tsv — 配置登记表（宪法 §19.3 服务三分离 + 单一事实源；视图由 devenv cfg 生成）
-# 格式: name|类(dotfile|system|service)|正本|应用层|机制(copy|append|chezmoi)|requires_root|备注
+# 格式: name|类(dotfile|system|service)|正本|应用层|机制(copy|copy-expand|append|chezmoi)|requires_root|cond|备注
 # - 正本 = $COMMON/config/{services,apt,dot_config}/ 下版本化文件（改配置只改正本，绝不手改应用层）
-# - 机制 copy=整文件落位（备份+cmp 幂等）；append=逐行追加（fstab 片段类）；chezmoi=归 chezmoi 事实源，本表只查漂移
+# - 机制 copy=整文件落位（备份+cmp 幂等）；copy-expand=落位前展开锚点变量（${DEV}/${COMMON}/${LOCAL}/${SHARE}/${HOME}——
+#   共享正本不写用户名/挂载点，跨机器/跨用户同一份正本自然落对）；append=逐行追加（fstab 片段类）；
+#   chezmoi=归 chezmoi 事实源，本表只查漂移（.tmpl 正本按本机数据渲染比对）
+# - cond 条件列：非适用机器自动缺席（不误报漂移）——os=<os_id 列表>｜backend_common=<后端>｜backend_host=<后端>，& 连接，空=无条件
 # - 新装服务/软件/工具的配置：devenv cfg adopt <name> <应用层路径> 收编一行即纳管
-sysctl-devspace|system|$COMMON/config/services/sysctl/99-devspace.conf|/etc/sysctl.d/99-devspace.conf|copy|y|inotify 上限（M1 写入，2026-11-08 收编）
-docker-daemon|service|$COMMON/config/services/docker/daemon.json|/etc/docker/daemon.json|copy|y|registry-mirrors+日志轮转（宪法 §10.6；2026-11-08 收编补全）
-fstab-hgfs|system|$COMMON/config/services/mount/hgfs.fstab|/etc/fstab|append|y|hgfs 挂载两行片段（M2 写入，2026-11-08 收编）
-apt-ubuntu|system|$COMMON/config/apt/ubuntu.sources|/etc/apt/sources.list.d/ubuntu.sources|copy|y|tuna noble 四组件（2026-11-08 修复后收编）
-user-dirs|dotfile|$COMMON/config/dot_config/user-dirs.dirs|$HOME/.config/user-dirs.dirs|chezmoi|n|XDG 用户目录 → Local（chezmoi 再生；M2 不再直写）
-fcitx5-rime|dotfile|$COMMON/config/dot_local/share/fcitx5/rime/default.custom.yaml|$HOME/DevEnv/xdg/local/fcitx5/rime/default.custom.yaml|copy|n|Fcitx5 actual XDG location
-fcitx5-autostart|dotfile|$COMMON/config/dot_config/autostart/org.fcitx.Fcitx5.desktop|$HOME/DevEnv/xdg/config/autostart/org.fcitx.Fcitx5.desktop|copy|n|Fcitx5 actual XDG location
-profile|dotfile|$COMMON/config/dot_profile|$HOME/.profile|chezmoi|n|登录 shell 环境契约兜底（非交互 bash -lc/cron/ssh；.bashrc 对非交互早退）
-zshenv|dotfile|$COMMON/config/dot_zshenv|$HOME/.zshenv|chezmoi|n|全 zsh 上下文环境契约入口（含非交互 zsh -c/脚本）
+sysctl-devspace|system|$COMMON/config/services/sysctl/99-devspace.conf|/etc/sysctl.d/99-devspace.conf|copy|y|os=ubuntu,debian,linuxmint|inotify 上限（M1 写入，2026-11-08 收编）
+docker-daemon|service|$COMMON/config/services/docker/daemon.json|/etc/docker/daemon.json|copy-expand|y||registry-mirrors+日志轮转；data-root=${DEV} 锚点展开（宪法 §10.6；2026-11-08 收编，v0.18 锚点化）
+fstab-hgfs|system|$COMMON/config/services/mount/hgfs.fstab|/etc/fstab|append|y|backend_common=hgfs&backend_host=hgfs|hgfs 挂载两行片段（仅 hgfs 后端机器生效；M2 写入，2026-11-08 收编）
+apt-ubuntu|system|$COMMON/config/apt/ubuntu.sources|/etc/apt/sources.list.d/ubuntu.sources|copy|y|os=ubuntu,debian,linuxmint|tuna noble 四组件（2026-11-08 修复后收编）
+user-dirs|dotfile|$COMMON/config/dot_config/user-dirs.dirs.tmpl|$HOME/.config/user-dirs.dirs|chezmoi|n||XDG 用户目录 → ② Local 锚点（.tmpl 按本机数据渲染；chezmoi 再生；M2 不再直写）
+fcitx5-rime|dotfile|$COMMON/config/dot_local/share/fcitx5/rime/default.custom.yaml|$HOME/DevEnv/xdg/local/fcitx5/rime/default.custom.yaml|copy|n||Fcitx5 actual XDG location
+fcitx5-autostart|dotfile|$COMMON/config/dot_config/autostart/org.fcitx.Fcitx5.desktop|$HOME/DevEnv/xdg/config/autostart/org.fcitx.Fcitx5.desktop|copy|n||Fcitx5 actual XDG location
+profile|dotfile|$COMMON/config/dot_profile|$HOME/.profile|chezmoi|n||登录 shell 环境契约兜底（非交互 bash -lc/cron/ssh；.bashrc 对非交互早退）
+zshenv|dotfile|$COMMON/config/dot_zshenv|$HOME/.zshenv|chezmoi|n||全 zsh 上下文环境契约入口（含非交互 zsh -c/脚本）

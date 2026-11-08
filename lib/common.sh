@@ -51,6 +51,63 @@ bde_os_id() {
     printf '%s\n' "${_id:-unknown}"
 }
 
+# cfg-map 机制感知的"生效正本"（probe 漂移巡检与 cfg.sh diff/apply 共用同一判定——宪法 §19.5 同源）：
+#   copy-expand → bde_expand_anchors 展开锚点（mktemp 落盘供 cmp）
+#   chezmoi(.tmpl) → chezmoi execute-template 用本机数据渲染
+#   其余机制 → 原样路径。工具缺失/展开失败返回空串（调用方决定语义）。
+# 依赖调用方先 source paths.sh（锚点变量；bde_expand_anchors 所在）。
+bde_cfg_effective_src() {  # <src> <mech> → echo 路径（可能为空）
+    local src="$1" mech="$2" _t
+    case "$mech" in
+        copy-expand)
+            _t="$(mktemp "${TMPDIR:-/tmp}/bde-cfg-x.XXXXXX" 2>/dev/null)" || return 0
+            if bde_expand_anchors "$src" > "$_t" 2>/dev/null; then
+                printf '%s\n' "$_t"
+            else
+                rm -f "$_t"
+            fi ;;
+        chezmoi)
+            if [[ "$src" == *.tmpl ]] && command -v chezmoi >/dev/null 2>&1; then
+                _t="$(mktemp "${TMPDIR:-/tmp}/bde-cfg-x.XXXXXX" 2>/dev/null)" || return 0
+                if chezmoi execute-template < "$src" > "$_t" 2>/dev/null && [ -s "$_t" ]; then
+                    printf '%s\n' "$_t"
+                else
+                    rm -f "$_t"
+                fi
+            else
+                printf '%s\n' "$src"
+            fi ;;
+        *) printf '%s\n' "$src" ;;
+    esac
+}
+
+# cfg-map 条件列判定（G3/G5：登记表支持按 OS/存储后端条件生效，非适用机器自动缺席不误报）
+# 语法：空 = 无条件；`&` 连接多个子句；子句 `key=v1,v2`。key ∈ os | backend_common | backend_host
+#   os=ubuntu,debian,linuxmint        ← bde_os_id（OS 变体）
+#   backend_common=hgfs               ← BDE_SCOPE_SHARED_BACKEND（存储档案解析值）
+# 依赖调用方先 source paths.sh（后端变量由 L0 解析层导出）
+bde_cfg_cond_ok() {  # <cond> → 0=适用
+    [ -z "${1:-}" ] && return 0
+    local _tok _k _v _val _c _ok
+    local _toks=()
+    IFS='&' read -ra _toks <<<"$1"
+    for _tok in "${_toks[@]}"; do
+        _k="${_tok%%=*}"; _v="${_tok#*=}"
+        case "$_k" in
+            os)             _val="$(bde_os_id)" ;;
+            backend_common) _val="${BDE_SCOPE_SHARED_BACKEND:-unknown}" ;;
+            backend_host)   _val="${BDE_SCOPE_HOST_BACKEND:-unknown}" ;;
+            *) bde_pending "cfg-map 条件键未知: $_k（支持 os/backend_common/backend_host）"; return 1 ;;
+        esac
+        _ok=0
+        local _vs=()
+        IFS=',' read -ra _vs <<<"$_v"
+        for _c in "${_vs[@]}"; do [ "$_c" = "$_val" ] && _ok=1; done
+        [ "$_ok" = "1" ] || return 1
+    done
+    return 0
+}
+
 # Linux 专属操作守卫（bind mount 等内核机制；非 Linux 响亮 pending，不静默错乱）
 bde_require_linux() {
     case "$(bde_os_id)" in

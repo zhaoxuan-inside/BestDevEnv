@@ -2,7 +2,10 @@
 # modules/cfg/cfg.sh — 统一配置治理器（M1.6；宪法 §19.3 服务三分离 + 单一事实源）
 # 契约：安装任何服务/软件/工具，其配置文件三问皆有统一答案——
 #   正本在哪  → modules/cfg/cfg-map.tsv 登记（内容住 $COMMON/config/{services,apt}/ 版本化）
-#   怎么应用  → 机制列：copy（备份+落位）/ append（逐行追加）/ chezmoi（事实源 apply，本模块只查漂移）
+#   怎么应用  → 机制列：copy（备份+落位）/ copy-expand（锚点变量展开后落位）/ append（逐行追加）/
+#               chezmoi（事实源 apply，本模块只查漂移；.tmpl 正本按本机数据渲染比对）
+#   何处生效  → 条件列：os=<ids> / backend_common=<b> / backend_host=<b>（& 连接；空=无条件）——
+#               非适用机器自动缺席，不误报漂移（OS/后端差异收敛在登记数据，不散落代码）
 #   漂移怎么发现 → devenv cfg diff ＋ doctor「系统/服务配置无漂移」巡检
 # 服务生命周期（enable/start）不在本模块——安装体动作归服务自身（配置与安装体分离）。
 # 用法：source（init M1.6:cfg）→ 全量 apply；独立执行 → list|apply [name]|diff|adopt <name> <target> [类] [root]
@@ -22,8 +25,8 @@ _cfg_usage() {
     cat <<'EOF'
 用法: cfg.sh list|apply [name]|diff|adopt <name> <target> [类=system] [root=y|n]|snapshot   （--svc 前缀=只看 service 类）
   list              配置清单视图（项|类|正本|应用层|机制|漂移）
-  apply [name]      正本 → 应用层（幂等；root 项走 sudo -n）
-  diff              全量漂移检测（非零退出 = 有漂移）
+  apply [name]      正本 → 应用层（幂等；root 项走 sudo -n；copy-expand 按本机锚点展开）
+  diff              全量漂移检测（非零退出 = 有漂移；条件不适用项自动缺席）
   adopt             收编：应用层现有文件 → $COMMON/config/services/<name>/ 正本并登记
   snapshot          备份：③ 正本 → 工程仓库 config/ seed 快照（rsync 镜像 + commit；工程 git push 即异地备份）
 EOF
@@ -40,9 +43,13 @@ _cfg_rows() {
     fi
 }
 
-_cfg_diff_one() {  # $1=name $2=类 $3=正本 $4=应用层 $5=机制 → echo 漂移描述（空=一致）
-    local name="$1" cls="$2" src="${3/#\$COMMON/$COMMON}" dst="$4" mech="$5"
+# 漂移比对用的"生效正本"：统一委托 lib/common.sh（probe 巡检与 cfg diff/apply 同一套判定）
+_cfg_effective_src() { bde_cfg_effective_src "$1" "$2"; }
+
+_cfg_diff_one() {  # $1=name $2=类 $3=正本 $4=应用层 $5=机制 $6=cond → echo 漂移描述（空=一致）
+    local name="$1" cls="$2" src="${3/#\$COMMON/$COMMON}" dst="$4" mech="$5" cond="$6"
     dst="${dst/#\$HOME/$HOME}"
+    bde_cfg_cond_ok "$cond" || return 0          # 条件不适用：本机自动缺席，不计漂移
     [ -f "$src" ] || { echo "$name:正本缺失"; return; }
     case "$mech" in
         append)
@@ -52,29 +59,42 @@ _cfg_diff_one() {  # $1=name $2=类 $3=正本 $4=应用层 $5=机制 → echo �
             done < "$src" ;;
         *)
             [ -f "$dst" ] || { echo "$name:应用层缺失"; return; }
-            cmp -s "$src" "$dst" || echo "$name:内容漂移" ;;
+            local _es; _es="$(_cfg_effective_src "$src" "$mech")"
+            if [ -z "$_es" ]; then
+                [[ "$mech" == "copy-expand" ]] || echo "$name:展开/渲染失败（工具缺失？）"
+                return
+            fi
+            cmp -s "$_es" "$dst" || echo "$name:内容漂移"
+            [[ "$_es" == "${TMPDIR:-/tmp}/bde-cfg-x."* ]] && rm -f "$_es" ;;
     esac
 }
 
 # ── apply：正本 → 应用层（幂等）──────────────────────────────────────────
 _cfg_apply_one() {
-    local name="$1" cls="$2" src="${3/#\$COMMON/$COMMON}" dst="$4" mech="$5" root="$6"
+    local name="$1" cls="$2" src="${3/#\$COMMON/$COMMON}" dst="$4" mech="$5" root="$6" cond="$7"
     dst="${dst/#\$HOME/$HOME}"
+    if ! bde_cfg_cond_ok "$cond"; then
+        bde_skip "$name 条件不适用（$cond；本机 os=$(bde_os_id) ③=$BDE_SCOPE_SHARED_BACKEND ②=$BDE_SCOPE_HOST_BACKEND），跳过"
+        return 0
+    fi
     [ -f "$src" ] || { bde_pending "$name 正本缺失（先收编或手工放置）：$src"; return 0; }
     case "$mech" in
-        copy)
+        copy|copy-expand)
+            local _es; _es="$(_cfg_effective_src "$src" "$mech")"
+            if [ -z "$_es" ]; then bde_fail "$name 正本展开/渲染失败"; return 0; fi
             ensure_dir "$(dirname "$dst")"
-            if cmp -s "$src" "$dst" 2>/dev/null; then
+            if cmp -s "$_es" "$dst" 2>/dev/null; then
                 bde_skip "$name 已一致（${dst/#$HOME/~}）"
             else
                 ensure_backup "$dst"
                 if [ "$root" = "y" ]; then
-                    sudo -n cp "$src" "$dst" && bde_ok "$name 落位 ${dst/#$HOME/~}（root）" \
+                    sudo -n cp "$_es" "$dst" && bde_ok "$name 落位 ${dst/#$HOME/~}（root${mech:+·$mech}）" \
                         || bde_fail "$name 落位失败（需 sudo 免密）"
                 else
-                    cp "$src" "$dst" && bde_ok "$name 落位 ${dst/#$HOME/~}"
+                    cp "$_es" "$dst" && bde_ok "$name 落位 ${dst/#$HOME/~}"
                 fi
-            fi ;;
+            fi
+            [[ "$_es" == "${TMPDIR:-/tmp}/bde-cfg-x."* ]] && rm -f "$_es" ;;
         append)
             local _miss=0 _l
             while IFS= read -r _l; do
@@ -112,7 +132,7 @@ _cfg_adopt() {
         else cp "$target" "$src" || { bde_fail "收编失败"; return 1; } fi
         bde_ok "收编正本 $src"
     fi
-    local line="${name}|${cls}|\$COMMON/config/services/${name}/$(basename "$target")|${target/#$HOME/\$HOME}|copy|${root}|adopt 收编"
+    local line="${name}|${cls}|\$COMMON/config/services/${name}/$(basename "$target")|${target/#$HOME/\$HOME}|copy|${root}||adopt 收编"
     if grep -qF -- "${name}|" "$CFG_MAP" 2>/dev/null; then
         bde_pending "登记表已有 $name 行（不重复登记）"
     else
@@ -148,28 +168,29 @@ _cfg_snapshot() {
 # ── 视图 ─────────────────────────────────────────────────────────────────
 _cfg_list() {
     bde_info "配置治理清单（正本根：$CFG_SRC_SERVICES ｜ $CFG_SRC_APT）"
-    printf "  %-16s %-8s %-46s %-38s %-8s %s\n" "NAME" "类" "正本" "应用层" "机制" "漂移"
+    printf "  %-16s %-8s %-46s %-38s %-11s %s\n" "NAME" "类" "正本" "应用层" "机制/条件" "漂移"
     mapfile -t _rows < <(_cfg_rows)
-    local _r name cls src dst mech root note d
+    local _r name cls src dst mech root cond note d
     for _r in "${_rows[@]}"; do
-        IFS='|' read -r name cls src dst mech root note <<<"$_r"
-        d="$(_cfg_diff_one "$name" "$cls" "$src" "$dst" "$mech")"
-        printf "  %-16s %-8s %-46s %-38s %-8s %s\n" "$name" "$cls" \
-            "${src/#\$COMMON//\$C}" "${dst/#\$HOME/\~}" "$mech" "${d:-一致}"
+        IFS='|' read -r name cls src dst mech root cond note <<<"$_r"
+        d="$(_cfg_diff_one "$name" "$cls" "$src" "$dst" "$mech" "$cond")"
+        if ! bde_cfg_cond_ok "$cond"; then d="不适用($cond)"; fi
+        printf "  %-16s %-8s %-46s %-38s %-11s %s\n" "$name" "$cls" \
+            "${src/#\$COMMON//\$C}" "${dst/#\$HOME/\~}" "$mech${cond:+·$cond}" "${d:-一致}"
     done
     bde_info "动作：devenv cfg apply（幂等落位）｜devenv cfg diff（漂移检测）｜doctor 巡检"
 }
 
 _cfg_diff_all() {
     mapfile -t _rows < <(_cfg_rows)
-    local _r name cls src dst mech root note d _n=0
+    local _r name cls src dst mech root cond note d _n=0
     for _r in "${_rows[@]}"; do
-        IFS='|' read -r name cls src dst mech root note <<<"$_r"
-        d="$(_cfg_diff_one "$name" "$cls" "$src" "$dst" "$mech")"
+        IFS='|' read -r name cls src dst mech root cond note <<<"$_r"
+        d="$(_cfg_diff_one "$name" "$cls" "$src" "$dst" "$mech" "$cond")"
         [ -n "$d" ] && { bde_fail "漂移：$d"; _n=$((_n+1)); }
     done
     if [ "$_n" -eq 0 ]; then
-        bde_ok "配置无漂移（${#_rows[@]} 项登记全一致）"
+        bde_ok "配置无漂移（${#_rows[@]} 项登记全一致；条件不适用项已缺席）"
     else
         bde_info "$_n 项漂移 → devenv cfg apply 还原（正本为准收编）"
     fi
@@ -184,13 +205,13 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
         apply) shift 2>/dev/null
                if [ -n "${1:-}" ]; then
                    _row="$(grep "^$1|" "$CFG_MAP" | head -1)"
-                   [ -n "$_row" ] && { IFS='|' read -r name cls src dst mech root note <<<"$_row"; _cfg_apply_one "$name" "$cls" "$src" "$dst" "$mech" "$root"; } \
+                   [ -n "$_row" ] && { IFS='|' read -r name cls src dst mech root cond note <<<"$_row"; _cfg_apply_one "$name" "$cls" "$src" "$dst" "$mech" "$root" "$cond"; } \
                        || { bde_fail "cfg-map 无此项：$1"; exit 2; }
                else
                    mapfile -t _rows < <(_cfg_rows)
                    for _r in "${_rows[@]}"; do
-                       IFS='|' read -r name cls src dst mech root note <<<"$_r"
-                       _cfg_apply_one "$name" "$cls" "$src" "$dst" "$mech" "$root"
+                       IFS='|' read -r name cls src dst mech root cond note <<<"$_r"
+                       _cfg_apply_one "$name" "$cls" "$src" "$dst" "$mech" "$root" "$cond"
                    done
                fi ;;
         diff)  shift 2>/dev/null; _cfg_diff_all ;;
@@ -204,7 +225,7 @@ else
     mapfile -t _rows < <(_cfg_rows)
     local_rc=0
     for _r in "${_rows[@]}"; do
-        IFS='|' read -r name cls src dst mech root note <<<"$_r"
-        _cfg_apply_one "$name" "$cls" "$src" "$dst" "$mech" "$root"
+        IFS='|' read -r name cls src dst mech root cond note <<<"$_r"
+        _cfg_apply_one "$name" "$cls" "$src" "$dst" "$mech" "$root" "$cond"
     done
 fi

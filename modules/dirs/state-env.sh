@@ -34,3 +34,33 @@ else
         bde_pending "网络画像未生成（${_err:-无档案/解析失败}）——env.sh 走内置兜底"
     fi
 fi
+
+# ── chezmoi.toml：模板数据正本（① 每机器状态；③ config 的 .tmpl 种子按此渲染）──
+# 双落位：chezmoi 配置查找随 XDG_CONFIG_HOME 漂移（env.sh 重定向 → $DEV/xdg/config），
+# 未 source env.sh 的上下文又回落 ~/.config/chezmoi——两处同写，任何上下文数据一致，
+# 行为不再由"调用方是否 source 过 env.sh"决定（差异屏蔽：上下文无关）。
+# config 种子里的锚点差异（XDG → ② Local 等）不再写字面量——换用户/换挂载点后
+# `devenv state-env` 重跑 + `chezmoi apply` 即再对齐，正本零修改。
+_cz_content="$(cat <<EOF
+# 由 devenv state-env 再生（① 每机器状态——③ config .tmpl 种子的锚点数据源；勿手改）
+[data]
+machine = "${BDE_MACHINE}"
+dev = "${DEV}"
+common = "${COMMON}"
+local = "${LOCAL}"
+share = "${SHARE}"
+EOF
+)"
+_cz_ok=0 _cz_miss=""
+for _czdir in "${XDG_CONFIG_HOME:-$HOME/.config}/chezmoi" "$HOME/.config/chezmoi"; do
+    if mkdir -p "$_czdir" 2>/dev/null && printf '%s\n' "$_cz_content" > "$_czdir/chezmoi.toml"; then
+        _cz_ok=$((_cz_ok+1))
+    else
+        _cz_miss="$_cz_miss ${_czdir/#$HOME/~}"
+    fi
+done
+if [ "$_cz_ok" -eq 2 ]; then
+    bde_ok "chezmoi 模板数据双落位（machine/dev/common/local/share：XDG 位 + 兜底位）"
+else
+    bde_pending "chezmoi 模板数据部分落位（不可写:$_cz_miss）——.tmpl 种子在对应上下文将无数据源"
+fi
