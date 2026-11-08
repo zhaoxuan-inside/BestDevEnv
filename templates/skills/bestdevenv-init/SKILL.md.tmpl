@@ -15,7 +15,7 @@ BDE="$COMMON/code/BestDevEnv"
 cd "$BDE" && ./init.sh          # 交互八项（机器名/锚点/XDG/语言栈/工具/镜像源），回车=全默认
 ```
 
-- 共享盘未挂载先手动挂一次：`sudo mkdir -p /Share/Common /Share/Local && sudo vmhgfs-fuse .host:/Common /Share/Common -o allow_other`
+- 共享盘未挂载先手动挂一次（HGFS 后端时；其他后端按 ③ `storage.toml` 档案）：`sudo mkdir -p /Share/Common /Share/Local && sudo vmhgfs-fuse .host:/Common /Share/Common -o allow_other`
 - 仓库缺失时先 clone：`git clone git@github.com:zhaoxuan-inside/BestDevEnv.git "$COMMON/code/BestDevEnv"`
 
 ## 进度管理

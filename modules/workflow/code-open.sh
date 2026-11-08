@@ -19,8 +19,8 @@ if [ -f "$CLAIM" ] && ! grep -q "^${MACHINE}|" "$CLAIM"; then
 fi
 printf '%s|%s\n' "$MACHINE" "$(date '+%F %T')" > "$CLAIM" && bde_ok "占用标记 → $REPO"
 
-# 2) 恢复该仓库登记的全部 bind mounts（node_modules / target / dist …）
-if [ -f "$LIST" ]; then
+# 2) 恢复该仓库登记的全部 bind mounts（node_modules / target / dist …；Linux 专属机制）
+if [ -f "$LIST" ] && bde_require_linux; then
     while IFS='|' read -r r sub real; do
         [ "$r" = "$REPO" ] || continue
         mp="$DIR/$sub"

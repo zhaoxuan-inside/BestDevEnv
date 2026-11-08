@@ -2,6 +2,8 @@
 # lib/probe.sh — L1 采集器：环境事实的唯一来源（宪法 §19.5 数据/视图分层）
 # 职责：只采集，不渲染。产出 schema 化 JSON 快照 → $DEV/docs/state/probe.json
 # 视图（doctor/report/AGENTS/SKILL）一律消费快照，绝不自行采集。
+# 硬件/OS 差异在这里转为事实：存储后端/持久化/期望对账、共享盘能力探测（symlink/
+# hardlink/大小写/权限/文件名长度）——视图层按事实渲染，不硬编码介质名词。
 # 用法：source 后调 bde_probe_collect（取 P_ 变量）/ bde_probe_save（落快照）；
 #       直接执行：probe.sh [--json|--save|--human]
 
@@ -17,6 +19,44 @@ bde_templates_hash() {
         | xargs -0 sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1)
 }
 
+# —— 存储持久化判定（按后端语义，不硬编码介质）——
+#   local        本机目录，天然持久
+#   passthrough  外部管理（已在位即视为受管）
+#   hgfs/nfs/smb 等 fstab 型后端：fstab 中存在该挂载点行 = 重启后自动恢复
+bde_persist_probe() {  # <backend> <mount> → 0/1
+    case "$1" in
+        local|passthrough) echo 1 ;;
+        *) awk -v m="$2" '$2==m{f=1} END{print (f?1:0)}' /etc/fstab 2>/dev/null || echo 0 ;;
+    esac
+}
+
+# —— 共享盘能力探测（P1-3：物理红线从静态文档变为机器自证）——
+# 临时目录做完即清；仅 Common 可写时执行。结果供视图按事实渲染物理边界段。
+# 全部动作静默（2>/dev/null）：探测失败是"事实"（如 HGFS 255B 上限）不是错误，不污染输出
+bde_caps_probe() {  # 设置 P_CAP_* 变量
+    P_CAP_PROBED=0; P_CAP_SYMLINK=0; P_CAP_HARDLINK=0; P_CAP_CASE=0; P_CAP_PERM=0; P_CAP_NAME255=0
+    [ "$P_COMMON_WRITABLE" = "1" ] || return 0
+    local _cap="$COMMON/.bde-capprobe.$$"
+    mkdir "$_cap" 2>/dev/null || return 0
+    P_CAP_PROBED=1
+    # symlink
+    if { ln -s . "$_cap/t.symlink" 2>/dev/null && [ -L "$_cap/t.symlink" ]; } 2>/dev/null; then P_CAP_SYMLINK=1; fi
+    # hardlink
+    if { : > "$_cap/t.h1" 2>/dev/null && ln "$_cap/t.h1" "$_cap/t.h2" 2>/dev/null; } 2>/dev/null; then P_CAP_HARDLINK=1; fi
+    # 大小写敏感（两个路径 -ef 同一 inode = 不区分大小写）
+    if { : > "$_cap/t.case-a" 2>/dev/null && : > "$_cap/t.case-A" 2>/dev/null \
+       && [ ! "$_cap/t.case-a" -ef "$_cap/t.case-A" ]; } 2>/dev/null; then P_CAP_CASE=1; fi
+    # 权限语义（chmod 是否真生效；恒 777 的共享盘 chmod 静默无效）
+    if { : > "$_cap/t.perm" 2>/dev/null && chmod 700 "$_cap/t.perm" 2>/dev/null; } 2>/dev/null; then
+        local _pm; _pm="$(stat -c %a "$_cap/t.perm" 2>/dev/null || stat -f '%Lp' "$_cap/t.perm" 2>/dev/null)"
+        [ "$_pm" = "700" ] && P_CAP_PERM=1
+    fi
+    # 255 字节文件名（HGFS 上限实测项；成功 = 可放深层缓存名）
+    local _n255; _n255="$(printf '%0255d' 0 | tr '0' 'n')"
+    if { : > "$_cap/$_n255" 2>/dev/null; } 2>/dev/null; then P_CAP_NAME255=1; fi
+    rm -rf "$_cap" 2>/dev/null
+}
+
 bde_probe_collect() {
     P_OS="$(grep -m1 PRETTY_NAME /etc/os-release 2>/dev/null | cut -d'"' -f2)"
     P_OS_ID="$(. /etc/os-release 2>/dev/null; echo "${ID:-unknown}")"
@@ -24,8 +64,10 @@ bde_probe_collect() {
     P_HOST="$(hostname)"
     P_USER="$(id -un)"
     P_DATE="$(date '+%Y-%m-%d %H:%M')"
-    P_DISK_ROOT_USE="$(df -h / 2>/dev/null | awk 'NR==2{print $5}')"
-    P_DISK_ROOT_FREE="$(df -BG / 2>/dev/null | awk 'NR==2{gsub("G","",$4);print $4}')"
+    # POSIX 格式（-kP：Linux/mac/BSD 通用；GNU -BG 在 BSD 系无此旗标会静默失败）
+    # 余量用 MB 精度（-BG 向上取整/int GB 取整都会让 ">15G" 阈值误判——实测 15.41G 曾被两种取整判成 16G/15G）
+    P_DISK_ROOT_USE="$(df -kP / 2>/dev/null | awk 'NR==2{print $5}')"
+    P_DISK_ROOT_FREE_MB="$(df -kP / 2>/dev/null | awk 'NR==2{print int($4/1024)}')"
 
     # 锚点与挂载
     P_SHARE_STATE="${BDE_SHARE_STATE:-unknown}"
@@ -36,9 +78,20 @@ bde_probe_collect() {
     if [ -d "$LOCAL" ] && touch "$LOCAL/.bde_write_test" 2>/dev/null; then
         rm -f "$LOCAL/.bde_write_test"; P_LOCAL_WRITABLE=1
     fi
-    P_FSTAB_HGFS="$(grep -c 'vmhgfs-fuse' /etc/fstab 2>/dev/null || echo 0)"
+    # 存储后端事实（L0 解析层给出声明值；probe 另测实际形态供 doctor 对账"声明 vs 实际"）
+    P_BACKEND_COMMON="${BDE_SCOPE_SHARED_BACKEND:-unknown}"
+    P_BACKEND_HOST="${BDE_SCOPE_HOST_BACKEND:-unknown}"
+    P_MOUNTED_COMMON=0; mountpoint -q "$COMMON" 2>/dev/null && P_MOUNTED_COMMON=1
+    P_MOUNTED_HOST=0;   mountpoint -q "$LOCAL"   2>/dev/null && P_MOUNTED_HOST=1
+    P_PERSIST_COMMON="$(bde_persist_probe "$P_BACKEND_COMMON" "$COMMON")"
+    P_PERSIST_HOST="$(bde_persist_probe "$P_BACKEND_HOST" "$LOCAL")"
     P_LAYER_COMMON="$(mount 2>/dev/null | grep -c " $COMMON ")"
     P_LAYER_LOCAL="$(mount 2>/dev/null | grep -c " $LOCAL ")"
+    bde_caps_probe
+    # 存储档案健康（storage.sh 解析层置位；0=档案生效）
+    P_PROFILE_ERR="${BDE_STORAGE_PROFILE_ERROR:+1}"
+    P_PROFILE_ERR="${P_PROFILE_ERR:-0}"
+    P_PROFILE_ERR_MSG="${BDE_STORAGE_PROFILE_ERROR:-}"
 
     # 配置 / 骨架 / 接线
     P_CONFIG_OK=0; { [ -f "$COMMON/config/.chezmoiignore" ] || [ -f "$HOME/.config/devspace/env.sh" ]; } && P_CONFIG_OK=1
@@ -53,7 +106,7 @@ bde_probe_collect() {
     P_DISPATCHER_OK=0
     { [ -x "$DEV/bin/devenv" ] && [ ! -e "$DEV/bin/env" ]; } && P_DISPATCHER_OK=1
     P_HOST_REG=0
-    if [ -f "$BDE_ROOT/hosts.toml" ] && grep -q "^\[$BDE_MACHINE\]" "$BDE_ROOT/hosts.toml" 2>/dev/null; then
+    if [ -f "$BDE_ROOT/hosts.toml" ] && grep -qi "^\[$BDE_MACHINE\]" "$BDE_ROOT/hosts.toml" 2>/dev/null; then
         P_HOST_REG=1
     fi
     P_GEN_FRESH=0
@@ -172,7 +225,7 @@ for line in (p.get("TOOL_ROWS") or "").splitlines():
         tools[t.strip()] = v.strip()
 
 doc = {
-    "schema": "bde.probe/1",
+    "schema": "bde.probe/2",
     "machine": p.get("HOST", ""),
     "os": p.get("OS", ""),
     "os_id": p.get("OS_ID", ""),
@@ -189,7 +242,6 @@ doc = {
     "facts": {
         "common_writable": i("P_COMMON_WRITABLE"),
         "local_writable": i("P_LOCAL_WRITABLE"),
-        "fstab_backend": i("P_FSTAB_HGFS"),
         "layer_common": i("P_LAYER_COMMON"),
         "layer_local": i("P_LAYER_LOCAL"),
         "config_ready": i("P_CONFIG_OK"),
@@ -208,9 +260,27 @@ doc = {
         "xdg_redirect": 1 if p.get("XDG_DOC") else 0,
         "inotify_ok": i("P_INOTIFY_OK"),
     },
+    "storage": {
+        "backend_common": p.get("BACKEND_COMMON", "unknown"),
+        "backend_host": p.get("BACKEND_HOST", "unknown"),
+        "mounted_common": i("P_MOUNTED_COMMON"),
+        "mounted_host": i("P_MOUNTED_HOST"),
+        "persisted_common": i("P_PERSIST_COMMON"),
+        "persisted_host": i("P_PERSIST_HOST"),
+        "profile_error": i("P_PROFILE_ERR"),
+        "profile_error_msg": p.get("PROFILE_ERR_MSG", ""),
+    },
+    "share_caps": {
+        "probed": i("P_CAP_PROBED"),
+        "symlink": i("P_CAP_SYMLINK"),
+        "hardlink": i("P_CAP_HARDLINK"),
+        "case_sensitive": i("P_CAP_CASE"),
+        "perm": i("P_CAP_PERM"),
+        "name255": i("P_CAP_NAME255"),
+    },
     "values": {
         "disk_root_used": p.get("DISK_ROOT_USE", ""),
-        "disk_root_free_g": i("P_DISK_ROOT_FREE"),
+        "disk_root_free_mb": i("P_DISK_ROOT_FREE_MB"),
         "inotify_watches": i("P_INOTIFY_W"),
         "xdg_doc": p.get("XDG_DOC", ""),
     },
@@ -231,7 +301,10 @@ bde_probe_save() {  # 落快照（原子写）——视图从这里读
 
 bde_probe_print() {  # 人类速览（正式视图在 doctor/report）
     echo "机器: $P_HOST ｜ $P_OS (kernel $P_KERNEL) ｜ probe $P_DATE"
-    echo "锚点: $SHARE（$P_SHARE_STATE）｜ Common可写:$P_COMMON_WRITABLE Local可写:$P_LOCAL_WRITABLE ｜ 根盘: $P_DISK_ROOT_USE（剩 ${P_DISK_ROOT_FREE}G）"
+    echo "锚点: $SHARE（$P_SHARE_STATE）｜ ③ $COMMON（$P_BACKEND_COMMON）② $LOCAL（$P_BACKEND_HOST）｜ 根盘: $P_DISK_ROOT_USE（剩 $(awk "BEGIN{printf \"%.1f\", $P_DISK_ROOT_FREE_MB/1024}")G）"
+    if [ "$P_CAP_PROBED" = "1" ]; then
+        echo "共享盘能力: symlink=$P_CAP_SYMLINK hardlink=$P_CAP_HARDLINK 大小写敏感=$P_CAP_CASE 权限=$P_CAP_PERM 文件名255B=$P_CAP_NAME255"
+    fi
     printf '%s\n' "$P_TOOL_ROWS" | while IFS='|' read -r t v; do
         [ -n "$t" ] && printf "  %-10s %s\n" "$t" "$v"
     done

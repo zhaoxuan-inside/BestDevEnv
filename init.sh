@@ -13,6 +13,8 @@ source "$BDE_ROOT/lib/ensure.sh"
 BDE_ASSUME_YES="${BDE_ASSUME_YES:-0}"
 BDE_RESUME=0; BDE_RERUN=0; BDE_STATUS_ONLY=0; BDE_RESET=0
 BDE_MACHINE="${BDE_MACHINE:-$(hostname)}"
+# 机器名小写归一（hosts.toml/storage.toml 机器段与进度文件统一按小写键匹配）
+BDE_MACHINE="$(printf '%s' "$BDE_MACHINE" | tr '[:upper:]' '[:lower:]')"
 BDE_LANGS="node,python"
 BDE_TOOLS="claude-code,codex,zcode,arkcli"
 BDE_XDG="y"

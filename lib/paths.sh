@@ -26,5 +26,6 @@ elif [ -d "$HOME/Share/Common" ]; then
     BDE_SHARE_STATE="fallback"                # 旧挂载点回退（迁移完成前）
 fi
 
-BDE_MACHINE="${BDE_MACHINE:-$(hostname)}"
+# 机器名小写归一（hosts.toml/storage.toml 机器段与进度文件统一按小写键匹配）
+BDE_MACHINE="$(printf '%s' "${BDE_MACHINE:-$(hostname)}" | tr '[:upper:]' '[:lower:]')"
 export SHARE COMMON LOCAL DEV BDE_MACHINE BDE_SHARE_STATE

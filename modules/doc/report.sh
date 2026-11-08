@@ -24,6 +24,7 @@ import os, json
 
 doc = json.load(open(os.environ["BDE_REPORT_JSON"]))
 a, f, v, t = doc["anchors"], doc["facts"], doc["values"], doc["tools"]
+s, caps = doc["storage"], doc["share_caps"]
 L = []
 L.append(f"# 开发环境报告 — {os.environ['BDE_MACHINE_N']}")
 L.append("")
@@ -35,10 +36,11 @@ L.append(f"| 机器 | {doc['machine']} |")
 L.append(f"| 系统 | {doc['os']}（内核 {doc['kernel']}）|")
 L.append(f"| 共享锚点 | {a['share']}（状态 {a['state']}）|")
 L.append(f"| Common 可写 | {f['common_writable']} ｜ Local 可写 | {f['local_writable']} |")
-L.append(f"| fstab 后端条目 | {f['fstab_backend']} |")
+L.append(f"| 存储后端 | ③ {s['backend_common']}（挂载 {s['mounted_common']}，持久 {s['persisted_common']}）｜ ② {s['backend_host']}（挂载 {s['mounted_host']}，持久 {s['persisted_host']}）|")
+L.append(f"| 共享盘能力 | symlink={caps['symlink']} hardlink={caps['hardlink']} 大小写敏感={caps['case_sensitive']} 权限={caps['perm']} 文件名255B={caps['name255']}（探测={caps['probed']}）|")
 L.append(f"| config/env.sh | {f['env_sh_applied']} ｜ 骨架 | {f['skeleton_ready']} ｜ AGENTS.md | {f['agents_md']} ｜ IDE | {f['ide_ready']} |")
 L.append(f"| XDG | {v['xdg_doc'] or '未重定向'} |")
-L.append(f"| 根盘 | 已用 {v['disk_root_used']}（剩 {v['disk_root_free_g']}G）|")
+L.append(f"| 根盘 | 已用 {v['disk_root_used']}（剩 {v['disk_root_free_mb']/1024:.1f}G）|")
 L.append("")
 L.append("| 工具 | 版本 |")
 L.append("|---|---|")

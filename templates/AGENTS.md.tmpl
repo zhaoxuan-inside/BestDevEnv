@@ -7,17 +7,17 @@
 @ANCHORS@
 
 放置口诀：
-> 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `DevEnv`；
-> 代码单份 Common/code，包仓库共享 Common/cache；实体住在 DevEnv，bind mount 接回去；
-> 用户目录住在 Local；配置永远改仓库；备份永远靠 push。
+> 公货 `@COMMON@`，私货 `@LOCAL@`，工具链和活状态 `@DEV@`；
+> 代码单份 @COMMON@/code，包仓库共享 @COMMON@/cache；实体住 @DEV@，bind mount 接回去；
+> 用户目录住 @LOCAL@；配置永远改仓库（`$COMMON/config`）；备份永远靠 push。
 
 ## 放置规则（写文件前先判断）
 
-1. 代码/文档/大文件要跨机 → `/Share/Common/`（code=仓库平铺、docs=文档、exchange=临时交换）
-2. 只属于本机 → `/Share/Local/`（build=编译产物、cache=锁敏感缓存、data=冷份）
-3. 依赖实体（node_modules/venv）→ `~/DevEnv/deps|virtualenvs`（VM 盘，symlink 需要）
-4. 会话级/临时 → `~/DevEnv/tmp` 或 `/Share/Common/exchange`
-5. 配置改动 → 改 `/Share/Common/config` 仓库并 push，绝不手改应用层了事
+1. 代码/文档/大文件要跨机 → `@COMMON@/`（code=仓库平铺、docs=文档、exchange=临时交换）
+2. 只属于本机 → `@LOCAL@/`（build=编译产物、cache=锁敏感缓存、data=冷份）
+3. 依赖实体（node_modules/venv）→ `@DEV@/deps|virtualenvs`（本机盘，symlink 需要）
+4. 会话级/临时 → `@DEV@/tmp` 或 `@COMMON@/exchange`
+5. 配置改动 → 改 `@COMMON@/config` 仓库并 push，绝不手改应用层了事
 6. 构建产物与代码分离：依赖实体 `code-nm <repo>`、产物目录 `code-out <repo> <target|build|dist>`（写入即落本机专享盘），跨机成品走 exchange
 
 ### 分离法则（宪法 v10.3）
@@ -27,12 +27,9 @@
 - **服务三分离**：安装体 → ① DevEnv/services（可再生）；配置 → ③ Common/config/services（版本化）；数据 → ② Local/data/services（共享数据 → ③ Common/data）；恢复 = 重装 + 应用配置 + 回灌数据
 - **构建十分离**：IDE 工具① / IDE 配置③ / IDE 运行数据② / 代码③ / 代码输出② / 代码日志② / 打包工具① / 打包配置③ / 缓存包③ / 打包结果③ exchange——清理只落 ② 与缓存/结果目录，代码与配置永不清理
 
-## 物理边界（HGFS 后端实测；换后端须重测本节）
+## 物理边界（probe 能力探测自动生成——换后端自动重测，勿手改）
 
-- 共享盘**不支持 symlink**、**不支持 hardlink**（npm cacache EPERM/link 实证）、**不区分大小写**、**权限恒 777 root**
-- 禁止在共享盘创建 symlink；node_modules/venv 绝不放共享盘
-- 命名一律小写 kebab-case
-- 单文件名/深层路径超 HGFS 上限（~255B）：gradle/flutter 构建缓存类目录无法上共享盘——此类缓存留本机或删重建
+@PHYSICAL@
 
 ## 常用命令
 
@@ -44,6 +41,7 @@
 | `devenv tidy` | 清理可再生缓存（gradle/npm/pnpm/go-build/Trash/日志）|
 | `devenv map` | 隐藏目录注册表视图（未登记项检测）|
 | `devenv cfg` / `devenv svc` | 配置治理：清单/漂移/apply/adopt/snapshot（cfg-map 登记制；snapshot=③→seed 备份快照）|
+| `devenv state-env` | 再生每机器状态正本（① anchors.env 锚点 + network.env 网络画像；改 storage/network.toml 后重跑 + 重开 shell）|
 | `devenv runtime` / `vibe` | vibecoding Runtime 统一入口 |
 | `devenv app [name]` | 应用视图：安装/配置/数据按应用聚合（config/apps 档案制，§20.3） |
 | `devenv runtime list\|wire\|mcp` | Runtime 接线现状 / 幂等接线 / MCP 正本投影 |

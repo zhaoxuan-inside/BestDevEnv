@@ -44,6 +44,21 @@ bde_root() {
     if sudo -n true 2>/dev/null; then echo "sudo -n"; else echo ""; fi
 }
 
+# OS 识别（BDE_OS_ID 可外部注入——测试钩子；init.sh 亦导出同语义变量）
+bde_os_id() {
+    if [ -n "${BDE_OS_ID:-}" ]; then printf '%s\n' "$BDE_OS_ID"; return; fi
+    local _id=""; _id="$(. /etc/os-release 2>/dev/null; printf '%s' "${ID:-}")"
+    printf '%s\n' "${_id:-unknown}"
+}
+
+# Linux 专属操作守卫（bind mount 等内核机制；非 Linux 响亮 pending，不静默错乱）
+bde_require_linux() {
+    case "$(bde_os_id)" in
+        ubuntu|debian|linuxmint|arch|manjaro|endeavouros|garuda|fedora|rhel|centos|rocky|alma|opensuse*|alpine|nixos|gentoo|void|pop|kali) return 0 ;;
+        *) bde_pending "本操作需 Linux（bind mount 等）；当前 OS: $(bde_os_id)——mac/win 对应物为里程碑项（宪法 §10）"; return 1 ;;
+    esac
+}
+
 bde_summary() {
     echo
     bde_info "========== 执行摘要 =========="

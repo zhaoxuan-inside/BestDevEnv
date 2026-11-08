@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# code-nm <repo> —— JS 依赖实体外置：node_modules 物理落 VM 盘，bind mount 接回共享盘项目
-# （HGFS 无 symlink → npm/pnpm 装不了依赖；实体在 ext4 才可装。忘挂时 npm 报 symlink 错=响亮失败）
+# code-nm <repo> —— JS 依赖实体外置：node_modules 物理落 ① 本机盘，bind mount 接回共享盘项目
+# （共享盘无 symlink 时 npm/pnpm 装不了依赖；实体在本机盘才可装。忘挂时 npm 报 symlink 错=响亮失败）
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 
 REPO="${1:?用法: code-nm <repo>}"
+bde_require_linux || exit 1
 DIR="$COMMON/code/$REPO"
 [ -d "$DIR" ] || { bde_fail "仓库不存在: $DIR"; exit 1; }
 [ -f "$DIR/package.json" ] || { bde_fail "$REPO 不是 JS/TS 项目（无 package.json）"; exit 1; }

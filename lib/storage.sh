@@ -7,7 +7,9 @@
 # 后端：passthrough（已有挂载）| hgfs | local（预留 nfs/smb/sync——环境其余部分不感知）
 # 档案解析顺序（bootstrap 免疫）：$BDE_STORAGE_PROFILE → ① docs/state/storage.toml
 #   → ③ 正本 config/data/storage.toml（可达则用）→ 内置默认（auto 探测）
-# 本文件不依赖 paths.sh/common.sh；对上层只暴露 bde_storage_load / bde_storage_ensure / BDE_SCOPE_*
+# 本文件不依赖 paths.sh/common.sh；对上层只暴露 bde_storage_load / bde_storage_ensure /
+# bde_storage_anchors_emit / BDE_SCOPE_* / BDE_STORAGE_PROFILE_ERROR
+# 机器段匹配按小写归一（hostname 大小写不敏感；克隆 VM / 大写主机名场景不丢段）
 
 [ -n "${BDE_STORAGE_LOADED:-}" ] && return 0 2>/dev/null || true
 BDE_STORAGE_LOADED=1
@@ -37,11 +39,19 @@ bde_storage_detect() {  # <mount> <source> → echo 后端名
     echo local
 }
 
-# —— 档案加载：解析三作用域根/后端/源（机器段覆盖默认段）——
+# —— 档案加载：解析三作用域根/后端/源/期望（机器段覆盖默认段；机器名小写归一）——
 bde_storage_load() {
     [ -n "${BDE_STORAGE_RESOLVED:-}" ] && return 0
     local prof; prof="$(bde_storage_profile)"
-    local machine="${BDE_MACHINE:-$(hostname)}"
+    local machine; machine="$(printf '%s' "${BDE_MACHINE:-$(hostname)}" | tr '[:upper:]' '[:lower:]')"
+
+    # tomllib 守卫（P1-4）：python3 <3.11 时档案静默失效是生产事故源——必须响亮 + 显式错误位
+    BDE_STORAGE_PROFILE_ERROR=""
+    if [ -n "$prof" ] && ! python3 -c 'import tomllib' 2>/dev/null; then
+        BDE_STORAGE_PROFILE_ERROR="python3 缺少 tomllib（需 ≥3.11）——storage.toml 未生效，改用内置默认"
+        printf '[!] %s\n' "$BDE_STORAGE_PROFILE_ERROR" >&2
+        prof=""
+    fi
 
     if [ -n "$prof" ]; then
         eval "$(BDE_STORAGE_PROFILE_FILE="$prof" BDE_STORAGE_MACHINE="$machine" python3 <<'PY'
@@ -50,7 +60,8 @@ prof, machine = os.environ["BDE_STORAGE_PROFILE_FILE"], os.environ["BDE_STORAGE_
 try:
     with open(prof, "rb") as fh:
         d = tomllib.load(fh)
-except Exception:
+except Exception as e:
+    print("BDE_STORAGE_PROFILE_ERROR=" + shlex.quote(f"storage.toml 解析失败（{e}）——档案未生效，改用内置默认"))
     d = {}
 def get(scope, key, dft):
     # [machine.scope] 在 TOML 中解析为嵌套表 d[machine][scope]
@@ -65,11 +76,9 @@ for scope, dmnt, dsrc in (("shared", "/Share/Common", ".host:/Common"),
     backend = get(scope, "backend", "auto")
     mount   = abspath(get(scope, "mount",   dmnt))
     source  = get(scope, "source",  dsrc)
-    root    = abspath(get(scope, "root",    mount))
     print(f"BDE_SCOPE_{scope.upper()}_BACKEND={shlex.quote(backend)}")
     print(f"BDE_SCOPE_{scope.upper()}_MOUNT={shlex.quote(mount)}")
     print(f"BDE_SCOPE_{scope.upper()}_SOURCE={shlex.quote(source)}")
-    print(f"BDE_SCOPE_{scope.upper()}_ROOT={shlex.quote(root)}")
 u_root = abspath(d.get(f"{machine}.user", {}).get("root") or d.get("user", {}).get("root", "DevEnv"))
 print(f"BDE_SCOPE_USER_ROOT={shlex.quote(u_root)}")
 PY
@@ -86,14 +95,15 @@ PY
         eval "local backend=\$BDE_SCOPE_${U}_BACKEND mount=\$BDE_SCOPE_${U}_MOUNT source=\$BDE_SCOPE_${U}_SOURCE"
         if [ "$backend" = "auto" ]; then
             backend="$(bde_storage_detect "$mount" "$source")"
-            eval "BDE_SCOPE_${U}_BACKEND=$backend"
+            eval "BDE_SCOPE_${U}_BACKEND=\$backend"
         fi
-        eval "BDE_SCOPE_${U}_ROOT=${mount}"
+        eval "BDE_SCOPE_${U}_ROOT=\$mount"
     done
     BDE_SCOPE_USER_ROOT="${BDE_SCOPE_USER_ROOT:-$HOME/DevEnv}"
     BDE_STORAGE_RESOLVED=1
-    export BDE_SCOPE_SHARED_ROOT BDE_SCOPE_SHARED_BACKEND BDE_SCOPE_HOST_ROOT BDE_SCOPE_HOST_BACKEND \
-           BDE_SCOPE_USER_ROOT BDE_STORAGE_RESOLVED
+    export BDE_SCOPE_SHARED_ROOT BDE_SCOPE_SHARED_BACKEND \
+           BDE_SCOPE_HOST_ROOT BDE_SCOPE_HOST_BACKEND \
+           BDE_SCOPE_USER_ROOT BDE_STORAGE_RESOLVED BDE_STORAGE_PROFILE_ERROR
 }
 
 # —— 后端 ensure（幂等；上层只调这个，永远不接触介质细节）——
@@ -124,11 +134,27 @@ bde_storage_ensure() {  # <shared|host>
             fi
             echo "fail $scope hgfs 挂载失败"; return 1 ;;
         local)
+            # host 作用域 = 同机多用户共享：/tmp 式 1777（sticky）让第二用户也能建自己的子区；
+            # 属主给当前用户（单用户机主流场景），多用户细分权限按需人工收窄
             if [ -n "$S" ]; then $S mkdir -p "$root" && $S chown "$(id -un):$(id -gn)" "$root" 2>/dev/null; fi
             mkdir -p "$root" 2>/dev/null
-            [ -d "$root" ] && [ -w "$root" ] && { echo "ok $scope local 目录 $root"; return 0; }
+            chmod 1777 "$root" 2>/dev/null
+            [ -d "$root" ] && [ -w "$root" ] && { echo "ok $scope local 目录 $root（1777）"; return 0; }
             echo "fail $scope local 目录创建失败"; return 1 ;;
         *)
             echo "fail $scope 未知后端: $backend"; return 1 ;;
     esac
+}
+
+# —— 锚点正本输出（state-env 消费，生成 ① anchors.env；env.sh 自动 source）——
+# SHARE 语义与 paths.sh 一致：两根同父取父目录，否则取 COMMON
+bde_storage_anchors_emit() {
+    bde_storage_load
+    local share="$BDE_SCOPE_SHARED_ROOT"
+    [ "$(dirname "$BDE_SCOPE_SHARED_ROOT")" = "$(dirname "$BDE_SCOPE_HOST_ROOT")" ] \
+        && share="$(dirname "$BDE_SCOPE_SHARED_ROOT")"
+    printf 'export DEV=%q\n'    "$BDE_SCOPE_USER_ROOT"
+    printf 'export SHARE=%q\n'  "$share"
+    printf 'export COMMON=%q\n' "$BDE_SCOPE_SHARED_ROOT"
+    printf 'export LOCAL=%q\n'  "$BDE_SCOPE_HOST_ROOT"
 }

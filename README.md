@@ -227,7 +227,8 @@ claude-code  codex  gemini-cli  opencode  zcode  trae/trae-cn  antigravity  qode
 ### M5 环境描述文档构建（需求 6）
 
 **数据/视图三层**（宪法 §19.5）：`lib/probe.sh` 是唯一采集器（L1），产出 schema 化 JSON 快照
-（`$DEV/docs/state/probe.json`，schema `bde.probe/1`）；doctor / report / AGENTS+SKILL / map 全部是
+（`$DEV/docs/state/probe.json`，schema `bde.probe/2`：含存储后端/持久化/期望对账与共享盘能力探测）；
+doctor / report / AGENTS+SKILL / map 全部是
 L3 纯视图，只消费快照与登记数据（L2），绝不自行采集。视图可随时删除重建，数据永远在家。
 
 ```text

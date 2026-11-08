@@ -49,9 +49,9 @@ code-close <repo>           # 释放；有未提交变更会提醒 push（工作
 
 ## 放置判断（写任何文件前）
 
-> 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `DevEnv`；代码单份 Common/code；
-> 实体住 DevEnv bind 接回；用户目录住 Local；配置改仓库（`$COMMON/config`）；备份靠 push。
-> 物理红线：共享盘无 symlink/不分大小写/权限 777——依赖实体与私钥绝不上去；跨机成品走 `$COMMON/exchange/<repo>/`。
+> 公货 `@COMMON@`，私货 `@LOCAL@`，工具链和活状态 `@DEV@`；代码单份 @COMMON@/code；
+> 实体住 @DEV@ bind 接回；用户目录住 @LOCAL@；配置改仓库（`$COMMON/config`）；备份靠 push。
+> @PHYSICAL_BRIEF@；跨机成品走 `$COMMON/exchange/<repo>/`。
 
 ## 故障速查
 

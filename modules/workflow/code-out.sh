@@ -6,6 +6,7 @@ source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 
 REPO="${1:?用法: code-out <repo> [subdir=target|build|dist]}"
+bde_require_linux || exit 1
 SUB="${2:-target}"
 DIR="$COMMON/code/$REPO"
 [ -d "$DIR" ] || { bde_fail "仓库不存在: $DIR"; exit 1; }
@@ -29,4 +30,4 @@ fi
 
 LINE="$REPO|$SUB|$REAL"
 grep -qF -- "$LINE" "$LIST" 2>/dev/null || printf '%s\n' "$LINE" >> "$LIST"
-bde_info "产物落点: $REAL ｜ 跨机成品 → /Share/Common/exchange/$REPO/"
+bde_info "产物落点: $REAL ｜ 跨机成品 → $COMMON/exchange/$REPO/"

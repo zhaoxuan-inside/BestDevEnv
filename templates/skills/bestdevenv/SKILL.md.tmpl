@@ -13,9 +13,9 @@ description: BestDevEnv 开发环境总调度——用户提出环境类需求�
 
 @ANCHORS@
 
-> 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `DevEnv`；
-> 实体住 `DevEnv/apps/<分类>/`（vibecoding 工具 → `apps/agent/`；家目录=入口层：链接 + 原生重定向，收敛路线见宪法 §20.5），bind mount 接回去；配置永远改仓库（`$COMMON/config`）；备份永远靠 push。
-> 物理红线（HGFS 后端）：无 symlink / 无 hardlink（npm cacache EPERM 实证）/ 不分大小写 / 权限恒 777——node_modules、venv、私钥、hardlink 型缓存绝不上去。
+> 公货 `@COMMON@`，私货 `@LOCAL@`，工具链和活状态 `@DEV@`；
+> 实体住 `@DEV@/apps/<分类>/`（vibecoding 工具 → `apps/agent/`；家目录=入口层：链接 + 原生重定向，收敛路线见宪法 §20.5），bind mount 接回去；配置永远改仓库（`$COMMON/config`）；备份永远靠 push。
+> @PHYSICAL_BRIEF@
 
 ### 分离法则（宪法 v10.3，调度时必须遵守）
 
@@ -29,7 +29,7 @@ description: BestDevEnv 开发环境总调度——用户提出环境类需求�
 ```bash
 source "$HOME/.config/devspace/env.sh"     # DEV/SHARE/COMMON/LOCAL 锚点变量
 BDE="$COMMON/code/BestDevEnv"
-bash "$BDE/lib/probe.sh" --json            # L1 环境事实快照（schema bde.probe/1，机器可读）
+bash "$BDE/lib/probe.sh" --json            # L1 环境事实快照（schema bde.probe/2：含存储后端/共享盘能力，机器可读）
 bash "$BDE/verify/doctor.sh"               # L3 校验视图（✓/✗ 全项；--json 出 bde.doctor/1）
 devenv cfg list / devenv cfg diff                # 配置治理视图（cfg-map 清单 + 漂移检测）
 devenv app --all                              # 应用视图（安装/配置/数据按应用聚合，§20.3）

@@ -14,13 +14,17 @@ source "$HOME/.config/devspace/env.sh"
 bash "$COMMON/code/BestDevEnv/modules/dirs/linux.sh"
 ```
 
-内容：死挂载清理 → 作用域就绪（**L0 存储抽象层** `lib/storage.sh`：`bde_storage_ensure shared/host`——M2 不感知介质；后端由 ③ `storage.toml` 档案决定：已挂载任意后端直接就绪 ｜ hgfs ｜ local 本机目录，锚点恒定）→ 骨架 50 目录 → config 种子（仅共享盘无 config 时）→ `~/DevEnv/bin/devenv` 与 code-* 四件套分发 → XDG 用户目录重定向（先搬家后 symlink）。
+内容：死挂载清理（清单制 ③ `config/data/mount-fixups.tsv`）→ 作用域就绪（**L0 存储抽象层** `lib/storage.sh`：`bde_storage_ensure shared/host`——M2 不感知介质；后端由 ③ `storage.toml` 档案决定：已挂载任意后端直接就绪 ｜ hgfs ｜ local 本机目录，锚点恒定）→ **每机器状态 env**（`state-env.sh` → ① `anchors.env` 锚点正本 + `network.env` 网络画像，env.sh 自动 source）→ **共享盘能力探测**（symlink/hardlink/大小写/权限/文件名长度 → probe 事实，物理边界按事实渲染）→ 骨架 50 目录 → app 实体归位（清单制 ③ `config/data/apps-classify.tsv`）→ config 种子（仅共享盘无 config 时）→ `~/DevEnv/bin/devenv`（含 `state-env` 子命令）与 code-* 四件套分发 → XDG 用户目录重定向（先搬家后 symlink）。
 
-## 物理红线（HGFS 共享盘，违反必坏）
+## 物理边界（本机实测，由 probe 能力探测生成；换后端自动重测）
 
-- 共享盘**无 symlink**、**不分大小写**、**权限恒 777 root**——node_modules/venv/私钥绝不放
-- 单文件名/深层路径超限（gradle/flutter 构建缓存类）→ 留本机盘或删重建
-- 命名一律小写 kebab-case
+@PHYSICAL@
+
+## 状态 env 再生（改档案后）
+
+```bash
+devenv state-env          # 再生 ① anchors.env / network.env；重开 shell 生效
+```
 
 ## 迁移收尾（仅迁移期）
 
@@ -30,4 +34,4 @@ devenv migrate-finish     # 旧 ~/Share 挂载下线后：守卫检查 → 清�
 
 ## 验收
 
-`devenv doctor` 中 Common/Local 可写、fstab 持久化、无叠层、骨架就绪、XDG 重定向各项 ✓。
+`devenv doctor` 中 Common/Local 可写、存储持久化（按后端）、后端符合档案预期、共享盘能力已探测、骨架就绪、XDG 重定向各项 ✓。

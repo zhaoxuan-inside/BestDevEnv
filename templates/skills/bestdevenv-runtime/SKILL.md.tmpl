@@ -36,7 +36,7 @@ vibe <tool> [args]                               # 统一启动（source env.sh 
 3. **绝不覆盖工具真实配置**：已有真实文件 → `ensure_backup` + pending 人工合并；工具自有状态（如 `~/.zcode/cli/config.json`）只在已有非空 `mcp.servers` 时受控合并
 4. **会话库永不迁移/清理**（home-map 政策为准）；跨工具任务续做 = `devenv orch`（journal 落 `$DEV/docs/progress/`）
 5. **收编**：工具内手动加的 MCP server 属工具本地——要全局生效就抄进 `mcp.json` 正本再 `mcp sync`
-6. 验收：`devenv doctor` 第 14 项「Runtime 统一接线」✓ + `devenv runtime wire` 二次执行全 skip（幂等）
+6. 验收：`devenv doctor`「Runtime 统一接线」项 ✓ + `devenv runtime wire` 二次执行全 skip（幂等）
 
 ## 长任务编排
 

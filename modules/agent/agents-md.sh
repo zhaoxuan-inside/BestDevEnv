@@ -32,13 +32,56 @@ t = json.load(open(os.environ["BDE_TOOLS_JSON"]))["tools"]
 sys.stdout.write("\n".join(f"| {k} | {v} |" for k, v in sorted(t.items())))
 ')"
 
+# ── 物理边界渲染（P1-3：probe 能力探测 → 事实化文本；取代旧"HGFS 后端实测"静态段）──
+# 换后端不再需要人工重测改模板：M2/probe 实测 symlink/hardlink/大小写/权限/文件名长度，视图按事实渲染
+_phys_date="$(date '+%F')"
+_be="${BDE_SCOPE_SHARED_BACKEND:-unknown}"
+if [ "${P_CAP_PROBED:-0}" = "1" ]; then
+    _constraints=()
+    [ "${P_CAP_SYMLINK:-0}" = "0" ]  && _constraints+=("无 symlink")
+    [ "${P_CAP_HARDLINK:-0}" = "0" ] && _constraints+=("无 hardlink")
+    [ "${P_CAP_CASE:-0}" = "0" ]     && _constraints+=("不区分大小写")
+    [ "${P_CAP_PERM:-0}" = "0" ]     && _constraints+=("权限恒 777")
+    [ "${P_CAP_NAME255:-0}" = "0" ]  && _constraints+=("文件名上限 255B")
+    if [ "${#_constraints[@]}" -gt 0 ]; then
+        _cl="$(printf '%s · ' "${_constraints[@]}")"; _cl="${_cl% · }"
+        _PHYS_BRIEF="物理红线（能力探测 $_phys_date · 后端 $_be）：$_cl——依赖实体与私钥绝不上去；命名一律小写 kebab-case"
+        _PHYS_FULL=""
+        for _c in "${_constraints[@]}"; do _PHYS_FULL+="\- $_c（probe 实测）"$'\n'; done
+    else
+        _PHYS_BRIEF="共享盘能力（探测 $_phys_date · 后端 $_be）：symlink/hardlink/大小写/权限/长文件名均可用——依赖实体仍住 ①（跨机一致），命名仍小写 kebab-case"
+        _PHYS_FULL="- 共享盘能力探测全部可用（symlink/hardlink/大小写/权限/文件名 ≥255B）"$'\n'
+    fi
+    _PHYS_FULL+="- 依赖实体（node_modules/venv）与私钥绝不放共享盘——住 ①（跨机一致性；bind 接回）"$'\n'
+    [ "${P_CAP_NAME255:-0}" = "0" ] && _PHYS_FULL+="- 单文件名/深层路径超 255B 上限——gradle/flutter 类缓存留本机盘"$'\n'
+    _PHYS_FULL+="- 命名一律小写 kebab-case"
+else
+    _PHYS_BRIEF="物理红线（能力未探测——共享盘当前不可写，按最保守假设）：无 symlink/不分大小写/权限 777——依赖实体与私钥绝不上去；命名一律小写 kebab-case"
+    _PHYS_FULL="- 共享盘能力未探测（probe 时共享盘不可写）——按最保守假设对待：无 symlink、不区分大小写、权限 777"$'\n'
+    _PHYS_FULL+="- 依赖实体（node_modules/venv）与私钥绝不放共享盘——住 ①（bind 接回）"$'\n'
+    _PHYS_FULL+="- 命名一律小写 kebab-case"
+fi
+
+# ── 统一占位符渲染（AGENTS.md 与 SKILL.md 同一套；新增锚点/物理边界占位符）──
+bde_tpl_render() {  # <模板内容> → stdout
+    local _c="$1"
+    _c="${_c//@MACHINE@/${BDE_MACHINE:-$(hostname)}}"
+    _c="${_c//@OS@/$P_OS}"
+    _c="${_c//@DATE@/$P_DATE}"
+    _c="${_c//@ANCHORS@/$_anchors}"
+    _c="${_c//@COMMON@/$COMMON}"
+    _c="${_c//@LOCAL@/$LOCAL}"
+    _c="${_c//@DEV@/$DEV}"
+    _c="${_c//@SHARE@/$SHARE}"
+    _c="${_c//@PHYSICAL@/$_PHYS_FULL}"
+    _c="${_c//@PHYSICAL_BRIEF@/$_PHYS_BRIEF}"
+    _c="${_c//@TOOLS_TABLE@/$_tools}"
+    _c="${_c//@RULES@/见上方放置规则与物理边界}"
+    printf '%s' "$_c"
+}
+
 content="$(<"$TPL")"
-content="${content//@MACHINE@/${BDE_MACHINE:-$(hostname)}}"
-content="${content//@OS@/$P_OS}"
-content="${content//@DATE@/$P_DATE}"
-content="${content//@ANCHORS@/$_anchors}"
-content="${content//@TOOLS_TABLE@/$_tools}"
-content="${content//@RULES@/见上方放置规则与物理边界}"
+content="$(bde_tpl_render "$content")"
 
 mkdir -p "$CANON_DIR"
 printf '%s\n' "$content" > "$CANON" && bde_ok "生成正本 ~/.config/devspace/agents/AGENTS.md"
@@ -56,16 +99,13 @@ if [ -d "$SKILLS_SRC" ]; then
     if [ -d "$SKILL_CANON_BASE/BestDevEnv" ] && [ ! -L "$SKILL_CANON_BASE/BestDevEnv" ]; then
         rm -rf "$SKILL_CANON_BASE/BestDevEnv" && bde_ok "清理旧单体 skill 正本 skill/BestDevEnv/"
     fi
-    # 逐模板生成正本（占位符与 AGENTS.md 同一套）
+    # 逐模板生成正本（占位符与 AGENTS.md 同一套——bde_tpl_render 统一渲染）
     for _tpl in "$SKILLS_SRC"/*/SKILL.md.tmpl; do
         [ -f "$_tpl" ] || { bde_pending "skills/ 下无模板"; break; }
         _name="$(basename "$(dirname "$_tpl")")"
         mkdir -p "$SKILL_CANON_BASE/$_name"
         _scontent="$(<"$_tpl")"
-        _scontent="${_scontent//@MACHINE@/${BDE_MACHINE:-$(hostname)}}"
-        _scontent="${_scontent//@OS@/$P_OS}"
-        _scontent="${_scontent//@DATE@/$P_DATE}"
-        _scontent="${_scontent//@ANCHORS@/$_anchors}"
+        _scontent="$(bde_tpl_render "$_scontent")"
         printf '%s\n' "$_scontent" > "$SKILL_CANON_BASE/$_name/SKILL.md" \
             && bde_ok "生成 skill: $_name"
     done

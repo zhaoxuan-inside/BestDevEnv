@@ -12,15 +12,24 @@ ROOT="$(bde_root)"
 
 bde_info "M2 目录架构（机器: $MACHINE ｜ 目标锚点: $BDE_SHARE_ROOT）"
 
-# 1) 死挂载清理（~/Documents/Obsidian —— Obsidian 共享已移除）
-if grep -q " ${HOME}/Documents/Obsidian " /proc/mounts 2>/dev/null; then
-    if [ -n "$ROOT" ] && $ROOT umount -l "$HOME/Documents/Obsidian" 2>/dev/null; then
-        bde_ok "卸载死挂载 ~/Documents/Obsidian"
-    else
-        bde_pending "死挂载 ~/Documents/Obsidian 卸载失败（需 sudo）"
-    fi
+# 1) 死挂载清理（清单制：③ config/data/mount-fixups.tsv——机器差异进数据，代码不背单机历史）
+_fixups="$COMMON/config/data/mount-fixups.tsv"
+if [ -f "$_fixups" ]; then
+    while IFS='|' read -r _m _mp _note; do
+        case "${_m:-}" in ''|'#'*) continue ;; esac
+        [ "$_m" = "*" ] || [ "$_m" = "$BDE_MACHINE" ] || continue
+        if grep -q " ${_mp} " /proc/mounts 2>/dev/null; then
+            if [ -n "$ROOT" ] && $ROOT umount -l "$_mp" 2>/dev/null; then
+                bde_ok "卸载死挂载 $_mp（$_note）"
+            else
+                bde_pending "死挂载 $_mp 卸载失败（需 sudo）——$_note"
+            fi
+        else
+            bde_skip "无死挂载 $_mp"
+        fi
+    done < "$_fixups"
 else
-    bde_skip "无死挂载 ~/Documents/Obsidian"
+    bde_skip "无 mount-fixups 清单（③ config/data/mount-fixups.tsv）"
 fi
 
 # 2) 作用域就绪——存储抽象层（宪法 §20：M2 不感知介质；作用域→后端解析见 lib/storage.sh + ③ storage.toml）
@@ -28,6 +37,15 @@ bde_storage_ensure shared || bde_pending "③ shared 就绪失败（见上）"
 bde_storage_ensure host   || bde_pending "② host 就绪失败（见上）"
 if [ -w "$COMMON" ]; then bde_ok "③ shared（跨主机级）就绪：$COMMON（后端 $BDE_SCOPE_SHARED_BACKEND）"; else bde_fail "③ shared 不可写：$COMMON"; fi
 if [ -w "$LOCAL" ]; then bde_ok "② host（主机级）就绪：$LOCAL（后端 $BDE_SCOPE_HOST_BACKEND）"; else bde_fail "② host 不可写：$LOCAL"; fi
+# 存储档案健康显性化（P1-4：tomllib 缺失/解析失败不再静默降级）
+[ -n "${BDE_STORAGE_PROFILE_ERROR:-}" ] && bde_pending "存储档案未生效：$BDE_STORAGE_PROFILE_ERROR（devenv state-env 可复现）"
+
+# 2.5) 每机器状态 env（P0-1：锚点/网络画像 → ① state 正本；env.sh 自动 source，机器差异不再写死共享 env.sh）
+if bash "$BDE_ROOT/modules/dirs/state-env.sh"; then
+    : # 生成器内部已逐项 ok/pending
+else
+    bde_pending "state-env 生成失败（见上）"
+fi
 
 # 3) 骨架目录（Common 八区 / Local / DevEnv / 业务热区）
 _bde_dirs=(
@@ -57,7 +75,7 @@ else
 fi
 
 # 3.5) app 实体分类归位（家目录=链接层；实体按分类住 apps/<分类>/ —— 宪法 §19.6/§20.2）
-# 配置点：三张清单即分类（agent=vibecoding / ide=编辑器 / dev=语言与开发工具链）
+# 配置点：③ config/data/apps-classify.tsv 一张清单即分类（agent=vibecoding / ide=编辑器 / dev=语言与开发工具链）
 # 双来源迁移：apps 顶层旧位 → 分类 ｜ 家目录真实目录 → 分类（收编，mv 同盘瞬时+链接接回）
 _migrate_app() {  # <name> <分类>
     local n=$1 cat=$2
@@ -74,10 +92,17 @@ _migrate_app() {  # <name> <分类>
     APPS_MOVED=$((APPS_MOVED+1))
 }
 APPS_MOVED=0
-for _a in agents arkcli cc-switch claude codex copilot gemini mcp-auth opencode zcode antigravity-ide; do _migrate_app "$_a" agent; done
-for _a in vscode vscode-server vscode-shared; do _migrate_app "$_a" ide; done
-for _a in android byted-supabase-cli dart-tool docker ipython java jupyter openpencil vim; do _migrate_app "$_a" dev; done
-[ "$APPS_MOVED" -gt 0 ] && bde_ok "app 实体分类归位（$APPS_MOVED 个：agent/ide/dev）" || bde_skip "app 实体分类已是最新"
+_applist="$COMMON/config/data/apps-classify.tsv"
+if [ -f "$_applist" ]; then
+    while IFS='|' read -r _cat _n; do
+        case "${_cat:-}" in ''|'#'*) continue ;; esac
+        _n="$(printf '%s' "${_n:-}" | tr -d '[:space:]')"
+        [ -n "$_n" ] && _migrate_app "$_n" "$_cat"
+    done < "$_applist"
+    [ "$APPS_MOVED" -gt 0 ] && bde_ok "app 实体分类归位（$APPS_MOVED 个，清单 $_applist）" || bde_skip "app 实体分类已是最新"
+else
+    bde_pending "无 apps-classify 清单（③ config/data/apps-classify.tsv）——app 归位跳过"
+fi
 
 # 4) config 种子（仅当共享盘尚无 config —— 防双源漂移）
 if [ ! -e "$COMMON/config/.chezmoiignore" ]; then
@@ -102,8 +127,9 @@ case "\${1:-}" in
     cfg) shift; exec bash "\$BDE_ROOT/modules/cfg/cfg.sh" "\$@" ;;
     app) shift; exec bash "\$BDE_ROOT/modules/app/app.sh" "\$@" ;;
     svc) shift; exec bash "\$BDE_ROOT/modules/cfg/cfg.sh" --svc "\$@" ;;
+    state-env) shift; exec bash "\$BDE_ROOT/modules/dirs/state-env.sh" "\$@" ;;
     migrate-finish) shift; exec bash "\$BDE_ROOT/modules/dirs/migrate-finish.sh" "\$@" ;;
-    *) echo "用法: devenv doctor|report|tidy|map|orch|runtime|cfg|svc|migrate-finish"; exit 1 ;;
+    *) echo "用法: devenv doctor|report|tidy|map|orch|runtime|cfg|svc|state-env|migrate-finish"; exit 1 ;;
 esac
 EOF
 chmod +x "$DEV/bin/devenv"
@@ -115,7 +141,7 @@ done
 printf "#!/usr/bin/env bash\n. \"\$HOME/.config/devspace/env.sh\" 2>/dev/null\nexec bash \"%s/modules/agent/runtime.sh\" \"\$@\"\n" "$BDE_ROOT" > "$DEV/bin/vibe"
 chmod +x "$DEV/bin/vibe"
 rm -f "$DEV/bin/env"   # 旧分发器除名（曾遮蔽 coreutils env——命名规范 §20.4）
-bde_ok "分发 code-open/close/nm/out + devenv（doctor/report/tidy/map/orch/cfg/app/runtime/migrate-finish）+ vibe；旧 env 已除名"
+bde_ok "分发 code-open/close/nm/out + devenv（doctor/report/tidy/map/orch/cfg/app/state-env/runtime/migrate-finish）+ vibe；旧 env 已除名"
 
 # 6) XDG 用户目录重定向 + home 兼容 symlink
 # user-dirs.dirs 正本已收编进 config 事实源（dot_config/user-dirs.dirs，chezmoi 再生；cfg-map 登记）——
