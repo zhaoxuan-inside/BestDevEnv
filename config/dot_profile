@@ -4,7 +4,7 @@
 # see /usr/share/doc/bash/examples/startup-files for examples.
 # the files are located in the bash-doc package.
 
-# the default umask is set in /etc/profile; for setting the umask
+# the default umask is set by /etc/profile; for setting the umask
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
 
@@ -26,9 +26,11 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
-. "$HOME/.local/bin/env"
-. "$HOME/DevEnv/cargo/env"
-
 # 开发环境契约（BestDevEnv）：非交互登录 shell（bash -lc/cron/ssh）也拿到锚点与 PATH
 # （.bashrc 对非交互 shell 头部早退，env.sh 必须在 .profile 兜底接入；装载守卫防重复）
 [ -f "$HOME/.config/devspace/env.sh" ] && . "$HOME/.config/devspace/env.sh"
+
+# 工具链 env 按锚点接入（全部 [ -f ] 守卫：缺失静默跳过，登录 shell 零报错；
+# 路径走 $DEV 锚点正本而非 ~/DevEnv 字面量——用户级根目录由 storage.toml 档案指定）
+[ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
+[ -n "${DEV:-}" ] && [ -f "$DEV/cargo/env" ] && . "$DEV/cargo/env"

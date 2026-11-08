@@ -1,5 +1,5 @@
 registry=https://registry.npmmirror.com
-cache=${DEV}/cache/npm   # cacache 依赖 hardlink，HGFS 不支持（EPERM/link 实证）→ 回落 ① 本机
-store-dir=/Share/Common/cache/linux/pnpm-store
+cache=${DEV}/cache/npm   # cacache 依赖 hardlink（probe 实测共享盘不支持）→ 回落 ① 本机
+store-dir=${COMMON}/cache/linux/pnpm-store
 package-import-method=copy
 prefix=${DEV}/npm-global

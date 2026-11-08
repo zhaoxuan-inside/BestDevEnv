@@ -1,0 +1,11 @@
+# 由 BestDevEnv 生成（宪法 §10.1）：XDG 用户目录 → ② Local 锚点
+# .tmpl 模板：数据源 ① ~/.config/chezmoi/chezmoi.toml（devenv state-env 再生）——
+# 本文件不写死挂载点字面量，换后端/换用户后 state-env + chezmoi apply 即再对齐
+XDG_DESKTOP_DIR="{{ .local }}/Desktop"
+XDG_DOCUMENTS_DIR="{{ .local }}/Documents"
+XDG_DOWNLOAD_DIR="{{ .local }}/Downloads"
+XDG_MUSIC_DIR="{{ .local }}/Music"
+XDG_PICTURES_DIR="{{ .local }}/Pictures"
+XDG_VIDEOS_DIR="{{ .local }}/Videos"
+XDG_TEMPLATES_DIR="{{ .local }}/Templates"
+XDG_PUBLICSHARE_DIR="{{ .local }}/Public"

@@ -1,4 +1,4 @@
-# /home/hardstone 隐藏目录注册表 —— 数据（视图由 devenv map 生成）
+# 本机隐藏目录注册表 —— 数据（视图由 devenv map 生成；按机器登记，注释勿写死具体用户路径）
 # 架构：家目录=入口层（symlink 链接 + environment.d/env.sh 原生重定向，宪法 §20.5）；实体住 ~/DevEnv/apps/<分类>/
 # 已收敛至 apps/<分类>/ 的实体不在本表（家目录链接已退役：.opencode/.vscode-server 等）；应用级视图见 devenv app
 # 格式: 项(目录或文件)|所属应用|分类|政策|备注 ｜ 文件层由 chezmoi/M1 再生
