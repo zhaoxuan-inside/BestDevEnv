@@ -1,0 +1,3 @@
+# mount-fixups.tsv — 死挂载清理清单（M2 step1 数据源；机器差异进数据，代码不背单机历史）
+# 格式: machine|挂载点|备注 ｜ machine 列 = 本机 hostname（小写），* = 全机
+hardstone|/home/hardstone/Documents/Obsidian|Obsidian 共享已移除（2026-11-08 迁移遗留）

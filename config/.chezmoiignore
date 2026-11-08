@@ -3,6 +3,8 @@
 .npmrc
 .config/devspace
 .config/fcitx5
+.config/autostart/org.fcitx.Fcitx5.desktop
+.local/share/fcitx5/rime/default.custom.yaml
 .config/konsole
 .config/user-dirs.dirs
 .config/starship.toml

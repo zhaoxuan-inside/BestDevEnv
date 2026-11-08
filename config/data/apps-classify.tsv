@@ -1,0 +1,26 @@
+# apps-classify.tsv — app 实体分类清单（M2 §3.5 数据源）：家目录/旧位实体 → DevEnv/apps/<分类>/
+# 分类：agent=vibecoding 工具 ｜ ide=编辑器 ｜ dev=语言与开发工具链
+# 格式: 分类|名称（家目录入口名，如 .claude）
+agent|agents
+agent|arkcli
+agent|cc-switch
+agent|claude
+agent|codex
+agent|copilot
+agent|gemini
+agent|mcp-auth
+agent|opencode
+agent|zcode
+agent|antigravity-ide
+ide|vscode
+ide|vscode-server
+ide|vscode-shared
+dev|android
+dev|byted-supabase-cli
+dev|dart-tool
+dev|docker
+dev|ipython
+dev|java
+dev|jupyter
+dev|openpencil
+dev|vim

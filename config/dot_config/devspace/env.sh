@@ -1,13 +1,21 @@
 # env.sh — 环境变量契约（宪法 §6.1；唯一权威块，BestDevEnv/config 种子）
-# 由 ~/.zshrc / ~/.bashrc source；机器差异查 hosts.toml，不写死在这
+# 由 ~/.zshrc / ~/.bashrc source；机器/站点差异不写死在本文件：
+#   锚点 → ① $DEV/docs/state/anchors.env（devenv state-env 由 ③ storage.toml 再生）
+#   网络 → ① $DEV/docs/state/network.env（devenv state-env 由 ③ network.toml 再生）
+#   机器数据 → hosts.toml（工程仓库，apply-config 单向同步）
+# 下方字面值均为 bootstrap 兜底（状态 env 缺失时生效，如全新机器 M2 之前/状态丢失）
 
 # ── 三档锚点 ─────────────────────────────────────────────
-export DEV="$HOME/DevEnv"                                # ① 本机文件系统
-SHARE="${SHARE:-/Share}"                                 # 外部存储锚点
-[ -d "$SHARE/Common" ] || SHARE="$HOME/Share"            # 迁移前回退（旧挂载）
-export SHARE
-export COMMON="$SHARE/Common"                            # ③ 多机共享
-export LOCAL="$SHARE/Local"                              # ② 本机专享
+DEV="${DEV:-$HOME/DevEnv}"                               # ① 先定位状态正本所在
+if [ -f "$DEV/docs/state/anchors.env" ]; then
+    . "$DEV/docs/state/anchors.env"                      # 每机器锚点正本（无条件覆盖；挂载下线由 doctor 报告，不静默改道）
+else
+    # bootstrap 兜底（M2 之前）：静态锚点 + 旧挂载回退（迁移完成前）
+    SHARE="${SHARE:-/Share}"
+    [ -d "$SHARE/Common" ] || SHARE="$HOME/Share"
+    COMMON="$SHARE/Common"; LOCAL="$SHARE/Local"
+fi
+export DEV SHARE COMMON LOCAL
 export XDG_CONFIG_HOME="$DEV/xdg/config"
 export XDG_DATA_HOME="$DEV/xdg/local"
 export XDG_STATE_HOME="$DEV/xdg/local/state"
@@ -15,7 +23,7 @@ export PYTHONUSERBASE="$DEV/xdg/local"  # pip --user 落点
 export XDG_CACHE_HOME="$DEV/xdg/cache"
 export PATH="$DEV/bin:$HOME/.local/bin:$DEV/cargo/bin:$DEV/npm-global/bin:$DEV/xdg/local/bin:$DEV/apps/agent/.opencode/bin:$PATH"    # 个人脚本优先（~/.local/bin：starship/uv/chezmoi/mise；cargo/bin：rust 工具链 ① 收敛落点）
 
-# ── 工具链与依赖态（①，VM 盘）────────────────────────────
+# ── 工具链与依赖态（① 本机盘，symlink 需要）────────────────
 export RUSTUP_HOME="$DEV/rustup"
 export CARGO_HOME="$DEV/cargo"
 export GOPATH="$DEV/go"
@@ -46,22 +54,24 @@ export ZCODE_CONFIG_DIR="$DEV/apps/agent/.zcode"      # zcode（JS 内 41 处引
 export OPENCODE_CONFIG_DIR="$DEV/apps/agent/.opencode"  # opencode 根（含 bin/）
 export HISTFILE="$DEV/history/bash"                   # bash 历史 → ①（用户活状态）
 
-# ── 国内镜像（统一清单，一处改全机生效）──────────────────
-export BDE_NODE_DIST_MIRROR=https://cdn.npmmirror.com/binaries/node/  # node 发行镜像（node.sh 消费；尾斜杠必留）
-export PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
-export RUSTUP_DIST_SERVER=https://rsproxy.cn
-export RUSTUP_UPDATE_ROOT=https://rsproxy.cn/rustup
-export GOPROXY=https://goproxy.cn,direct
-export PUB_HOSTED_URL=https://pub.flutter-io.cn
-export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
-export HF_ENDPOINT=https://hf-mirror.com
-
-# ── 网络出口（LAN 代理；zsh/bash 共用，勿只写 .bashrc——换 shell 会静默失效）──
-# 家庭 LAN 出口 192.168.1.100:7890（非机器差异，同网所有机器一致；不需要整段注释即直连）
-# OpenAI/Codex 仅在此出口下可用；国内镜像/内网段走 no_proxy 直连
-export https_proxy="http://192.168.1.100:7890"
-export http_proxy="$https_proxy"
-export all_proxy="$https_proxy"
-export HTTPS_PROXY="$https_proxy" HTTP_PROXY="$http_proxy" ALL_PROXY="$all_proxy"
-export NO_PROXY="localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,.aliyuncs.com,.aliyun.com,.cn"
-export no_proxy="$NO_PROXY"
+# ── 网络画像（镜像清单 + 代理出口；站点差异查 ③ network.toml 档案，不写死在这）──
+if [ -f "$DEV/docs/state/network.env" ]; then
+    . "$DEV/docs/state/network.env"                      # 每机器网络正本（devenv state-env 再生）
+else
+    # bootstrap 兜底（家庭 LAN 站点基线；network.env 生成后本段不参与）
+    # OpenAI/Codex 仅在此出口下可用；国内镜像/内网段走 no_proxy 直连
+    export BDE_NODE_DIST_MIRROR=https://cdn.npmmirror.com/binaries/node/  # node 发行镜像（node.sh 消费；尾斜杠必留）
+    export PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+    export RUSTUP_DIST_SERVER=https://rsproxy.cn
+    export RUSTUP_UPDATE_ROOT=https://rsproxy.cn/rustup
+    export GOPROXY=https://goproxy.cn,direct
+    export PUB_HOSTED_URL=https://pub.flutter-io.cn
+    export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
+    export HF_ENDPOINT=https://hf-mirror.com
+    export https_proxy="http://192.168.1.100:7890"
+    export http_proxy="$https_proxy"
+    export all_proxy="$https_proxy"
+    export HTTPS_PROXY="$https_proxy" HTTP_PROXY="$http_proxy" ALL_PROXY="$all_proxy"
+    export NO_PROXY="localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,.aliyuncs.com,.aliyun.com,.cn"
+    export no_proxy="$NO_PROXY"
+fi

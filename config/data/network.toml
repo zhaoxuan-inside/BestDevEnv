@@ -1,0 +1,22 @@
+# network.toml — 网络画像档案（宪法 §20 同构：站点差异只存在于本文件）
+# 内容：镜像清单 + 代理出口。生成：devenv state-env → ① $DEV/docs/state/network.env（env.sh 自动 source）
+# 解析顺序：机器段（<hostname>，小写）覆盖 [default] 段；python3 ≥3.11（tomllib）
+# 解析失败 → env.sh 内置兜底（bootstrap 免疫），doctor/state-env 会响亮提示
+# 语义：https_proxy 留空 = 直连（不导出代理变量）；镜像键留空 = 不导出该变量
+
+[default]
+# 站点基线：家庭 LAN（2026-11-08 起始值，同网所有机器一致）
+https_proxy = "http://192.168.1.100:7890"
+no_proxy = "localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,.aliyuncs.com,.aliyun.com,.cn"
+node_dist_mirror = "https://cdn.npmmirror.com/binaries/node/"
+pip_index_url = "https://mirrors.aliyun.com/pypi/simple/"
+rustup_dist_server = "https://rsproxy.cn"
+rustup_update_root = "https://rsproxy.cn/rustup"
+goproxy = "https://goproxy.cn,direct"
+pub_hosted_url = "https://pub.flutter-io.cn"
+flutter_storage_base_url = "https://storage.flutter-io.cn"
+hf_endpoint = "https://hf-mirror.com"
+
+# —— 机器段（跨网段机器在此覆盖：办公室/云主机直连场景 https_proxy = ""）——
+[hardstone]
+# 归属默认站点（显式登记；与 [default] 相同则整段可省）
