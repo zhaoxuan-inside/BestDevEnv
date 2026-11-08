@@ -10,3 +10,5 @@ apt-ubuntu|system|$COMMON/config/apt/ubuntu.sources|/etc/apt/sources.list.d/ubun
 user-dirs|dotfile|$COMMON/config/dot_config/user-dirs.dirs|$HOME/.config/user-dirs.dirs|chezmoi|n|XDG 用户目录 → Local（chezmoi 再生；M2 不再直写）
 fcitx5-rime|dotfile|$COMMON/config/dot_local/share/fcitx5/rime/default.custom.yaml|$HOME/DevEnv/xdg/local/fcitx5/rime/default.custom.yaml|copy|n|Fcitx5 actual XDG location
 fcitx5-autostart|dotfile|$COMMON/config/dot_config/autostart/org.fcitx.Fcitx5.desktop|$HOME/DevEnv/xdg/config/autostart/org.fcitx.Fcitx5.desktop|copy|n|Fcitx5 actual XDG location
+profile|dotfile|$COMMON/config/dot_profile|$HOME/.profile|chezmoi|n|登录 shell 环境契约兜底（非交互 bash -lc/cron/ssh；.bashrc 对非交互早退）
+zshenv|dotfile|$COMMON/config/dot_zshenv|$HOME/.zshenv|chezmoi|n|全 zsh 上下文环境契约入口（含非交互 zsh -c/脚本）
