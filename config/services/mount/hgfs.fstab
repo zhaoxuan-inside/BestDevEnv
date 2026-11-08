@@ -1,0 +1,2 @@
+.host:/Common /Share/Common fuse.vmhgfs-fuse allow_other 0 0
+.host:/Local /Share/Local fuse.vmhgfs-fuse allow_other 0 0

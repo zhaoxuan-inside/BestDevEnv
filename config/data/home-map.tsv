@@ -1,39 +1,56 @@
-# /home/hardstone 隐藏目录注册表 —— 数据（视图由 env map 生成）
-# 架构：家目录=链接层（symlink），实体住 ~/DevEnv/apps/<分类>/（vibecoding 工具实体在 apps/agent/）
+# /home/hardstone 隐藏目录注册表 —— 数据（视图由 devenv map 生成）
+# 架构：家目录=入口层（symlink 链接 + environment.d/env.sh 原生重定向，宪法 §20.5）；实体住 ~/DevEnv/apps/<分类>/
+# 已收敛至 apps/<分类>/ 的实体不在本表（家目录链接已退役：.opencode/.vscode-server 等）；应用级视图见 devenv app
 # 格式: 项(目录或文件)|所属应用|分类|政策|备注 ｜ 文件层由 chezmoi/M1 再生
 # 政策: keep=保留 / tidy=可再生，env tidy 自动清 / keep+tidy=保留本体+清内部缓存 / keep+dump=保留+例行 dump 外置
-# 新出现的隐藏目录必须登记一行（env map 会报"未登记"）
+# 新出现的隐藏目录必须登记一行（devenv map 会报"未登记"）
 .agents|arkcli|AI工具|keep|skills 库（各工具 skills symlink 的指向）
-.antigravity-ide|antigravity|AI IDE|keep|snap 版状态
 .arkcli|arkcli|AI工具|keep|
-.byted-supabase-cli|byted-supabase-cli|自研工具|keep|CLI 版本目录（0.1.34）
-.cc-switch|cc-switch|AI工具|keep|供应商切换 db+备份+日志
 .claude|claude-code|AI工具|keep|
 .config|XDG|框架|keep|GUI/Electron 应用配置（Trae CN 已迁出归档）
 .copilot|copilot|AI工具|keep|
 .dart-tool|dart/flutter|开发工具|keep|遥测配置
 .gemini|gemini|AI工具|keep|antigravity 会话/brain 1.7G 已 dump→Local 并清除（2026-11-08）；余 CLI/IDE 状态
-.java|JDK|开发工具|keep|Java Preferences + 字体缓存
-.mcp-auth|mcp-remote|安全|keep|MCP OAuth 凭据
-.opencode|opencode|AI工具|keep|配置+auth+bin（会话库在 .local/share，2026-11-08 已清旧会话）
-.openpencil|openpencil|自研工具|keep|agents.json+会话
 .pki|证书框架|安全|keep|
-.snap|snap|框架|keep|
 .ssh|ssh|安全|keep|密钥
-.vim|vim|开发工具|keep|
 .vscode|code|开发工具|keep|→ apps/ide/vscode/home（VSCODE_EXTENSIONS）
 .vscode-server|code remote|开发工具|keep+tidy|→ apps/ide/vscode/server（VSCODE_AGENT_FOLDER）
 .vscode-shared|code|开发工具|keep|→ apps/ide/vscode/shared（三合一）
 .zcode|zcode|AI工具|keep|
 .m2|maven|开发工具|keep|仅 settings.xml（localRepository → Local/cache/m2；MAVEN_OPTS 双保险；2026-11-08 端到端实测落点 ✓）
+.agent-browser|agent-browser|AI工具|keep|浏览器自动化 agent（browsers/ 381M 内核缓存，随工具重建）
+.ai-reader|ai-reader|自研工具|keep|ai-reader-android-tools 配套状态
+.android|android|开发工具|keep|契约落点 apps/dev/.android（ANDROID_USER_HOME）；家目录残留待新会话验证后清
+.auraos-tools|auraos|自研工具|keep|用户项目（1.8G）
+.camoufox|camoufox|AI工具|keep|反检测 Firefox 配置（agent-browser 配套）
+.codex|codex|AI工具|keep|旧版残留 0B（契约落点 apps/agent/.codex；CODEX_HOME）
+.dotnet|.NET|开发工具|keep|CLI 用户态/遥测
+.gnupg|gnupg|安全|keep|GPG 密钥环
+.gradle|gradle|开发工具|keep|契约落点 Local/cache/gradle（GRADLE_USER_HOME）；残留 daemon
+.hermes|hermes|AI工具|keep|自有框架 5.2G（runtimes.tsv 在册；本地 77 技能保留原样）
+.hs-dev-skill|hs-dev-skill|自研工具|keep|技能偏好库（preferences + index）
+.local|XDG|框架|keep|XDG 数据根（uv tools/browseract 在役；随收敛渐迁 ①）
+.npm|npm|框架|keep+tidy|_cacache 已重定向共享盘；残留由 env tidy 清
+.pi|pi|自研工具|keep|pi 工具状态
 .zshrc|zsh|框架|keep|chezmoi 再生（dot_zshrc）
 .bashrc|bash|框架|keep|M1 ensure_line 接 env.sh
 .gitconfig|git|框架|keep|chezmoi 再生（dot_gitconfig；include 方案已弃用）
 .npmrc|npm|框架|keep|chezmoi 再生（dot_npmrc；prefix/cache 契约）
-.profile|shell|框架|keep|系统框架文件
+.profile|shell|框架|keep|系统框架文件（cargo env → ① DevEnv/cargo/env，2026-11-08 收敛）
 .bash_logout|shell|框架|keep|系统框架文件
 .bash_history|bash|框架|keep|命令历史（用户数据）
 .xinputrc|im-config|框架|keep|输入法接线（fcitx5）
 .sudo_as_admin_successful|sudo|框架|keep|首sudo提示标志
 .zcompdump|zsh|框架|tidy|补全缓存（可再生，env tidy 清）
+.claude.json|claude-code|AI工具|keep|旧版配置残留（契约落点 apps/agent/.claude/；CLAUDE_CONFIG_DIR）
+.dmrc|DMRC|框架|keep|会话管理器记录
+.lesshst|less|框架|keep|less 历史（用户数据）
+.pam_environment|PAM|框架|keep|登录环境变量
+.python_history|python|框架|keep|REPL 历史（用户数据）
+.selected_editor|select-editor|框架|keep|sudo select-editor 选择记录
+.venv|python/akshare|开发工具|keep|用户活跃 venv（284M；契约落点 DevEnv/virtualenvs——迁移需重建，随用户节奏）
+.viminfo|vim|开发工具|keep|vim 状态（用户数据）
+.wget-hsts|wget|框架|keep|HSTS 缓存（可再生，体量可忽略）
+.Xauthority|X11|框架|keep|X 会话凭据
+.xsession-errors|X11|框架|tidy|会话错误日志（可再生，env tidy 清）
 .cache|XDG|框架|tidy|GUI 会话回建（Codex 桌面/声音缓存）；重登后 environment.d 契约合流 ①，残留为死缓存可清

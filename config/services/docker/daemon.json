@@ -1,0 +1,10 @@
+{
+  "data-root": "/home/hardstone/DevEnv/services/docker",
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://dockerproxy.cn",
+    "https://docker.1ms.run"
+  ],
+  "log-driver": "json-file",
+  "log-opts": {"max-size": "10m", "max-file": "3"}
+}

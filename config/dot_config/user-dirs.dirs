@@ -1,0 +1,9 @@
+# 由 BestDevEnv 生成（宪法 §10.1）：XDG 用户目录 → /Share/Local
+XDG_DESKTOP_DIR="/Share/Local/Desktop"
+XDG_DOCUMENTS_DIR="/Share/Local/Documents"
+XDG_DOWNLOAD_DIR="/Share/Local/Downloads"
+XDG_MUSIC_DIR="/Share/Local/Music"
+XDG_PICTURES_DIR="/Share/Local/Pictures"
+XDG_VIDEOS_DIR="/Share/Local/Videos"
+XDG_TEMPLATES_DIR="/Share/Local/Templates"
+XDG_PUBLICSHARE_DIR="/Share/Local/Public"

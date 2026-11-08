@@ -1,13 +1,19 @@
 # ~/.zshrc — 由 BestDevEnv config 管理（改动请进 /Share/Common/config 仓库）
 
-# nvm（兼容期；mise 接管后移除）
-export NVM_DIR="$HOME/DevEnv/nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
-export NVM_NODEJS_ORG_MIRROR=https://npmmirror.com/mirrors/node
+# env.sh 必须最先：DEV 锚点与 XDG 重定向就位后，后续块才落 ①
+[ -f "$HOME/.config/devspace/env.sh" ] && . "$HOME/.config/devspace/env.sh"
+
+# zsh 会话态 → ①（历史/补全缓存不落家目录；skip 全局 compinit 见 ~/.zshenv）
+export HISTFILE="$DEV/history/zsh"
+export HISTSIZE=50000
+export SAVEHIST=50000
+autoload -Uz compinit && compinit -d "${ZSH_COMPDUMP:-$DEV/cache/zsh/zcompdump}"
+
+# mise（node 版本管理；nvm 已退役 2026-11-08，实体 $DEV/xdg/local/mise，NVM_DIR 实体保留作回滚）
+# activate 必须在 env.sh 之后（XDG 重定向前初始化 shims 会落错位）；command -v 探测兼容各安装渠道
+command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 
 # Antigravity CLI installer 追加（已归一为 $HOME，勿写死用户名）
 export PATH="$HOME/.local/bin:$PATH"
 
-# === devspace（BestDevEnv 管理）===
-[ -f "$HOME/.config/devspace/env.sh" ] && . "$HOME/.config/devspace/env.sh"
 command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"

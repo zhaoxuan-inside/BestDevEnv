@@ -10,8 +10,10 @@ export COMMON="$SHARE/Common"                            # ③ 多机共享
 export LOCAL="$SHARE/Local"                              # ② 本机专享
 export XDG_CONFIG_HOME="$DEV/xdg/config"
 export XDG_DATA_HOME="$DEV/xdg/local"
+export XDG_STATE_HOME="$DEV/xdg/local/state"
+export PYTHONUSERBASE="$DEV/xdg/local"  # pip --user 落点
 export XDG_CACHE_HOME="$DEV/xdg/cache"
-export PATH="$DEV/bin:$DEV/npm-global/bin:$HOME/.local/bin:$HOME/.opencode/bin:$PATH"    # 个人脚本优先
+export PATH="$DEV/bin:$HOME/.local/bin:$DEV/cargo/bin:$DEV/npm-global/bin:$DEV/xdg/local/bin:$DEV/apps/agent/.opencode/bin:$PATH"    # 个人脚本优先（~/.local/bin：starship/uv/chezmoi/mise；cargo/bin：rust 工具链 ① 收敛落点）
 
 # ── 工具链与依赖态（①，VM 盘）────────────────────────────
 export RUSTUP_HOME="$DEV/rustup"
@@ -36,10 +38,16 @@ export IPYTHONDIR="$DEV/apps/dev/.ipython"            # 实体 ①（家目录 .
 export JUPYTER_CONFIG_DIR="$DEV/apps/dev/.jupyter"    # 实体 ①
 export ANDROID_USER_HOME="$DEV/apps/dev/.android"     # 实体 ①（adb 密钥）
 export DOCKER_CONFIG="$DEV/apps/dev/.docker"          # 实体 ①（CLI 登录态；daemon 配置另在 /etc）
+export VSCODE_EXTENSIONS="$DEV/apps/ide/vscode/home/extensions"  # VS Code 扩展（实测被尊重）
+export VSCODE_AGENT_FOLDER="$DEV/apps/ide/vscode/server"         # 远程服务端安装位
 export CLAUDE_CONFIG_DIR="$DEV/apps/agent/.claude"    # 实体 ①（.claude.json 随迁已实测；~/.claude 链接保留供交叉工具）
-export CODEX_HOME="$DEV/apps/agent/.codex"            # 实体 ①（~/.codex 链接保留供交叉工具）
+export CODEX_HOME="$DEV/apps/agent/.codex"            # 实体 ①
+export ZCODE_CONFIG_DIR="$DEV/apps/agent/.zcode"      # zcode（JS 内 41 处引用，实测支持）
+export OPENCODE_CONFIG_DIR="$DEV/apps/agent/.opencode"  # opencode 根（含 bin/）
+export HISTFILE="$DEV/history/bash"                   # bash 历史 → ①（用户活状态）
 
 # ── 国内镜像（统一清单，一处改全机生效）──────────────────
+export BDE_NODE_DIST_MIRROR=https://cdn.npmmirror.com/binaries/node/  # node 发行镜像（node.sh 消费；尾斜杠必留）
 export PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 export RUSTUP_DIST_SERVER=https://rsproxy.cn
 export RUSTUP_UPDATE_ROOT=https://rsproxy.cn/rustup
@@ -47,3 +55,13 @@ export GOPROXY=https://goproxy.cn,direct
 export PUB_HOSTED_URL=https://pub.flutter-io.cn
 export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
 export HF_ENDPOINT=https://hf-mirror.com
+
+# ── 网络出口（LAN 代理；zsh/bash 共用，勿只写 .bashrc——换 shell 会静默失效）──
+# 家庭 LAN 出口 192.168.1.100:7890（非机器差异，同网所有机器一致；不需要整段注释即直连）
+# OpenAI/Codex 仅在此出口下可用；国内镜像/内网段走 no_proxy 直连
+export https_proxy="http://192.168.1.100:7890"
+export http_proxy="$https_proxy"
+export all_proxy="$https_proxy"
+export HTTPS_PROXY="$https_proxy" HTTP_PROXY="$http_proxy" ALL_PROXY="$all_proxy"
+export NO_PROXY="localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,.aliyuncs.com,.aliyun.com,.cn"
+export no_proxy="$NO_PROXY"
