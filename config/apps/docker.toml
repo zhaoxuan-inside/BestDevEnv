@@ -1,0 +1,26 @@
+# 应用档案：docker（宪法 §20.3 应用视图——数据层散落各作用域，视图层聚合成卡）
+[meta]
+name = "docker"
+kind = "service"
+summary = "容器运行时（服务三分离首例）"
+
+[install]
+scope = "system"          # system=包管理器管辖（用户空间豁免）
+via = "apt docker.io"
+verify = "docker --version"
+
+[config]
+manifest = "services/docker/daemon.json"   # ③ 正本（cfg-map: docker-daemon）
+applied = "/etc/docker/daemon.json"
+via = "cfg-map"
+
+[data]
+scope = "host"                              # 逻辑作用域：主机级（daemon 全机共享）
+at = "user:services/docker"                 # 物理落点：① 用户空间（用户空间优先；host 数据可住用户盘）
+dump = "host:data/dumps"                    # 例行 dump 留档基目录
+
+[service]
+unit = "docker"
+
+[doctor]
+check = "docker-daemon"

@@ -1,0 +1,2 @@
+Vue.volar
+bradlc.vscode-tailwindcss

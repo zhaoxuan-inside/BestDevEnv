@@ -1,0 +1,9 @@
+# 需求(语言) → JetBrains 产品映射（数据；脚本按所选语言自动推导，不点名）
+# 格式: 语言|产品代码|产品名|命令名    版本由 JetBrains releases API 自动发现
+# 社区版：BDE_JB_EDITION=community 时 IIU→IIC、PCP→PCC（其余产品无社区版）
+java|IIU|IntelliJ IDEA Ultimate|idea
+python|PCP|PyCharm Professional|pycharm
+go|GO|GoLand|goland
+rust|RR|RustRover|rustrover
+web|WS|WebStorm|webstorm
+# 数据库需求（db）不随语言触发，需要时在此加： db|DG|DataGrip|datagrip

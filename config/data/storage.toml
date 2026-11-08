@@ -1,0 +1,29 @@
+# storage.toml — 存储档案（宪法 §20：作用域→后端解析；介质差异只存在于本文件）
+# 作用域：shared 跨主机级(③ COMMON) ｜ host 主机级(② LOCAL) ｜ user 用户级(① DEV)
+# backend：auto（探测：已有挂载→hgfs→local）| passthrough | hgfs | local（预留 nfs/smb/sync）
+# 解析顺序：机器段（<hostname>.<scope>）覆盖默认段；档案本体在 ③ 正本，bootstrap 时内置默认兜底
+# 相对 root 相对 $HOME（用户空间优先）
+
+[shared]
+backend = "auto"
+mount = "/Share/Common"
+source = ".host:/Common"
+
+[host]
+backend = "auto"
+mount = "/Share/Local"
+source = ".host:/Local"
+
+[user]
+root = "DevEnv"
+
+# —— 机器段 ——
+[hardstone.shared]
+backend = "hgfs"
+mount = "/Share/Common"
+source = ".host:/Common"
+
+[hardstone.host]
+backend = "hgfs"
+mount = "/Share/Local"
+source = ".host:/Local"

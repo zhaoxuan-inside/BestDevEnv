@@ -1,0 +1,12 @@
+[user]
+	email = zhaoxuanmail@163.com
+[safe]
+	directory = *
+[credential]
+	helper = cache
+[core]
+	fileMode = false
+	untrackedCache = true
+	symlinks = false
+[init]
+	defaultBranch = main

@@ -1,0 +1,19 @@
+# starship 提示符 — 四机同款；hostname 必显（并行开发识别当前机器）
+add_newline = false
+
+[hostname]
+ssh_only = false
+format = "[$hostname]($style) "
+style = "bold yellow"
+
+[directory]
+truncation_length = 4
+
+[git_branch]
+format = "[$symbol$branch]($style) "
+
+[python]
+format = "[\$py]($style) "
+
+[nodejs]
+format = "[\$node]($style) "

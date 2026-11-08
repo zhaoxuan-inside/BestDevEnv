@@ -1,0 +1,13 @@
+# ~/.zshrc — 由 BestDevEnv config 管理（改动请进 /Share/Common/config 仓库）
+
+# nvm（兼容期；mise 接管后移除）
+export NVM_DIR="$HOME/DevEnv/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+export NVM_NODEJS_ORG_MIRROR=https://npmmirror.com/mirrors/node
+
+# Antigravity CLI installer 追加（已归一为 $HOME，勿写死用户名）
+export PATH="$HOME/.local/bin:$PATH"
+
+# === devspace（BestDevEnv 管理）===
+[ -f "$HOME/.config/devspace/env.sh" ] && . "$HOME/.config/devspace/env.sh"
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"

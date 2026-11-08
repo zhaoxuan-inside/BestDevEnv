@@ -1,0 +1,66 @@
+# 开发环境协作规范（由 BestDevEnv 自动生成，勿手改；上游：BestDevEnv/templates）
+
+## 环境地图
+
+本机：**@MACHINE@**（@OS@，生成于 @DATE@）
+
+@ANCHORS@
+
+放置口诀：
+> 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `DevEnv`；
+> 代码单份 Common/code，包仓库共享 Common/cache；实体住在 DevEnv，bind mount 接回去；
+> 用户目录住在 Local；配置永远改仓库；备份永远靠 push。
+
+## 放置规则（写文件前先判断）
+
+1. 代码/文档/大文件要跨机 → `/Share/Common/`（code=仓库平铺、docs=文档、exchange=临时交换）
+2. 只属于本机 → `/Share/Local/`（build=编译产物、cache=锁敏感缓存、data=冷份）
+3. 依赖实体（node_modules/venv）→ `~/DevEnv/deps|virtualenvs`（VM 盘，symlink 需要）
+4. 会话级/临时 → `~/DevEnv/tmp` 或 `/Share/Common/exchange`
+5. 配置改动 → 改 `/Share/Common/config` 仓库并 push，绝不手改应用层了事
+6. 构建产物与代码分离：依赖实体 `code-nm <repo>`、产物目录 `code-out <repo> <target|build|dist>`（写入即落本机专享盘），跨机成品走 exchange
+
+### 分离法则（宪法 v9）
+
+- **用户空间优先**：可再生内容一律落 ①②③；系统目录只留 OS 必需——重装系统后凭 ①②③ + config 仓库完整重建
+- **锚点是逻辑目录**：Common/Local 可以是本机盘、宿主机盘或云盘（NFS/SMB/Syncthing）；路径恒定，后端差异收敛在挂载适配器
+- **服务三分离**：安装体 → ① DevEnv/services（可再生）；配置 → ③ Common/config/services（版本化）；数据 → ② Local/data/services（共享数据 → ③ Common/data）；恢复 = 重装 + 应用配置 + 回灌数据
+- **构建十分离**：IDE 工具① / IDE 配置③ / IDE 运行数据② / 代码③ / 代码输出② / 代码日志② / 打包工具① / 打包配置③ / 缓存包③ / 打包结果③ exchange——清理只落 ② 与缓存/结果目录，代码与配置永不清理
+
+## 物理边界（HGFS 后端实测；换后端须重测本节）
+
+- 共享盘**不支持 symlink**、**不支持 hardlink**（npm cacache EPERM/link 实证）、**不区分大小写**、**权限恒 777 root**
+- 禁止在共享盘创建 symlink；node_modules/venv 绝不放共享盘
+- 命名一律小写 kebab-case
+- 单文件名/深层路径超 HGFS 上限（~255B）：gradle/flutter 构建缓存类目录无法上共享盘——此类缓存留本机或删重建
+
+## 常用命令
+
+| 命令 | 用途 |
+|---|---|
+| `code-open <repo>` / `code-close` | 占用/释放共享盘上的仓库 |
+| `devenv doctor` | 环境自检（挂载/配置漂移/重定向/磁盘） |
+| `devenv report` | 生成环境描述文档 → Common/docs/env/ |
+| `devenv tidy` | 清理可再生缓存（gradle/npm/pnpm/go-build/Trash/日志）|
+| `devenv map` | 隐藏目录注册表视图（未登记项检测）|
+| `devenv cfg` / `devenv svc` | 配置治理：清单/漂移/apply/adopt（cfg-map 登记制）|
+| `devenv runtime` / `vibe` | vibecoding Runtime 统一入口 |
+| `devenv app [name]` | 应用视图：安装/配置/数据按应用聚合（config/apps 档案制，§20.3） |
+| `devenv runtime list\|wire\|mcp` | Runtime 接线现状 / 幂等接线 / MCP 正本投影 |
+| `devenv cfg list\|diff\|apply` | 配置治理清单 / 漂移检测 / 正本落位（`devenv svc` 只看服务类）|
+| `vibe <tool> [args]` | Runtime 统一启动入口（自动接入 env.sh 契约）|
+
+## Runtime 统一契约（vibecoding 工具 = 可替换运行时）
+
+1. **记忆**：正本 `~/.config/devspace/agents/AGENTS.md`，各工具约定路径（`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.gemini/GEMINI.md`、`~/.config/opencode/AGENTS.md`、`~/.zcode/AGENTS.md`）均为 symlink——改指令只改模板后由生成器再生，勿手改正本与链接
+2. **Skill**：正本 `~/.config/devspace/agents/skill/<name>/`；`~/.claude/skills`、`~/.agents/skills`（arkcli 枢纽）、`~/.zcode/skills` 逐项 symlink 接线
+3. **MCP**：正本 `~/.config/devspace/agents/mcp.json`——加/删 server 改正本后 `devenv runtime mcp sync` 投影到各工具；工具内手动加的属工具本地，收编时抄入正本
+4. **会话**：会话库归各工具私有（位置调查：`devenv runtime sessions`），不迁移、不自动清；跨工具续做长任务一律走 `devenv orch`
+5. **注册表**：全部工具登记于 BestDevEnv `modules/agent/runtimes.tsv`——新 runtime 先登记一行，再 `devenv runtime wire`
+6. **配置**：任何服务/软件/工具的配置文件——正本登记于 `modules/cfg/cfg-map.tsv`、内容住 `$COMMON/config/{services,apt,dot_config}/`（git 版本化）；改动只改正本后 `devenv cfg apply`，漂移 `devenv cfg diff`（doctor 巡检）；新装软件用 `devenv cfg adopt <name> <路径>` 收编。服务生命周期（enable/start）归安装体，不归本工程
+
+环境任务分域：由 `bestdevenv` 主 Skill 统一调度，子域各司其职——`bestdevenv-init`（新机初始化）、`bestdevenv-dirs`（目录挂载）、`bestdevenv-optimize`（系统参数）、`bestdevenv-config`（配置规范）、`bestdevenv-dev`（语言栈·工具·IDE）、`bestdevenv-runtime`（runtime 统一：记忆/Skill/MCP/会话）、`bestdevenv-workflow`（仓库日常）、`bestdevenv-health`（自检清理）。
+
+## 本机工具链
+
+@TOOLS_TABLE@

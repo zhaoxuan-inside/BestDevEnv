@@ -1,0 +1,50 @@
+{
+  "security.workspace.trust.untrustedFiles": "open",
+  "editor.largeFileOptimizations": false,
+  "workbench.startupEditor": "none",
+  "workbench.editorAssociations": {
+    "*.class": "default",
+  },
+  "editor.accessibilitySupport": "on",
+  "redhat.telemetry.enabled": true,
+  "git.openRepositoryInParentFolders": "always",
+  "tabnine.experimentalAutoImports": true,
+  "security.workspace.trust.banner": "never",
+  "workbench.colorTheme": "Solarized Light",
+  "explorer.confirmDelete": false,
+  "window.customTitleBarVisibility": "windowed",
+  "git.autorefresh": false,
+  "terminal.integrated.enableMultiLinePasteWarning": "never",
+  "workbench.editor.empty.hint": "hidden",
+  "workbench.activityBar.location": "top",
+  "chat.viewSessions.orientation": "stacked",
+  "terminal.integrated.inheritEnv": false,
+  "editor.linkedEditing": true,
+  "explorer.confirmDragAndDrop": false,
+  "github.copilot.enable": {
+    "*": false,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+  },
+  "remote.SSH.remotePlatform": {
+    "192.168.1.11": "linux",
+    "192.168.1.12": "linux"
+  },
+  "totalTypeScript.hideAllTips": false,
+  "totalTypeScript.hideBasicTips": true,
+  "files.associations": {
+    "*.json": "jsonl"
+  },
+  "[json]": {
+    "editor.quickSuggestions": {
+      "strings": true
+    },
+    "editor.suggest.insertMode": "replace"
+  },
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+  "python.analysis.typeCheckingMode": "standard",
+  "git.confirmSync": false,
+  "explorer.confirmPasteNative": false,
+  "editor.fontFamily": "JetBrainsMono Nerd Font",
+}

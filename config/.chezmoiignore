@@ -1,0 +1,11 @@
+{{ if ne .chezmoi.os "linux" }}
+.zshrc
+.npmrc
+.config/devspace
+.config/fcitx5
+.config/konsole
+.config/user-dirs.dirs
+.config/starship.toml
+{{ end }}
+hosts.toml
+

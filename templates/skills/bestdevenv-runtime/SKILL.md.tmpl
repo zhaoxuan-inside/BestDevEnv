@@ -1,0 +1,43 @@
+---
+name: bestdevenv-runtime
+description: BestDevEnv runtime 统一管理层——所有 vibecoding 工具视为可替换 Runtime，统一接线记忆（AGENTS.md 正本）、Skill（正本分发）、MCP（mcp.json 正本投影）、会话治理（登记+orch 续做）。当任务涉及：新增/接线 runtime、切换工具的环境不适、MCP server 增删同步、skills 分发、会话库调查治理时使用。
+---
+
+# Runtime 统一管理（记忆 / Skill / MCP / 会话）
+
+单一职责：让任何 vibecoding 工具接上**同一份记忆、同一套 Skill、同一组 MCP、同一个任务续做协议**——工具只是运行时，环境由 BestDevEnv 承载。
+
+## 四域正本与落点
+
+| 域 | 正本 | 各工具落点（symlink/投影） | 动作 |
+|---|---|---|---|
+| 记忆 | `~/.config/devspace/agents/AGENTS.md` | `~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.gemini/GEMINI.md`、`~/.config/opencode/AGENTS.md`、`~/.zcode/AGENTS.md`、`~/.agents/AGENTS.md`（arkcli） | `devenv runtime wire` |
+| Skill | `~/.config/devspace/agents/skill/<name>/` | `~/.claude/skills`、`~/.agents/skills`（arkcli 枢纽）、`~/.zcode/skills` | `devenv runtime wire` |
+| MCP | `~/.config/devspace/agents/mcp.json` | claude `~/.claude.json`、codex `config.toml` 托管块、gemini `settings.json`、opencode `opencode.json`、copilot `mcp-config.json`、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
+| 会话 | 工具私有（登记于 `modules/agent/runtimes.tsv`） | 各工具自管 | `devenv runtime sessions`（只读调查） |
+
+## 执行
+
+```bash
+source "$HOME/.config/devspace/env.sh"
+BDE="$COMMON/code/BestDevEnv"
+bash "$BDE/modules/agent/runtime.sh" list        # 全 runtime 接线现状视图
+bash "$BDE/modules/agent/runtime.sh" wire        # 幂等接线（memory + skills + mcp）
+bash "$BDE/modules/agent/runtime.sh" mcp sync    # MCP 正本 → 各工具投影
+bash "$BDE/modules/agent/runtime.sh" mcp list    # 正本内容
+bash "$BDE/modules/agent/runtime.sh" sessions    # 会话库调查（只读，不迁移不清理）
+vibe <tool> [args]                               # 统一启动（source env.sh 后 exec 工具）
+```
+
+## 规则
+
+1. **注册表是唯一事实源**：`$BDE/modules/agent/runtimes.tsv`——新 runtime 先登记一行，再 `wire`；域留空 = 约定不明，登记待定
+2. **模板类正本勿手改**：AGENTS.md/SKILL.md 改 `$BDE/templates/` 后由 `agents-md.sh` 再生；**MCP 正本可直接编辑**（`mcp.json` 播种后归用户）
+3. **绝不覆盖工具真实配置**：已有真实文件 → `ensure_backup` + pending 人工合并；工具自有状态（如 `~/.zcode/cli/config.json`）只在已有非空 `mcp.servers` 时受控合并
+4. **会话库永不迁移/清理**（home-map 政策为准）；跨工具任务续做 = `devenv orch`（journal 落 `$DEV/docs/progress/`）
+5. **收编**：工具内手动加的 MCP server 属工具本地——要全局生效就抄进 `mcp.json` 正本再 `mcp sync`
+6. 验收：`devenv doctor` 第 14 项「Runtime 统一接线」✓ + `devenv runtime wire` 二次执行全 skip（幂等）
+
+## 长任务编排
+
+多步接线/批量接入新工具时走 `devenv orch`（见主 Skill 编排协议）：`orch new` 建日志 → 逐步 `wire`/`mcp sync` → `orch done` 记账 → doctor 终验。

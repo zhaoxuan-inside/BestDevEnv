@@ -1,0 +1,64 @@
+---
+name: bestdevenv-workflow
+description: BestDevEnv 共享盘仓库日常工作流——code-open/close 占用仓库、code-nm JS 依赖实体外置、code-out 构建产物外置、三档放置判断时使用。触发：打开/关闭仓库、占用冲突、node_modules symlink 报错、产物分离、文件该放哪。
+---
+
+# 共享盘仓库日常工作流（工作流四件套）
+
+单一职责：`$COMMON/code` 上仓库的日常开发动作与文件放置判断。
+
+## 标准四步
+
+```bash
+source "$HOME/.config/devspace/env.sh"
+code-open <repo>            # 占用（.claimed-by，一仓同时只开一台）+ 恢复全部 bind mounts
+code-nm <repo>              # 仅 JS/TS：node_modules 实体落 DevEnv/deps（ext4），bind 回项目
+code-out <repo> target      # 产物外置（Maven=target Gradle=build 前端=dist）→ Local/build
+# …开发…
+code-close <repo>           # 释放；有未提交变更会提醒 push（工作副本不是备份）
+```
+
+## 构建十分离（宪法 v9：十类对象各归其位）
+
+| 对象 | 归属 |
+|---|---|
+| IDE 工具 | ① DevEnv/ide |
+| IDE 配置 | ③ Common/config/ide（应用层再生） |
+| IDE 运行数据（索引/会话状态） | ② Local/ide-data/<ide>（待建约定） |
+| 代码 | ③ Common/code/<repo> |
+| 代码输出（构建中间产物） | ② Local/build/<repo>（code-out bind） |
+| 代码日志（构建/运行日志） | ② Local/logs/<repo>（待建约定） |
+| 打包工具（构建工具链） | ① DevEnv（mise/uv/GOPATH/CARGO_HOME…） |
+| 打包工具配置 | ③ Common/config（settings.xml/.npmrc/…） |
+| 缓存包（依赖缓存） | ③ Common/cache/linux/*（锁敏感 → ② Local/cache） |
+| 打包结果（最终交付物） | ③ Common/exchange/<repo>/ |
+
+清理只落 ②Local 与缓存/结果目录；**代码与配置永不清理**。
+
+### 依赖与产物拆分（按工具速查）
+
+| 工具 | 依赖位置 | 产物位置 |
+|---|---|---|
+| Maven | Local/cache/m2（settings.xml + MAVEN_OPTS 双保险，实测 ✓） | `code-out <repo> target` |
+| Gradle | Local/cache/gradle（GRADLE_USER_HOME 全局化） | `code-out <repo> build` |
+| npm/pnpm | Common/cache/linux（.npmrc） | `code-out <repo> dist` |
+| Cargo | DevEnv/cargo | CARGO_TARGET_DIR=Local/build/<repo> |
+| Go | DevEnv/go | `code-out <repo> bin` |
+| Python | Common/cache/linux/{pip,uv} | venv → DevEnv/virtualenvs |
+| Flutter | DevEnv/pub-cache | `code-out <repo> build` |
+
+## 放置判断（写任何文件前）
+
+> 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `DevEnv`；代码单份 Common/code；
+> 实体住 DevEnv bind 接回；用户目录住 Local；配置改仓库（`$COMMON/config`）；备份靠 push。
+> 物理红线：共享盘无 symlink/不分大小写/权限 777——依赖实体与私钥绝不上去；跨机成品走 `$COMMON/exchange/<repo>/`。
+
+## 故障速查
+
+- npm 报 symlink 错 = 忘挂 bind → `code-nm <repo>`（响亮失败是设计）
+- 占用冲突：`cat "$COMMON/code/<repo>/.claimed-by"` 找对方机器 code-close
+- bind 恢复失败 → 检查 sudo 免密
+
+## 验收
+
+`mountpoint -q "$COMMON/code/<repo>/node_modules"` 为真；`devenv doctor` 挂载项 ✓；结束必 `code-close`。
