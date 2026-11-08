@@ -93,6 +93,14 @@ bde_probe_collect() {
     if command -v git >/dev/null 2>&1 && [ -d "$COMMON/config/.git" ]; then
         [ -n "$(git -C "$COMMON/config" status --porcelain 2>/dev/null | head -1)" ] && P_CFG_DIRTY=1
     fi
+    # config 备份通道就绪（seed 快照随工程仓库 push = 异地备份；snapshot 机制见 devenv cfg snapshot）
+    P_CFG_BACKUP=0
+    if [ -d "$BDE_ROOT/config" ] \
+       && git -C "$BDE_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+       && [ -n "$(git -C "$BDE_ROOT" remote 2>/dev/null | head -1)" ] \
+       && [ -n "$(git -C "$BDE_ROOT" ls-files config/ 2>/dev/null | head -1)" ]; then
+        P_CFG_BACKUP=1
+    fi
 
     # 内核参数
     P_INOTIFY_W="$(cat /proc/sys/fs/inotify/max_user_watches 2>/dev/null || echo 0)"
@@ -195,6 +203,7 @@ doc = {
         "runtime_wired": i("P_RUNTIME_OK"),
         "cfg_drift": i("P_CFG_DRIFT"),
         "cfg_dirty": i("P_CFG_DIRTY"),
+        "cfg_backup": i("P_CFG_BACKUP"),
         "ide_ready": i("P_IDE_OK"),
         "xdg_redirect": 1 if p.get("XDG_DOC") else 0,
         "inotify_ok": i("P_INOTIFY_OK"),

@@ -30,10 +30,17 @@ devenv cfg list                # 清单：项|类|正本|应用层|机制|漂移
 devenv cfg diff                # 全量漂移检测（非零退出 = 有漂移；doctor 亦巡检）
 devenv cfg apply [name]        # 正本 → 应用层（copy: 备份+落位；append: 逐行追加；幂等）
 devenv cfg adopt <name> <应用层路径> [类] [root]   # 新装软件的配置收编：拷为正本 + 登记一行
+devenv cfg snapshot            # 备份：③ 正本 → 工程仓库 config/ seed 快照 + commit（工程仓库 git push 即异地备份）
 ```
 
 改系统/服务配置的标准动作 = **改正本 → commit/push → `devenv cfg apply`**；
 服务生命周期（enable/start）归安装体，不归本工程。
+
+## 备份通道（config 正本的异地备份）
+
+config 正本（③）跨机同步靠共享盘；**异地备份 = `devenv cfg snapshot`**：③ → 工程仓库 `config/` seed
+快照（rsync 镜像 + commit）→ 工程仓库 `git push` 到 GitHub。改动 ③ 后跑一次 snapshot，doctor
+「config 备份通道」项巡检 seed 在册且工程仓库有 remote。
 
 ## 漂移治理（应用层 ≠ config 时）
 

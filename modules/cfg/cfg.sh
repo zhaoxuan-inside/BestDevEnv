@@ -20,11 +20,12 @@ CFG_SRC_APT="$COMMON/config/apt"
 
 _cfg_usage() {
     cat <<'EOF'
-用法: cfg.sh list|apply [name]|diff|adopt <name> <target> [类=system] [root=y|n]   （--svc 前缀=只看 service 类）
+用法: cfg.sh list|apply [name]|diff|adopt <name> <target> [类=system] [root=y|n]|snapshot   （--svc 前缀=只看 service 类）
   list              配置清单视图（项|类|正本|应用层|机制|漂移）
   apply [name]      正本 → 应用层（幂等；root 项走 sudo -n）
   diff              全量漂移检测（非零退出 = 有漂移）
   adopt             收编：应用层现有文件 → $COMMON/config/services/<name>/ 正本并登记
+  snapshot          备份：③ 正本 → 工程仓库 config/ seed 快照（rsync 镜像 + commit；工程 git push 即异地备份）
 EOF
 }
 
@@ -119,6 +120,31 @@ _cfg_adopt() {
     fi
 }
 
+# ── snapshot：③ 正本 → 工程仓库 seed 快照（备份通道；config 正本无独立远端时的异地备份实现）──
+# 链路：③ config（正本，跨机同步靠共享盘）→ rsync 镜像到 $BDE_ROOT/config/（seed）→ 工程仓库 commit → push GitHub
+# doctor「config 备份通道」项巡检：seed 在册且工程仓库有 remote。config 正本将来配独立远端后，本命令仍是快照留痕手段。
+_cfg_snapshot() {
+    [ -d "$COMMON/config" ] || { bde_fail "config 正本缺失：$COMMON/config"; return 1; }
+    command -v rsync >/dev/null 2>&1 || { bde_fail "rsync 不可用（apt install rsync）"; return 1; }
+    mkdir -p "$BDE_ROOT/config"
+    # -rlt：保留链接/权限位忽略（HGFS 恒 777，不追 perm）+ 时间戳增量；--delete 保真镜像；.git 不进 seed
+    local _err; _err="$(mktemp)"
+    if rsync -rlt --delete --exclude '.git/' "$COMMON/config/" "$BDE_ROOT/config/" 2>"$_err"; then
+        [ -s "$_err" ] && bde_info "rsync 提示: $(head -2 "$_err")"
+        bde_ok "seed 快照镜像 → $BDE_ROOT/config/（③ 正本，--delete 保真）"
+    else
+        bde_fail "seed 快照同步失败: $(head -2 "$_err")"; rm -f "$_err"; return 1
+    fi
+    rm -f "$_err"
+    if [ -n "$(git -C "$BDE_ROOT" status --porcelain -- config 2>/dev/null | head -1)" ]; then
+        git -C "$BDE_ROOT" add config \
+            && git -C "$BDE_ROOT" commit -m "chore(config): seed 快照同步（devenv cfg snapshot；③ 正本 → 工程仓库，push 即异地备份）" --quiet \
+            && bde_ok "seed 快照已 commit——记得 git push 完成异地备份"
+    else
+        bde_skip "seed 快照与 ③ 正本一致（无新变更）"
+    fi
+}
+
 # ── 视图 ─────────────────────────────────────────────────────────────────
 _cfg_list() {
     bde_info "配置治理清单（正本根：$CFG_SRC_SERVICES ｜ $CFG_SRC_APT）"
@@ -169,6 +195,7 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
                fi ;;
         diff)  shift 2>/dev/null; _cfg_diff_all ;;
         adopt) shift; _cfg_adopt "$@" ;;
+        snapshot) shift 2>/dev/null; _cfg_snapshot ;;
         *)     _cfg_usage; exit 2 ;;
     esac
 else

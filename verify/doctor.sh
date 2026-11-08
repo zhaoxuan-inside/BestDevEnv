@@ -39,6 +39,7 @@ CHECKS = [
     ("分发器就绪（devenv 在位，旧 env 已除名）", f["dispatcher_ok"] == 1),
     ("Skill/AGENTS 正本与模板同代（gen 指纹）",  f["gen_fresh"] == 1),
     ("本机已登记 hosts.toml（机器数据表）",      f["host_registered"] == 1),
+    ("config 备份通道（seed 快照随工程仓库 push）", f["cfg_backup"] == 1),
 ]
 
 passed = sum(1 for _, ok, *_ in CHECKS if ok)

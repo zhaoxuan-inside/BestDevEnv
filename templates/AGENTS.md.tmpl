@@ -43,11 +43,11 @@
 | `devenv report` | 生成环境描述文档 → Common/docs/env/ |
 | `devenv tidy` | 清理可再生缓存（gradle/npm/pnpm/go-build/Trash/日志）|
 | `devenv map` | 隐藏目录注册表视图（未登记项检测）|
-| `devenv cfg` / `devenv svc` | 配置治理：清单/漂移/apply/adopt（cfg-map 登记制）|
+| `devenv cfg` / `devenv svc` | 配置治理：清单/漂移/apply/adopt/snapshot（cfg-map 登记制；snapshot=③→seed 备份快照）|
 | `devenv runtime` / `vibe` | vibecoding Runtime 统一入口 |
 | `devenv app [name]` | 应用视图：安装/配置/数据按应用聚合（config/apps 档案制，§20.3） |
 | `devenv runtime list\|wire\|mcp` | Runtime 接线现状 / 幂等接线 / MCP 正本投影 |
-| `devenv cfg list\|diff\|apply` | 配置治理清单 / 漂移检测 / 正本落位（`devenv svc` 只看服务类）|
+| `devenv cfg list\|diff\|apply\|snapshot` | 配置治理清单 / 漂移检测 / 正本落位 / ③→seed 备份快照（`devenv svc` 只看服务类）|
 | `vibe <tool> [args]` | Runtime 统一启动入口（自动接入 env.sh 契约）|
 
 ## Runtime 统一契约（vibecoding 工具 = 可替换运行时）

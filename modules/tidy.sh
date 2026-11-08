@@ -27,6 +27,7 @@ tidy_rm "$HOME/.cache/node-gyp"                   "node-gyp 头文件缓存（�
 tidy_rm "$HOME/.cache/vmware/drag_and_drop"       "VMware 拖拽暂存"
 tidy_rm "$HOME/.cache/tracker3"                   "桌面索引缓存（tracker）"
 tidy_rm "$HOME/.zcompdump"                        "zsh 补全缓存（可再生）"
+tidy_rm "$HOME/.xsession-errors"                  "X 会话错误日志（可再生）"
 tidy_rm "$HOME/.local/share/pnpm/store"           "pnpm 旧 store（已重定向共享盘）"
 tidy_rm "$HOME/.dartServer"                       "dart 分析缓存"
 tidy_rm "$HOME/.npm/_cacache"                     "npm 旧 cache（已重定向共享盘）"

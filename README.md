@@ -6,7 +6,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v0.15（**部署层一致性**：doctor +3 巡检——分发器就绪/正本 gen 指纹/机器登记；zcode skill 双根去重走 ~/.agents 枢纽；node 镜像覆盖口 `BDE_NODE_DIST_MIRROR`；doctor 19 项） |
+| 版本 | v0.16（**零遗留收尾**：config 备份通道 `devenv cfg snapshot`——③ 正本→工程 seed 快照→push 即异地备份，doctor「备份通道」项；rustup/cargo 收敛落地 ① DevEnv；home-map 注册表对齐收敛实况；devenv 分发器参数透传；doctor 20 项） |
 | 日期 | 2026-11-08 |
 | 上游宪法 | devspace-design.md **v10.3**（位于 `/Share/Common/docs/dev-env/design.md`）；MCP/会话/Skill 统一为 §10.9 延伸、配置治理落实 §19.3，提请宪法增补 |
 | 适用范围 | **跨系统：Linux（Ubuntu/Arch）/ macOS / Windows 为目标**；Common/Local 为逻辑目录（本机盘/宿主机盘/云盘皆可为后端）。**当前生产实装 = Ubuntu 系**（ubuntu.sh）；Arch/Windows/macOS 为占位适配器（P2/P3 里程碑，实机验证后才算数） |
@@ -101,11 +101,11 @@ BestDevEnv/
 │   ├── orch/                        编排进度日志（devenv orch：主 Skill 长任务落盘续做）
 │   └── doc/                         M5 环境描述文档（需求 6）
 │       └── report.sh
-├── config/                          chezmoi 源（主题平铺，宪法 §9 结构）
+├── config/                          chezmoi 源种子（= ③ 正本快照，`devenv cfg snapshot` 再生）
 │   ├── .chezmoi.toml.tmpl  .chezmoiignore  hosts.toml
-│   ├── dot_gitconfig  env.sh  dot_zshrc  dot_npmrc
-│   ├── dot_config/{starship,fcitx5,konsole,user-dirs.dirs}
-│   └── apt/  pacman/  windows/
+│   ├── dot_gitconfig  dot_zshrc  dot_npmrc  dot_m2
+│   ├── dot_config/{devspace/env.sh, starship, fcitx5, konsole, user-dirs.dirs, environment.d}
+│   └── apt/  services/  apps/  data/  ide/
 ├── templates/
 │   ├── AGENTS.md.tmpl               统一 Agent 指令模板（常驻摘要）
 │   └── skills/                      Skill 家族模板（主调度 + 8 子域，agents-md.sh 再生）
@@ -185,6 +185,7 @@ BestDevEnv/
 | 漂移怎么发现 | `devenv cfg diff` ＋ doctor「系统/服务配置无漂移」「config 仓库干净」巡检 |
 
 - **收编**：新装软件 `devenv cfg adopt <name> <路径>` → 拷为正本 + 登记一行；改配置 = 改正本 → commit → apply
+- **备份**：`devenv cfg snapshot`——③ 正本 rsync 镜像到本仓库 `config/`（seed）+ commit；本仓库 push 即 config 异地备份（doctor「config 备份通道」项巡检）
 - **已收编**：sysctl 99-devspace、docker daemon.json（补 §10.6 日志轮转）、fstab hgfs 片段、apt ubuntu.sources、user-dirs.dirs（归 chezmoi，M2 不再直写）
 - 服务生命周期（enable/start）归安装体——配置与安装体分离（宪法 §19.3）
 
@@ -303,7 +304,7 @@ probe.sh ──→ $DEV/docs/state/probe.json ──→ doctor.sh（校验视图
 - [x] 5. M4 工具安装 + `agents-md.sh`（本机验证：~/AGENTS.md 生成）
 - [x] 10. **Runtime 统一管理层** `agent/runtime.sh` + `runtimes.tsv` + `mcp.seed.json`（记忆/Skill/MCP/会话四域正本+接线；doctor「Runtime 统一接线」项）
 - [x] 11. **统一配置治理** `cfg/cfg.sh` + `cfg-map.tsv`（正本落位/漂移巡检/收编；宪法 §19.3 服务三分离；doctor 第 15/16 项；存量 5 项收编）
-- [x] 6. M5 `report.sh` + `verify/doctor.sh`（本机验证：doctor 19 项全绿、报告落 Common/docs/env/）
+- [x] 6. M5 `report.sh` + `verify/doctor.sh`（本机验证：doctor 20 项全绿、报告落 Common/docs/env/）
 - [x] 8. M6 `ide/ide.sh`（语言档案 + JetBrains 需求推导：本机实装 PyCharm Pro 2026.3）
 - [x] 9. 工作流四件套 `workflow/{code-open,code-close,code-nm,code-out}.sh` + Maven settings.xml（端到端验证：产物物理分离）
 - [ ] 7. P2/P3 推广：arch / win11（arch.sh 与 windows.ps1 为占位）

@@ -93,16 +93,16 @@ cat > "$DEV/bin/devenv" <<EOF
 # devenv — 开发环境入口（由 BestDevEnv 生成于 $(date +%F)）
 BDE_ROOT="$BDE_ROOT"
 case "\${1:-}" in
-    doctor) exec bash "\$BDE_ROOT/verify/doctor.sh" ;;
-    report) exec bash "\$BDE_ROOT/modules/doc/report.sh" ;;
-    tidy) exec bash "\$BDE_ROOT/modules/tidy.sh" ;;
+    doctor) shift; exec bash "\$BDE_ROOT/verify/doctor.sh" "\$@" ;;
+    report) shift; exec bash "\$BDE_ROOT/modules/doc/report.sh" "\$@" ;;
+    tidy) shift; exec bash "\$BDE_ROOT/modules/tidy.sh" "\$@" ;;
     map) exec bash "\$BDE_ROOT/modules/home-map.sh" "\$@" ;;
     orch) shift; exec bash "\$BDE_ROOT/modules/orch/orch.sh" "\$@" ;;
     runtime) shift; exec bash "\$BDE_ROOT/modules/agent/runtime.sh" "\$@" ;;
     cfg) shift; exec bash "\$BDE_ROOT/modules/cfg/cfg.sh" "\$@" ;;
     app) shift; exec bash "\$BDE_ROOT/modules/app/app.sh" "\$@" ;;
     svc) shift; exec bash "\$BDE_ROOT/modules/cfg/cfg.sh" --svc "\$@" ;;
-    migrate-finish) exec bash "\$BDE_ROOT/modules/dirs/migrate-finish.sh" ;;
+    migrate-finish) shift; exec bash "\$BDE_ROOT/modules/dirs/migrate-finish.sh" "\$@" ;;
     *) echo "用法: devenv doctor|report|tidy|map|orch|runtime|cfg|svc|migrate-finish"; exit 1 ;;
 esac
 EOF
