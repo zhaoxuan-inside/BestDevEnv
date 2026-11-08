@@ -117,8 +117,9 @@ else
     bde_pending "starship 安装失败"
 fi
 
-# 9) 输入法人工步骤（涉及桌面会话，不自动切换）
-bde_pending "启用 fcitx5+雾凇：im-config -n fcitx5 后注销重登（人工执行）"
-bde_pending "rime-ice 方案与 macOS 皮肤：拉取放置 ~/.local/share/fcitx5/（人工或后续脚本）"
+# 9) 输入法：皮肤与 rime 简体默认自动落位（幂等，三链路拉取）；启用切换仍人工
+bash "$BDE_ROOT/modules/os/fcitx5-theme.sh"
+bde_pending "启用 fcitx5：im-config -n fcitx5 后注销重登（人工执行）"
+bde_pending "rime-ice 雾凇方案（可选大词库）：github.com/amzxyz/rime-ice → $HOME/DevEnv/xdg/local/fcitx5/rime/（人工）"
 
 bde_ok "M1 完成"

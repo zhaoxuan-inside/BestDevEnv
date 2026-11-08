@@ -30,7 +30,7 @@ esac
 | docker 安装体 | apt docker.io + `enable --now` + docker 组（M1 三件套） | `systemctl is-active docker` |
 | apt 源 | 只检测报告，不自动切（人工切阿里/清华） | 执行输出 pending 项 |
 | 默认终端/shell | konsole + Ctrl+Alt+T；zsh；`.bashrc` 接 env.sh | `echo $SHELL` |
-| 输入法 | fcitx5 全家桶安装；启用/雾凇方案为人工步骤 | `im-config -n fcitx5` 后重登 |
+| 输入法 | fcitx5 全家桶 + **macOS12 皮肤**（macos12-light/dark → ① `$DEV/xdg/local/fcitx5/themes/`，git→jsDelivr→API 三链路拉取）+ rime 简体默认；皮肤选择在 config 仓库 `classicui.conf`；启用/雾凇为人工 | `im-config -n fcitx5` 后重登 ｜ 皮肤重放：`bash modules/os/fcitx5-theme.sh` |
 | 提示符 | starship（`~/.local/bin` 用户级安装） | `starship --version` |
 
 ## 边界
