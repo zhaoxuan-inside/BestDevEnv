@@ -8,3 +8,5 @@ docker-daemon|service|$COMMON/config/services/docker/daemon.json|/etc/docker/dae
 fstab-hgfs|system|$COMMON/config/services/mount/hgfs.fstab|/etc/fstab|append|y|hgfs 挂载两行片段（M2 写入，2026-11-08 收编）
 apt-ubuntu|system|$COMMON/config/apt/ubuntu.sources|/etc/apt/sources.list.d/ubuntu.sources|copy|y|tuna noble 四组件（2026-11-08 修复后收编）
 user-dirs|dotfile|$COMMON/config/dot_config/user-dirs.dirs|$HOME/.config/user-dirs.dirs|chezmoi|n|XDG 用户目录 → Local（chezmoi 再生；M2 不再直写）
+fcitx5-rime|dotfile|$COMMON/config/dot_local/share/fcitx5/rime/default.custom.yaml|$HOME/DevEnv/xdg/local/fcitx5/rime/default.custom.yaml|copy|n|Fcitx5 actual XDG location
+fcitx5-autostart|dotfile|$COMMON/config/dot_config/autostart/org.fcitx.Fcitx5.desktop|$HOME/DevEnv/xdg/config/autostart/org.fcitx.Fcitx5.desktop|copy|n|Fcitx5 actual XDG location
