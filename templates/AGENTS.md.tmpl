@@ -20,7 +20,7 @@
 5. 配置改动 → 改 `/Share/Common/config` 仓库并 push，绝不手改应用层了事
 6. 构建产物与代码分离：依赖实体 `code-nm <repo>`、产物目录 `code-out <repo> <target|build|dist>`（写入即落本机专享盘），跨机成品走 exchange
 
-### 分离法则（宪法 v9）
+### 分离法则（宪法 v10.3）
 
 - **用户空间优先**：可再生内容一律落 ①②③；系统目录只留 OS 必需——重装系统后凭 ①②③ + config 仓库完整重建
 - **锚点是逻辑目录**：Common/Local 可以是本机盘、宿主机盘或云盘（NFS/SMB/Syncthing）；路径恒定，后端差异收敛在挂载适配器
@@ -53,7 +53,7 @@
 ## Runtime 统一契约（vibecoding 工具 = 可替换运行时）
 
 1. **记忆**：正本 `~/.config/devspace/agents/AGENTS.md`，各工具约定路径（`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.gemini/GEMINI.md`、`~/.config/opencode/AGENTS.md`、`~/.zcode/AGENTS.md`）均为 symlink——改指令只改模板后由生成器再生，勿手改正本与链接
-2. **Skill**：正本 `~/.config/devspace/agents/skill/<name>/`；`~/.claude/skills`、`~/.agents/skills`（arkcli 枢纽）、`~/.zcode/skills` 逐项 symlink 接线
+2. **Skill**：正本 `~/.config/devspace/agents/skill/<name>/`；`~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽——ZCode 客户端原生扫描该目录，`~/.zcode/skills` 双根接线曾致同名 skill 重复注册，2026-11-08 实证）逐项 symlink 接线
 3. **MCP**：正本 `~/.config/devspace/agents/mcp.json`——加/删 server 改正本后 `devenv runtime mcp sync` 投影到各工具；工具内手动加的属工具本地，收编时抄入正本
 4. **会话**：会话库归各工具私有（位置调查：`devenv runtime sessions`），不迁移、不自动清；跨工具续做长任务一律走 `devenv orch`
 5. **注册表**：全部工具登记于 BestDevEnv `modules/agent/runtimes.tsv`——新 runtime 先登记一行，再 `devenv runtime wire`

@@ -119,7 +119,8 @@ fi
 
 # 9) 输入法：皮肤与 rime 简体默认自动落位（幂等，三链路拉取）；启用切换仍人工
 bash "$BDE_ROOT/modules/os/fcitx5-theme.sh"
-bde_pending "启用 fcitx5：im-config -n fcitx5 后注销重登（人工执行）"
+bde_pending "启用 fcitx5：im-config -n fcitx5 后注销重登（人工执行；IM 环境变量由 config 仓库 environment.d 下发，不要写 .profile）"
+bde_pending "GNOME Wayland 限制：Wayland 原生客户端（Chromium/Electron 的 ozone-wayland、GNOME Shell 自身界面）无法用 fcitx5，需该客户端走 XWayland 或改用 IBus"
 bde_pending "rime-ice 雾凇方案（可选大词库）：github.com/amzxyz/rime-ice → $HOME/DevEnv/xdg/local/fcitx5/rime/（人工）"
 
 bde_ok "M1 完成"

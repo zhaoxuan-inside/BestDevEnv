@@ -1,6 +1,11 @@
 # hosts.toml — 机器数据表（宪法：数据与视图分离；全部机器一张表）
 # 模板按本机 hostname 查询；新增机器 = 加一段，不改目录
 
+[hardstone]
+ip = ""
+note = "本机实装机（Ubuntu 24.04，2026-11-08 登记）"
+role = "active"
+
 [ubuntu24]
 ip = ""
 note = "主力开发（LTS）"

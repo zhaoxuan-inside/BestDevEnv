@@ -17,7 +17,7 @@ description: BestDevEnv 开发环境总调度——用户提出环境类需求�
 > 实体住 `DevEnv/apps/<分类>/`（vibecoding 工具 → `apps/agent/`；家目录=入口层：链接 + 原生重定向，收敛路线见宪法 §20.5），bind mount 接回去；配置永远改仓库（`$COMMON/config`）；备份永远靠 push。
 > 物理红线（HGFS 后端）：无 symlink / 无 hardlink（npm cacache EPERM 实证）/ 不分大小写 / 权限恒 777——node_modules、venv、私钥、hardlink 型缓存绝不上去。
 
-### 分离法则（宪法 v9，调度时必须遵守）
+### 分离法则（宪法 v10.3，调度时必须遵守）
 
 1. **用户空间优先**：可再生内容一律落 ①②③，系统目录只留 OS 必需（重装后凭 ①②③ + config 仓库重建）
 2. **存储介质与结构解耦**：只说作用域（shared 跨主机/host 主机/user 用户），介质差异收敛在 L0 存储抽象层（`lib/storage.sh` + `config/data/storage.toml` 档案制，跨系统 macOS/Linux/Windows 同一套原则）
@@ -30,7 +30,7 @@ description: BestDevEnv 开发环境总调度——用户提出环境类需求�
 source "$HOME/.config/devspace/env.sh"     # DEV/SHARE/COMMON/LOCAL 锚点变量
 BDE="$COMMON/code/BestDevEnv"
 bash "$BDE/lib/probe.sh" --json            # L1 环境事实快照（schema bde.probe/1，机器可读）
-bash "$BDE/verify/doctor.sh"               # L3 校验视图（14 项 ✓/✗；--json 出 bde.doctor/1）
+bash "$BDE/verify/doctor.sh"               # L3 校验视图（✓/✗ 全项；--json 出 bde.doctor/1）
 devenv cfg list / devenv cfg diff                # 配置治理视图（cfg-map 清单 + 漂移检测）
 devenv app --all                              # 应用视图（安装/配置/数据按应用聚合，§20.3）
 . /etc/os-release; echo "$ID"              # OS 变体（ubuntu 实装；arch/windows/mac 为适配器待建项）
@@ -85,4 +85,4 @@ devenv orch status                              # 查进度与续做指引
 
 模板：`$BDE/templates/skills/<name>/SKILL.md.tmpl`；正本由 `bash "$BDE/modules/agent/agents-md.sh"`
 统一再生，工具接线由 `bash "$BDE/modules/agent/runtime.sh"` 按注册表（runtimes.tsv）执行。
-勿手改正本，勿手改 `~/.claude/skills`、`~/.agents/skills`、`~/.zcode/skills` 下的链接。
+勿手改正本，勿手改 `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽）下的链接。

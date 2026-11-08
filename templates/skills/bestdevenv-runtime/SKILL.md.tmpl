@@ -12,7 +12,7 @@ description: BestDevEnv runtime 统一管理层——所有 vibecoding 工具视
 | 域 | 正本 | 各工具落点（symlink/投影） | 动作 |
 |---|---|---|---|
 | 记忆 | `~/.config/devspace/agents/AGENTS.md` | `~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.gemini/GEMINI.md`、`~/.config/opencode/AGENTS.md`、`~/.zcode/AGENTS.md`、`~/.agents/AGENTS.md`（arkcli） | `devenv runtime wire` |
-| Skill | `~/.config/devspace/agents/skill/<name>/` | `~/.claude/skills`、`~/.agents/skills`（arkcli 枢纽）、`~/.zcode/skills` | `devenv runtime wire` |
+| Skill | `~/.config/devspace/agents/skill/<name>/` | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽，ZCode 原生扫描） | `devenv runtime wire` |
 | MCP | `~/.config/devspace/agents/mcp.json` | claude `~/.claude.json`、codex `config.toml` 托管块、gemini `settings.json`、opencode `opencode.json`、copilot `mcp-config.json`、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
 | 会话 | 工具私有（登记于 `modules/agent/runtimes.tsv`） | 各工具自管 | `devenv runtime sessions`（只读调查） |
 

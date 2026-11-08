@@ -74,3 +74,12 @@ if [ -d "$SKILLS_SRC" ]; then
 else
     bde_pending "skill 模板目录缺失：$SKILLS_SRC"
 fi
+
+# ── 生成指纹落盘（doctor 巡检部署层代际：正本生成时的 templates 哈希 vs 当前哈希）──
+mkdir -p "$DEV/docs/state" 2>/dev/null
+{
+    echo "templates_hash=$(bde_templates_hash)"
+    echo "bde_commit=$(git -C "$BDE_ROOT" rev-parse --short HEAD 2>/dev/null || echo none)"
+    echo "machine=${BDE_MACHINE:-$(hostname)}"
+    echo "date=$(date '+%F %T')"
+} > "$DEV/docs/state/gen-fingerprint" && bde_ok "生成指纹 → $DEV/docs/state/gen-fingerprint（doctor 巡检代际）"

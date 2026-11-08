@@ -20,19 +20,21 @@ fi
 # 2) node 现状——按来源三态判定（command -v node 无法区分 nvm/mise/系统来源，2026-11-08 nvm 误判实证）
 _mise="$(command -v mise || echo "$HOME/.local/bin/mise")"
 _mise_installs="${XDG_DATA_HOME:-$HOME/.local/share}/mise/installs"
+# node 发行镜像（覆盖口：BDE_NODE_DIST_MIRROR，正本 env.sh 契约；尾斜杠必留——缺了拼接丢 node 段 404）
+_node_mirror="${BDE_NODE_DIST_MIRROR:-https://cdn.npmmirror.com/binaries/node/}"
 if compgen -G "$_mise_installs/node/*" >/dev/null 2>&1; then
     bde_ok "node 已由 mise 接管（$("$_mise" exec node -- node --version 2>/dev/null || echo '待 mise 解析')）"
 elif [ -s "${NVM_DIR:-$HOME/DevEnv/nvm}/nvm.sh" ]; then
     if command -v node >/dev/null 2>&1; then
-        bde_pending "nvm 兼容期（node $(node --version) 来自 nvm）——接管：mise settings set node.mirror_url 'https://cdn.npmmirror.com/binaries/node/' && mise use -g node@22.22.1，并退役 zshrc 的 nvm 块"
+        bde_pending "nvm 兼容期（node $(node --version) 来自 nvm）——接管：mise settings set node.mirror_url '$_node_mirror' && mise use -g node@22.22.1，并退役 zshrc 的 nvm 块"
     else
         bde_pending "nvm 实体在但 PATH 无 node——nvm install --lts 或按上条接管"
     fi
 elif command -v node >/dev/null 2>&1; then
     bde_ok "node 系统级安装：$(node --version)（来源 $(command -v node)）"
 elif [ -x "$_mise" ]; then
-    # npmmirror 镜像；尾斜杠必留——缺了拼接丢 node 段 404（2026-11-08 实证）
-    "$_mise" settings set node.mirror_url 'https://cdn.npmmirror.com/binaries/node/' >/dev/null 2>&1
+    # npmmirror 镜像（BDE_NODE_DIST_MIRROR 可覆盖，见上）
+    "$_mise" settings set node.mirror_url "$_node_mirror" >/dev/null 2>&1
     if "$_mise" use -g node@lts >/dev/null 2>&1; then
         export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims:$PATH"
         bde_ok "mise 接管：node LTS 就绪（$(node --version 2>/dev/null || echo '待新 shell 生效')）"

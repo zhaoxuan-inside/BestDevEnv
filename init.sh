@@ -65,7 +65,8 @@ if [ "$BDE_STATUS_ONLY" = "1" ]; then
     exit 0
 fi
 
-bde_info "BestDevEnv init ｜ 宪法 devspace-design.md v8.4 ｜ 锚点: $SHARE（$BDE_SHARE_STATE）｜ OS: $BDE_OS_ID"
+BDE_CONST_V="$(sed -n 's/^| 版本 | \*\*v\([0-9.]*\).*/\1/p' "$COMMON/docs/dev-env/design.md" 2>/dev/null | head -1)"
+bde_info "BestDevEnv init ｜ 宪法 devspace-design.md ${BDE_CONST_V:-未知（design.md 未达，动态读取）} ｜ 锚点: $SHARE（$BDE_SHARE_STATE）｜ OS: $BDE_OS_ID"
 bde_info "模式: $([ "$BDE_RESUME" = "1" ] && echo '续建（跳过已完成阶段）' || echo '全量幂等')"
 bde_progress_show
 bde_ask BDE_GO "开始构建？(y/n)" "y"

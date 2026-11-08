@@ -10,6 +10,13 @@ source "$BDE_ROOT/lib/paths.sh"
 
 BDE_PROBE_STATE_DIR="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}"
 
+# 部署层指纹：templates/ 目录内容哈希——agents-md.sh 生成正本时落 gen-fingerprint，
+# doctor 以此比对"正本代际 vs 模板现状"（env→devenv 重命名未重放致全链路漂移，2026-11-08 实证）
+bde_templates_hash() {
+    (cd "$BDE_ROOT" && find templates -type f -print0 2>/dev/null | LC_ALL=C sort -z \
+        | xargs -0 sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1)
+}
+
 bde_probe_collect() {
     P_OS="$(grep -m1 PRETTY_NAME /etc/os-release 2>/dev/null | cut -d'"' -f2)"
     P_OS_ID="$(. /etc/os-release 2>/dev/null; echo "${ID:-unknown}")"
@@ -41,6 +48,19 @@ bde_probe_collect() {
     P_SKELETON=0; [ -d "$COMMON/data/models" ] && [ -d "$LOCAL/build" ] && P_SKELETON=1
     P_IDE_OK=0; { [ -f "$HOME/.config/Code/User/settings.json" ] && [ -f "$COMMON/config/ide/vscode/base.txt" ] \
         && command -v code >/dev/null 2>&1; } && P_IDE_OK=1
+
+    # 部署层一致性（分发器 / 正本同代指纹 / 机器登记）
+    P_DISPATCHER_OK=0
+    { [ -x "$DEV/bin/devenv" ] && [ ! -e "$DEV/bin/env" ]; } && P_DISPATCHER_OK=1
+    P_HOST_REG=0
+    if [ -f "$BDE_ROOT/hosts.toml" ] && grep -q "^\[$BDE_MACHINE\]" "$BDE_ROOT/hosts.toml" 2>/dev/null; then
+        P_HOST_REG=1
+    fi
+    P_GEN_FRESH=0
+    _gen_state="$DEV/docs/state/gen-fingerprint"
+    if [ -f "$_gen_state" ] && [ -n "$(bde_templates_hash)" ]; then
+        [ "$(bde_templates_hash)" = "$(sed -n 's/^templates_hash=//p' "$_gen_state" | head -1)" ] && P_GEN_FRESH=1
+    fi
 
     # Runtime 统一接线（M4 扩展：记忆/MCP/Skill 三正本 + ~/.agents 枢纽兜底）
     P_MCP_CANON=0; [ -f "$HOME/.config/devspace/agents/mcp.json" ] && P_MCP_CANON=1
@@ -168,6 +188,9 @@ doc = {
         "env_sh_applied": i("P_ENV_SH"),
         "skeleton_ready": i("P_SKELETON"),
         "agents_md": i("P_AGENTS_MD"),
+        "dispatcher_ok": i("P_DISPATCHER_OK"),
+        "gen_fresh": i("P_GEN_FRESH"),
+        "host_registered": i("P_HOST_REG"),
         "mcp_canon": i("P_MCP_CANON"),
         "runtime_wired": i("P_RUNTIME_OK"),
         "cfg_drift": i("P_CFG_DRIFT"),

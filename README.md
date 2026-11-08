@@ -1,15 +1,15 @@
 # BestDevEnv —— 虚拟机统一开发环境构建工程
 
-> 一句话：把《虚拟机统一开发环境设计方案》（devspace-design.md **v8.4**）从纸面变成
+> 一句话：把《虚拟机统一开发环境设计方案》（devspace-design.md **v10.3**）从纸面变成
 > **一条命令 + 交互确认** 的可执行构建工程——四台虚拟机（ubuntu24 / ubuntu26 / arch / win11）
 > 从"装完系统"到"`devenv doctor` 全绿"，中间没有任何手工步骤。
 
 | 项 | 值 |
 |---|---|
-| 版本 | v0.14（**统一配置治理**：devenv cfg 登记表+正本落位+漂移巡检，服务三分离落地；doctor 16 项） |
+| 版本 | v0.15（**部署层一致性**：doctor +3 巡检——分发器就绪/正本 gen 指纹/机器登记；zcode skill 双根去重走 ~/.agents 枢纽；node 镜像覆盖口 `BDE_NODE_DIST_MIRROR`；doctor 19 项） |
 | 日期 | 2026-11-08 |
-| 上游宪法 | devspace-design.md **v9.0**（实施后位于 `/Share/Common/docs/dev-env/design.md`）；MCP/会话/Skill 统一为 §10.9 延伸、配置治理落实 §19.3，提请宪法增补 |
-| 适用范围 | **跨系统：Linux（Ubuntu/Arch）/ macOS / Windows**；Common/Local 为逻辑目录（本机盘/宿主机盘/云盘皆可为后端） |
+| 上游宪法 | devspace-design.md **v10.3**（位于 `/Share/Common/docs/dev-env/design.md`）；MCP/会话/Skill 统一为 §10.9 延伸、配置治理落实 §19.3，提请宪法增补 |
+| 适用范围 | **跨系统：Linux（Ubuntu/Arch）/ macOS / Windows 为目标**；Common/Local 为逻辑目录（本机盘/宿主机盘/云盘皆可为后端）。**当前生产实装 = Ubuntu 系**（ubuntu.sh）；Arch/Windows/macOS 为占位适配器（P2/P3 里程碑，实机验证后才算数） |
 | 远端 | `git@github.com:zhaoxuan-inside/BestDevEnv.git` |
 
 ---
@@ -67,7 +67,8 @@ BestDevEnv/
 ├── init.sh                          Linux 总入口（交互式，Ubuntu/Arch 通用）
 ├── init.ps1                         Windows 总入口（交互式）
 ├── lib/                             M0 公共库
-│   ├── paths.sh                     锚点常量唯一出处：DEV/SHARE/COMMON/LOCAL
+│   ├── paths.sh                     锚点常量唯一出处：DEV/SHARE/COMMON/LOCAL（作用域派生自 storage.sh）
+│   ├── storage.sh                   L0 存储抽象层：作用域→后端解析（passthrough/hgfs/local；档案 storage.toml）
 │   ├── common.sh                    交互菜单（whiptail 优先/read 兜底）、颜色、日志、确认
 │   ├── ensure.sh                    幂等原语：ensure_pkg / ensure_dir / ensure_line / ensure_fstab / ensure_symlink
 │   └── probe.sh                     环境探针（doctor / report / AGENTS.md 三方共用的唯一数据源）
@@ -201,14 +202,14 @@ claude-code  codex  gemini-cli  opencode  zcode  trae/trae-cn  antigravity  qode
 | 域 | 正本（应用层） | 工具落点 | 命令 |
 |---|---|---|---|
 | 记忆 | `~/.config/devspace/agents/AGENTS.md` | 各工具约定路径 symlink（claude/codex/gemini/opencode/zcode/arkcli） | `devenv runtime wire` |
-| Skill | `~/.config/devspace/agents/skill/<name>/` | `~/.claude/skills`、`~/.agents/skills`（arkcli 枢纽）、`~/.zcode/skills` 逐项 symlink | `devenv runtime wire` |
+| Skill | `~/.config/devspace/agents/skill/<name>/` | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽——ZCode 原生扫描该目录，~/.zcode/skills 双根曾致同名 skill 重复注册，2026-11-08 实证）逐项 symlink | `devenv runtime wire` |
 | MCP | `~/.config/devspace/agents/mcp.json`（播种后归用户） | claude `~/.claude.json`、codex TOML 托管块、gemini/opencode/copilot JSON 合并、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
 | 会话 | 工具私有（注册表登记） | 只调查不迁移；跨工具续做走 `devenv orch` | `devenv runtime sessions` |
 
 - **注册表**：`modules/agent/runtimes.tsv` 是唯一事实源（新 runtime = 加一行）；接线器只按注册表干活
 - **统一入口**：`vibe <tool> [args]`（`$DEV/bin/vibe`）——任何 runtime 都拿到同一份 env.sh 契约
 - **绝不覆盖工具真实配置**：已有真实文件 → 备份 + pending 人工合并；工具自有状态只受控合并
-- doctor 第 14 项「Runtime 统一接线」验收三正本 + 枢纽兜底
+- doctor「Runtime 统一接线」项验收三正本 + 枢纽兜底；「正本 gen 指纹」项验收正本与模板同代
 
 **AGENTS.md 正本生成**（`agents-md.sh`，只生成不接线）：单一模板 `templates/AGENTS.md.tmpl`
 + probe 快照 → `~/.config/devspace/agents/AGENTS.md`（环境地图 + 放置规则 + Runtime 统一契约 +
@@ -281,9 +282,9 @@ probe.sh ──→ $DEV/docs/state/probe.json ──→ doctor.sh（校验视图
 
 ## 7. 与上游设计文档的关系
 
-`devspace-design.md v8.4` 是**宪法**（结构与规则），本工程是**施工队**（落实与自动化）。
+`devspace-design.md` 是**宪法**（结构与规则），本工程是**施工队**（落实与自动化）。
 实现与宪法冲突时：以宪法为准，并提请修订宪法后再改实现；本 README 的每次实质变更
-注明所依宪法版本。当前依赖：**v9.0**（锚点 `/Share` 逻辑化、主题平铺 config、`hosts.toml` 数据表、用户空间优先、服务三分离、构建十分离、macOS 纳入范围）。
+注明所依宪法版本。当前依赖：**v10.3**（锚点 `/Share` 逻辑化、L0 存储抽象 `lib/storage.sh`、主题平铺 config、`hosts.toml` 数据表、用户空间优先、服务三分离、构建十分离）。
 
 ## 8. 验收标准
 
@@ -300,9 +301,9 @@ probe.sh ──→ $DEV/docs/state/probe.json ──→ doctor.sh（校验视图
 - [x] 3. M1 `os/ubuntu.sh` + `apply-config.sh`（本机验证：chezmoi apply、inotify、konsole、zsh、starship）
 - [x] 4. M3 语言栈七件（node/python/rust/go/flutter/java/ai；本机验证 node/python/rust/go/flutter/ai）
 - [x] 5. M4 工具安装 + `agents-md.sh`（本机验证：~/AGENTS.md 生成）
-- [x] 10. **Runtime 统一管理层** `agent/runtime.sh` + `runtimes.tsv` + `mcp.seed.json`（记忆/Skill/MCP/会话四域正本+接线；doctor 第 14 项）
+- [x] 10. **Runtime 统一管理层** `agent/runtime.sh` + `runtimes.tsv` + `mcp.seed.json`（记忆/Skill/MCP/会话四域正本+接线；doctor「Runtime 统一接线」项）
 - [x] 11. **统一配置治理** `cfg/cfg.sh` + `cfg-map.tsv`（正本落位/漂移巡检/收编；宪法 §19.3 服务三分离；doctor 第 15/16 项；存量 5 项收编）
-- [x] 6. M5 `report.sh` + `verify/doctor.sh`（本机验证：doctor 16 项全绿、报告落 Common/docs/env/）
+- [x] 6. M5 `report.sh` + `verify/doctor.sh`（本机验证：doctor 19 项全绿、报告落 Common/docs/env/）
 - [x] 8. M6 `ide/ide.sh`（语言档案 + JetBrains 需求推导：本机实装 PyCharm Pro 2026.3）
 - [x] 9. 工作流四件套 `workflow/{code-open,code-close,code-nm,code-out}.sh` + Maven settings.xml（端到端验证：产物物理分离）
 - [ ] 7. P2/P3 推广：arch / win11（arch.sh 与 windows.ps1 为占位）

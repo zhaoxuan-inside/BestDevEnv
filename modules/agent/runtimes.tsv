@@ -8,7 +8,7 @@ claude-code|claude|npm:@anthropic-ai/claude-code|$HOME/.claude/CLAUDE.md|$HOME/.
 codex|codex|npm:@openai/codex|$HOME/.codex/AGENTS.md||$HOME/.codex/config.toml|$HOME/.codex/sessions|MCP 投影 TOML 托管块（BEGIN/END）
 gemini-cli|gemini|npm:@google/gemini-cli|$HOME/.gemini/GEMINI.md||$HOME/.gemini/settings.json|$HOME/.gemini/tmp|MCP 投影 mcpServers
 opencode|opencode|curl installer|$HOME/.config/opencode/AGENTS.md||$HOME/.config/opencode/opencode.json|$HOME/.local/share/opencode|MCP 投影 "mcp" 键（保留既有 provider/apiKey）
-zcode|zcode|deb 系统渠道|$HOME/.zcode/AGENTS.md|$HOME/.zcode/skills||$HOME/.zcode/cli|MCP 经 ~/.agents/mcp.json 兜底 symlink（config.json 为工具自有，不动）
+zcode|zcode|deb 系统渠道|$HOME/.zcode/AGENTS.md|||$HOME/.zcode/cli|MCP 经 ~/.agents/mcp.json 兜底 symlink；skills 走 ~/.agents 枢纽（ZCode 原生扫描该目录，~/.zcode/skills 双根曾致同名 skill 重复注册，2026-11-08 实证）
 arkcli|arkcli|npm 自有|$HOME/.agents/AGENTS.md|$HOME/.agents/skills|$HOME/.agents/mcp.json||分发枢纽（skills 广播 + MCP 兜底读取）
 copilot|copilot|人工|||$HOME/.copilot/mcp-config.json|$HOME/.copilot|MCP 投影 mcp-config.json；凭据勿动
 antigravity|antigravity|snap（M6 ide.sh）|||||GUI IDE；适配待定（登记）
