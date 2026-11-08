@@ -7,16 +7,13 @@
 .antigravity-ide|antigravity|AI IDE|keep|snap 版状态
 .arkcli|arkcli|AI工具|keep|
 .byted-supabase-cli|byted-supabase-cli|自研工具|keep|CLI 版本目录（0.1.34）
-.cache|XDG|框架|tidy|各工具缓存；SAFE 子项清单在 tidy.sh
 .cc-switch|cc-switch|AI工具|keep|供应商切换 db+备份+日志
 .claude|claude-code|AI工具|keep|
-.codex|codex|AI工具|keep|
 .config|XDG|框架|keep|GUI/Electron 应用配置（Trae CN 已迁出归档）
 .copilot|copilot|AI工具|keep|
 .dart-tool|dart/flutter|开发工具|keep|遥测配置
 .gemini|gemini|AI工具|keep|antigravity 会话/brain 1.7G 已 dump→Local 并清除（2026-11-08）；余 CLI/IDE 状态
 .java|JDK|开发工具|keep|Java Preferences + 字体缓存
-.local|XDG|框架|keep+dump|opencode.db 已清 11M（2026-11-08 全部旧会话+VACUUM；完整 dump → Local/data/dumps/opencode-20261108）
 .mcp-auth|mcp-remote|安全|keep|MCP OAuth 凭据
 .opencode|opencode|AI工具|keep|配置+auth+bin（会话库在 .local/share，2026-11-08 已清旧会话）
 .openpencil|openpencil|自研工具|keep|agents.json+会话
@@ -24,9 +21,9 @@
 .snap|snap|框架|keep|
 .ssh|ssh|安全|keep|密钥
 .vim|vim|开发工具|keep|
-.vscode|code|开发工具|keep|扩展
-.vscode-server|code remote|开发工具|keep+tidy|远程服务端；旧版本 tidy 自动清
-.vscode-shared|code|开发工具|keep|
+.vscode|code|开发工具|keep|→ apps/ide/vscode/home（VSCODE_EXTENSIONS）
+.vscode-server|code remote|开发工具|keep+tidy|→ apps/ide/vscode/server（VSCODE_AGENT_FOLDER）
+.vscode-shared|code|开发工具|keep|→ apps/ide/vscode/shared（三合一）
 .zcode|zcode|AI工具|keep|
 .m2|maven|开发工具|keep|仅 settings.xml（localRepository → Local/cache/m2；MAVEN_OPTS 双保险；2026-11-08 端到端实测落点 ✓）
 .zshrc|zsh|框架|keep|chezmoi 再生（dot_zshrc）
@@ -39,3 +36,4 @@
 .xinputrc|im-config|框架|keep|输入法接线（fcitx5）
 .sudo_as_admin_successful|sudo|框架|keep|首sudo提示标志
 .zcompdump|zsh|框架|tidy|补全缓存（可再生，env tidy 清）
+.cache|XDG|框架|tidy|GUI 会话回建（Codex 桌面/声音缓存）；重登后 environment.d 契约合流 ①，残留为死缓存可清

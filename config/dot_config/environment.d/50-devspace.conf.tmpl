@@ -1,0 +1,23 @@
+# 家目录收敛契约——GUI/systemd user session 覆盖（shell 侧见 env.sh；chezmoi 按机器渲染）
+# 生效：重新登录（或 systemctl --user daemon-reload 后新起的应用）
+IPYTHONDIR={{ .chezmoi.homeDir }}/DevEnv/apps/dev/.ipython
+JUPYTER_CONFIG_DIR={{ .chezmoi.homeDir }}/DevEnv/apps/dev/.jupyter
+ANDROID_USER_HOME={{ .chezmoi.homeDir }}/DevEnv/apps/dev/.android
+DOCKER_CONFIG={{ .chezmoi.homeDir }}/DevEnv/apps/dev/.docker
+VSCODE_EXTENSIONS={{ .chezmoi.homeDir }}/DevEnv/apps/ide/vscode/home/extensions
+VSCODE_AGENT_FOLDER={{ .chezmoi.homeDir }}/DevEnv/apps/ide/vscode/server
+CLAUDE_CONFIG_DIR={{ .chezmoi.homeDir }}/DevEnv/apps/agent/.claude
+CODEX_HOME={{ .chezmoi.homeDir }}/DevEnv/apps/agent/.codex
+XDG_CACHE_HOME={{ .chezmoi.homeDir }}/DevEnv/xdg/cache
+XDG_DATA_HOME={{ .chezmoi.homeDir }}/DevEnv/xdg/local
+XDG_STATE_HOME={{ .chezmoi.homeDir }}/DevEnv/xdg/local/state
+PYTHONUSERBASE={{ .chezmoi.homeDir }}/DevEnv/xdg/local
+ZCODE_CONFIG_DIR={{ .chezmoi.homeDir }}/DevEnv/apps/agent/.zcode
+OPENCODE_CONFIG_DIR={{ .chezmoi.homeDir }}/DevEnv/apps/agent/.opencode
+# 输入法：GNOME Wayland 的 Mutter 只走 IBus，fcitx5 无法从合成器侧接入，
+# 因此必须让 GTK/Qt 客户端自己加载 fcitx 模块（D-Bus 直连）。重新登录后生效。
+GTK_IM_MODULE=fcitx
+QT_IM_MODULE=fcitx
+XMODIFIERS=@im=fcitx
+SDL_IM_MODULE=fcitx
+CLUTTER_IM_MODULE=fcitx
