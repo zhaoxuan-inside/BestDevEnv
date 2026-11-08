@@ -1,0 +1,10 @@
+# cfg-map.tsv — 配置登记表（宪法 §19.3 服务三分离 + 单一事实源；视图由 devenv cfg 生成）
+# 格式: name|类(dotfile|system|service)|正本|应用层|机制(copy|append|chezmoi)|requires_root|备注
+# - 正本 = $COMMON/config/{services,apt,dot_config}/ 下版本化文件（改配置只改正本，绝不手改应用层）
+# - 机制 copy=整文件落位（备份+cmp 幂等）；append=逐行追加（fstab 片段类）；chezmoi=归 chezmoi 事实源，本表只查漂移
+# - 新装服务/软件/工具的配置：devenv cfg adopt <name> <应用层路径> 收编一行即纳管
+sysctl-devspace|system|$COMMON/config/services/sysctl/99-devspace.conf|/etc/sysctl.d/99-devspace.conf|copy|y|inotify 上限（M1 写入，2026-11-08 收编）
+docker-daemon|service|$COMMON/config/services/docker/daemon.json|/etc/docker/daemon.json|copy|y|registry-mirrors+日志轮转（宪法 §10.6；2026-11-08 收编补全）
+fstab-hgfs|system|$COMMON/config/services/mount/hgfs.fstab|/etc/fstab|append|y|hgfs 挂载两行片段（M2 写入，2026-11-08 收编）
+apt-ubuntu|system|$COMMON/config/apt/ubuntu.sources|/etc/apt/sources.list.d/ubuntu.sources|copy|y|tuna noble 四组件（2026-11-08 修复后收编）
+user-dirs|dotfile|$COMMON/config/dot_config/user-dirs.dirs|$HOME/.config/user-dirs.dirs|chezmoi|n|XDG 用户目录 → Local（chezmoi 再生；M2 不再直写）

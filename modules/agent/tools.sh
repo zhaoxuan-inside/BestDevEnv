@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# M4: vibecoding 工具安装部署（幂等：已装则登记版本）
+[ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "$BDE_ROOT/lib/paths.sh"
+source "$BDE_ROOT/lib/common.sh"
+source "$BDE_ROOT/lib/ensure.sh"
+
+TOOLS_CSV="${BDE_TOOLS:-claude-code,codex,zcode,arkcli}"
+bde_info "M4 vibecoding 工具（$TOOLS_CSV）"
+
+_have_npm() { command -v npm >/dev/null 2>&1; }
+
+_install_tool() {
+    local t=$1
+    # 探测 15s / 安装 300s 超时——网络劣化时快速失败而非挂起（2026-11-07 实测 zcode --version 挂起引出）
+    case "$t" in
+        claude-code)
+            if command -v claude >/dev/null 2>&1; then bde_skip "claude-code 已装：$(timeout 15 claude --version 2>/dev/null | head -1)"
+            elif _have_npm && timeout 300 npm install -g @anthropic-ai/claude-code >/dev/null 2>&1; then bde_ok "claude-code 安装"
+            else bde_pending "claude-code 安装失败（需 npm）"; fi ;;
+        codex)
+            if command -v codex >/dev/null 2>&1; then bde_skip "codex 已装：$(timeout 15 codex --version 2>/dev/null | head -1)"
+            elif _have_npm && timeout 300 npm install -g @openai/codex >/dev/null 2>&1; then bde_ok "codex 安装"
+            else bde_pending "codex 安装失败（需 npm）"; fi ;;
+        gemini-cli)
+            if command -v gemini >/dev/null 2>&1; then bde_skip "gemini-cli 已装：$(timeout 15 gemini --version 2>/dev/null | head -1)"
+            elif _have_npm && timeout 300 npm install -g @google/gemini-cli >/dev/null 2>&1; then bde_ok "gemini-cli 安装"
+            else bde_pending "gemini-cli 安装失败（需 npm）"; fi ;;
+        opencode)
+            if command -v opencode >/dev/null 2>&1; then bde_skip "opencode 已装：$(timeout 15 opencode --version 2>/dev/null | head -1)"
+            elif curl -fsSL --max-time 120 https://opencode.ai/install | bash >/dev/null 2>&1; then bde_ok "opencode 安装"
+            else bde_pending "opencode 安装失败"; fi ;;
+        zcode)
+            if command -v zcode >/dev/null 2>&1; then bde_skip "zcode 已装：$(timeout 15 zcode --version 2>/dev/null | head -1)"
+            else bde_pending "zcode 走系统安装渠道（未装）"; fi ;;
+        arkcli)
+            if command -v arkcli >/dev/null 2>&1; then bde_skip "arkcli 已装：$(timeout 15 arkcli --version 2>/dev/null | head -1)"
+            else bde_pending "arkcli 为自有工具（未装，人工安装）"; fi ;;
+        trae|trae-cn|antigravity|qoder|copilot)
+            if command -v "$t" >/dev/null 2>&1; then bde_skip "$t 已装"
+            else bde_pending "$t 安装方式待定（GUI 类工具人工安装）"; fi ;;
+        *) bde_pending "未知工具: $t" ;;
+    esac
+}
+
+IFS=',' read -ra _tools <<< "$TOOLS_CSV"
+for _t in "${_tools[@]}"; do
+    _install_tool "$(echo "$_t" | tr -d ' ')"
+done

@@ -1,0 +1,17 @@
+# runtimes.tsv — Runtime 注册表（单一事实源：vibecoding 工具 = 可替换运行时，宪法 §10.9 延伸）
+# 格式: name|binary|安装渠道|memory_file|skills_dir|mcp_config|session_dir|note
+# - memory/skills/mcp 各域留空 = 该工具不支持或约定不明（登记待定，接线器自动跳过）
+# - mcp 投影由 runtime.sh 按工具逐个适配；正本 = ~/.config/devspace/agents/mcp.json
+# - session_dir 只登记调查（devenv runtime sessions），会话库归工具私有，不迁移不自动清
+# - 新增 runtime = 加一行，不改接线器代码
+claude-code|claude|npm:@anthropic-ai/claude-code|$HOME/.claude/CLAUDE.md|$HOME/.claude/skills|$HOME/.claude.json|$HOME/.claude/projects|MCP 投影 mcpServers（JSON 合并）
+codex|codex|npm:@openai/codex|$HOME/.codex/AGENTS.md||$HOME/.codex/config.toml|$HOME/.codex/sessions|MCP 投影 TOML 托管块（BEGIN/END）
+gemini-cli|gemini|npm:@google/gemini-cli|$HOME/.gemini/GEMINI.md||$HOME/.gemini/settings.json|$HOME/.gemini/tmp|MCP 投影 mcpServers
+opencode|opencode|curl installer|$HOME/.config/opencode/AGENTS.md||$HOME/.config/opencode/opencode.json|$HOME/.local/share/opencode|MCP 投影 "mcp" 键（保留既有 provider/apiKey）
+zcode|zcode|deb 系统渠道|$HOME/.zcode/AGENTS.md|$HOME/.zcode/skills||$HOME/.zcode/cli|MCP 经 ~/.agents/mcp.json 兜底 symlink（config.json 为工具自有，不动）
+arkcli|arkcli|npm 自有|$HOME/.agents/AGENTS.md|$HOME/.agents/skills|$HOME/.agents/mcp.json||分发枢纽（skills 广播 + MCP 兜底读取）
+copilot|copilot|人工|||$HOME/.copilot/mcp-config.json|$HOME/.copilot|MCP 投影 mcp-config.json；凭据勿动
+antigravity|antigravity|snap（M6 ide.sh）|||||GUI IDE；适配待定（登记）
+trae|trae|人工|||||GUI；适配待定（登记）
+qoder|qoder|人工|||||GUI；适配待定（登记）
+hermes|hermes|人工||$HOME/.hermes/skills||$HOME/.hermes|自有框架；本地 77 技能保留原样，bestdevenv 家族接入其 skills 目录

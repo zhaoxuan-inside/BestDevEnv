@@ -1,0 +1,22 @@
+# hosts.toml — 机器数据表（宪法：数据与视图分离；全部机器一张表）
+# 模板按本机 hostname 查询；新增机器 = 加一段，不改目录
+
+[ubuntu24]
+ip = ""
+note = "主力开发（LTS）"
+role = "primary"
+
+[ubuntu26]
+ip = ""
+note = "下一代 LTS 验证"
+role = "verify"
+
+[arch]
+ip = ""
+note = "滚动前沿实验"
+role = "explore"
+
+[win11]
+ip = ""
+note = "Windows 生态（.NET/打包/兼容性）"
+role = "windows"
