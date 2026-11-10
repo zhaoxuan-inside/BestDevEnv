@@ -78,3 +78,8 @@ else
     export NO_PROXY="localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,.aliyuncs.com,.aliyun.com,.cn"
     export no_proxy="$NO_PROXY"
 fi
+
+# ── 桌面应用接入（GNOME Wayland + fcitx5）────────────────
+# Electron/Chromium 类（ZCode、VS Code…）：Mutter 只喂 IBus，原生 Wayland 收不到 fcitx5，
+# 统一压回 XWayland。任何启动方式（终端裸敲 / dock / MIME）都吃此 hint；显式 --ozone-platform 仍可覆盖。
+export ELECTRON_OZONE_PLATFORM_HINT=x11

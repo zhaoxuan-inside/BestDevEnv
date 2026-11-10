@@ -1,0 +1,95 @@
+---
+name: bestdevenv
+version: 0.0.2
+description: BestDevEnv 开发环境总调度——用户提出环境类需求但不属于单一子域、或需要先探明本机现状再编排多步工作时使用：探环境（devenv doctor）→拆需求→按依赖顺序调度 bestdevenv-* 子 Skill→devenv doctor 验收。单一明确子域（如仅清缓存）直接用对应子 Skill，不经本 Skill。
+---
+
+# BestDevEnv 环境总调度（主 Skill）
+
+角色：**路由器 + 验收者**。不亲自执行子域工作（探针除外）——每件事交给一个 bestdevenv-* 子 Skill 完成后再验收。
+
+## 环境地图
+
+本机：**hardstone**（Ubuntu 24.04.5 LTS，生成于 2026-11-10 23:48）
+
+| 档 | 作用域 | 路径 |
+|---|---|---|
+| ① DevEnv | user 用户级（本机本用户） | `/home/hardstone/DevEnv` |
+| ② Local | host 主机级（同机多用户） | `/Share/Local` |
+| ③ Common | shared 跨主机级（多机多用户） | `/Share/Common` |
+
+> 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `/home/hardstone/DevEnv`；
+> 实体住 `/home/hardstone/DevEnv/apps/<分类>/`（vibecoding 工具 → `apps/agent/`；家目录=入口层：链接 + 原生重定向，收敛路线见宪法 §20.5），bind mount 接回去；配置永远改仓库（`$COMMON/config`）；备份永远靠 push。
+> 物理红线（能力探测 2026-11-10 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；命名一律小写 kebab-case
+
+### 分离法则（宪法 v10.3，调度时必须遵守）
+
+1. **用户空间优先**：可再生内容一律落 ①②③，系统目录只留 OS 必需（重装后凭 ①②③ + config 仓库重建）
+2. **存储介质与结构解耦**：只说作用域（shared 跨主机/host 主机/user 用户），介质差异收敛在 L0 存储抽象层（`lib/storage.sh` + `config/data/storage.toml` 档案制，跨系统 macOS/Linux/Windows 同一套原则）
+3. **服务三分离**：安装体→①（可再生）｜配置→③ config/services（版本化）｜数据→② Local/data（共享→③）；恢复=重装+应用配置+回灌数据
+4. **构建十分离**：IDE 工具①｜IDE 配置③｜IDE 运行数据②｜代码③｜代码输出②｜代码日志②｜打包工具①｜打包配置③｜缓存包③｜打包结果③exchange——清理只落 ② 与缓存/结果目录
+
+## 第一步永远是探环境（只读，不改任何东西）
+
+```bash
+source "$HOME/.config/devspace/env.sh"     # DEV/SHARE/COMMON/LOCAL 锚点变量
+BDE="$COMMON/code/BestDevEnv"
+bash "$BDE/lib/probe.sh" --json            # L1 环境事实快照（schema bde.probe/2：含存储后端/共享盘能力，机器可读）
+bash "$BDE/verify/doctor.sh"               # L3 校验视图（✓/✗ 全项；--json 出 bde.doctor/1）
+devenv cfg list / devenv cfg diff                # 配置治理视图（cfg-map 清单 + 漂移检测）
+devenv app --all                              # 应用视图（安装/配置/数据按应用聚合，§20.3）
+. /etc/os-release; echo "$ID"              # OS 变体（ubuntu 实装；arch/windows/mac 为适配器待建项）
+```
+
+## 需求 → 子 Skill 路由表
+
+| 用户意图（示例问句） | 调度 |
+|---|---|
+| 新机器/装完系统从零构建 | `bestdevenv-init` |
+| 挂载没了、fstab、目录骨架、XDG、迁移 | `bestdevenv-dirs` |
+| 优化系统参数/内核参数/docker/终端/镜像源 | `bestdevenv-optimize` |
+| 改配置、chezmoi、配置漂移、config 仓库 | `bestdevenv-config` |
+| 装语言栈/agent 工具/IDE | `bestdevenv-dev` |
+| 新增/接线 runtime、统一记忆/MCP/Skill/会话、切换工具不适 | `bestdevenv-runtime` |
+| code-open/close/nm/out、依赖产物拆分、文件放哪 | `bestdevenv-workflow` |
+| 自检/报告/清缓存/看门/磁盘紧张 | `bestdevenv-health` |
+| 症状含糊（"环境好像坏了"） | 先 `bestdevenv-health` 诊断，按失败项再路由 |
+
+## 编排规则
+
+1. **依赖顺序**：dirs → optimize → config → dev（装语言前先有目录与基线）；health 可随时插队诊断
+2. **幂等**：所有子 Skill 底层脚本可重复执行；中断的 init 用 `--resume` 续建
+3. **组合示例**：「部署开发环境」＝ config（确认基线）→ dev；「这台机器不对劲」＝ health 诊断 → 按失败项路由对应子 Skill 修复
+4. **多子域任务**：先建编排日志（见下节），逐个调度并逐步记账；不要并行改系统
+5. **先确认再装**：调度 bestdevenv-dev 前先向用户确认语言栈与 vibecoding 工具清单（七语言 + runtimes.tsv 注册表），确认结果经 `--langs`/`--tools` 显式传入——不按默认静默安装（init.sh 全量管道自带交互询问，无需二次确认）
+
+## 编排进度（长任务跨会话可续建）
+
+编排可能耗时很长、甚至跨越多个会话——**每一步进度必须落盘**（`devenv orch` → `~/DevEnv/docs/progress/orch-*.md`），任何时刻中断都能无损续做：
+
+```bash
+J="$(devenv orch new "<任务目标>")"            # 开工：创建编排日志（自动记录探环境快照）
+devenv orch add bestdevenv-dirs "修复挂载"      # 逐条登记计划（按依赖顺序）
+devenv orch next "1. bestdevenv-dirs（开始）"   # 每步调度前写续做指针
+devenv orch done 1 "挂载转绿；doctor 复查 ✓"    # 每步完成/失败立即记账（先落盘再继续）
+devenv orch status                              # 查进度与续做指引
+```
+
+协议（严格执行）：
+1. **开工**：`orch new` → `orch add` 逐条登记；≥2 步的任务必须建日志，单步小任务可免
+2. **每步**：调度前 `orch next` 写指针 → 调度子 Skill → `orch done/fail <n> "<结果>｜doctor 复查结论"`
+3. **续做**（用户说"继续/接着上次的来"）：`orch status` 取最新日志 → **先重跑探环境**（前置条件可能已变）→ 从第一个未完成步骤继续，已完成的靠幂等跳过、绝不重做
+4. **收尾**：全部 done → doctor 终验 → 向用户报告（附 journal 路径）
+
+## 验收与收尾
+
+- 完成后必跑 `devenv doctor` 复查，向用户报告 ✓/✗ 清单
+- 动过 `$COMMON/config` 就提醒 commit + push；动过系统参数提醒需重启生效项
+- 需要留痕时 `devenv report`（→ `$COMMON/docs/env/`）
+
+## 子 Skill 维护（改模板 → 重新生成）
+
+模板：`$BDE/templates/skills/<name>/SKILL.md.tmpl`；正本由 `devenv gen`（即 `agents-md.sh`）
+统一再生，工具接线由 `bash "$BDE/modules/agent/runtime.sh"` 按注册表（runtimes.tsv）执行。
+勿手改正本，勿手改 `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽）下的链接。
+doctor「正本与模板同代（gen 指纹）」项红 = 改了模板未再生 → 跑 `devenv gen`。

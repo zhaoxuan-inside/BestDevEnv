@@ -1,0 +1,42 @@
+---
+name: bestdevenv-optimize
+version: 0.0.1
+description: BestDevEnv 系统基线与参数优化——内核参数（inotify）、docker daemon.json、apt 源检测、默认终端 konsole/shell zsh、fcitx5、starship 的落地与幂等重放时使用。触发：优化系统参数、内核参数、inotify、docker 配置、镜像源、终端、输入法。
+---
+
+# 系统基线与参数优化（M1）
+
+单一职责：OS 层基线与参数。目录/挂载归 `bestdevenv-dirs`，用户配置文件归 `bestdevenv-config`。
+
+## 执行（幂等；脚本按检测到的 OS 选变体）
+
+```bash
+source "$HOME/.config/devspace/env.sh"
+BDE="$COMMON/code/BestDevEnv"
+OS="$(. /etc/os-release; echo "$ID")"
+case "$OS" in
+    ubuntu|debian|linuxmint)      bash "$BDE/modules/os/ubuntu.sh" ;;
+    arch|manjaro|endeavouros)     bash "$BDE/modules/os/arch.sh" ;;
+    *)                            echo "OS 未支持: $OS（arch/windows 为里程碑占位）" ;;
+esac
+```
+
+## 已落盘参数清单（重跑即重放）
+
+| 项 | 落点 | 验收 |
+|---|---|---|
+| inotify 上限 | `/etc/sysctl.d/99-devspace.conf`（watches=524288 / instances=1024） | `sysctl fs.inotify.max_user_watches` |
+| docker 配置 | cfg-map 收编：正本 ③ `config/services/docker/daemon.json` → `/etc/docker/daemon.json`（`devenv cfg apply`） | `devenv cfg diff` ｜ `docker info` |
+| docker 数据根 | ① `DevEnv/services/docker`（2026-11-08 迁移，服务三分离首例） | `docker info` Docker Root Dir ｜ `docker system df` |
+| docker 安装体 | apt docker.io + `enable --now` + docker 组（M1 三件套） | `systemctl is-active docker` |
+| apt 源 | 只检测报告，不自动切（人工切阿里/清华） | 执行输出 pending 项 |
+| 默认终端/shell | konsole + Ctrl+Alt+T；zsh；`.bashrc` 接 env.sh | `echo $SHELL` |
+| 输入法 | fcitx5 全家桶 + **macOS12 皮肤**（macos12-light/dark → ① `$DEV/xdg/local/fcitx5/themes/`，git→jsDelivr→API 三链路拉取）+ rime 简体默认；皮肤选择在 config 仓库 `classicui.conf`；**IM 环境变量由 config 仓库 `dot_config/environment.d/50-devspace.conf.tmpl` 下发**（GTK/QT/XMODIFIERS → fcitx：GNOME Wayland 的 Mutter 只支持 IBus，必须让客户端自己加载 fcitx 模块直连 D-Bus）；启用/雾凇为人工 | `im-config -n fcitx5` + 重登；`systemctl --user show-environment \| grep IM_MODULE` 应为 fcitx ｜ 皮肤重放：`bash modules/os/fcitx5-theme.sh` |
+| 提示符 | starship（`~/.local/bin` 用户级安装） | `starship --version` |
+
+## 边界
+
+- 写操作依赖 `sudo -n` 免密——批量 pending 先查 sudo
+- locale/时区不在脚本内盲改（人工确认后手改）
+- GNOME Wayland 下 Mutter 只认 IBus：不走 GTK/Qt IM 模块的客户端（`--ozone-platform=wayland` 的 Chromium/Electron、GNOME Shell 自身界面）用不了 fcitx5；需要中文输入时让该客户端走 XWayland（`--ozone-platform=x11`），或整体改用 IBus
+- kernel 参数文件已存在即跳过——改参数需先改 `/etc/sysctl.d/99-devspace.conf` 内容或删文件重跑

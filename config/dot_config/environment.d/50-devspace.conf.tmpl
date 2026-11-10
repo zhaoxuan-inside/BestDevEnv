@@ -21,3 +21,5 @@ QT_IM_MODULE=fcitx
 XMODIFIERS=@im=fcitx
 SDL_IM_MODULE=fcitx
 CLUTTER_IM_MODULE=fcitx
+# Electron 客户端（ZCode 等）：原生 Wayland 绕过 GTK/Qt IM 模块收不到 fcitx5，统一压回 XWayland
+ELECTRON_OZONE_PLATFORM_HINT=x11
