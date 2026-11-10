@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=ZCode
+Exec=/opt/ZCode/zcode --ozone-platform=x11 %U
+Terminal=false
+Type=Application
+Icon=zcode
+StartupWMClass=ZCode
+Comment=ZCode Desktop App
+MimeType=x-scheme-handler/zcode;
+Categories=Development;
