@@ -148,8 +148,9 @@ _cfg_snapshot() {
     command -v rsync >/dev/null 2>&1 || { bde_fail "rsync 不可用（apt install rsync）"; return 1; }
     mkdir -p "$BDE_ROOT/config"
     # -rlt：保留链接/权限位忽略（HGFS 恒 777，不追 perm）+ 时间戳增量；--delete 保真镜像；.git 不进 seed
+    # 密钥不入 seed：.env 类（技能自管 API key，如 arkcli byted-web-search）磁盘中留在 ③，仓库面除名（GitHub Push Protection 实证，2026-11-11）
     local _err; _err="$(mktemp)"
-    if rsync -rlt --delete --exclude '.git/' "$COMMON/config/" "$BDE_ROOT/config/" 2>"$_err"; then
+    if rsync -rlt --delete --exclude '.git/' --exclude '.env' "$COMMON/config/" "$BDE_ROOT/config/" 2>"$_err"; then
         [ -s "$_err" ] && bde_info "rsync 提示: $(head -2 "$_err")"
         bde_ok "seed 快照镜像 → $BDE_ROOT/config/（③ 正本，--delete 保真）"
     else

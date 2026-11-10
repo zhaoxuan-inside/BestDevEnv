@@ -1,2 +1,5 @@
 .zcode/
 *.log
+
+# 密钥不入库：技能自管 .env（API key 磁盘留存 ③，仓库面除名——GitHub Push Protection，2026-11-11）
+config/agents/skill/*/.env
