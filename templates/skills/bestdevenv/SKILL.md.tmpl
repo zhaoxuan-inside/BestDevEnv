@@ -1,6 +1,6 @@
 ---
 name: bestdevenv
-version: 0.0.1
+version: 0.0.2
 description: BestDevEnv 开发环境总调度——用户提出环境类需求但不属于单一子域、或需要先探明本机现状再编排多步工作时使用：探环境（devenv doctor）→拆需求→按依赖顺序调度 bestdevenv-* 子 Skill→devenv doctor 验收。单一明确子域（如仅清缓存）直接用对应子 Skill，不经本 Skill。
 ---
 
@@ -57,6 +57,7 @@ devenv app --all                              # 应用视图（安装/配置/数
 2. **幂等**：所有子 Skill 底层脚本可重复执行；中断的 init 用 `--resume` 续建
 3. **组合示例**：「部署开发环境」＝ config（确认基线）→ dev；「这台机器不对劲」＝ health 诊断 → 按失败项路由对应子 Skill 修复
 4. **多子域任务**：先建编排日志（见下节），逐个调度并逐步记账；不要并行改系统
+5. **先确认再装**：调度 bestdevenv-dev 前先向用户确认语言栈与 vibecoding 工具清单（七语言 + runtimes.tsv 注册表），确认结果经 `--langs`/`--tools` 显式传入——不按默认静默安装（init.sh 全量管道自带交互询问，无需二次确认）
 
 ## 编排进度（长任务跨会话可续建）
 

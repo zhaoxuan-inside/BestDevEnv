@@ -19,12 +19,16 @@ bde_fail()  { printf "%s[✗]%s %s\n" "$C_R" "$C_0" "$*"; BDE_FAIL=$((BDE_FAIL+1
 bde_pending() { printf "%s[⏳]%s %s\n" "$C_Y" "$C_0" "$*"; BDE_PENDINGS+=("$*"); BDE_PENDING_N=$((BDE_PENDING_N+1)); }
 
 # 单值询问：bde_ask 变量名 提示 默认值（非交互/--yes 时取默认）
+# EOF（Ctrl+D/输入流关闭）≠ 确认——返回空串由调用方决定，绝不静默取默认开工
 bde_ask() {
     local __var=$1 __q=$2 __d=$3 __a=""
     if [ "${BDE_ASSUME_YES:-0}" = "1" ] || [ ! -t 0 ]; then
         printf -v "$__var" "%s" "$__d"; return
     fi
-    read -r -p "$__q [$__d] " __a || __a="$__d"
+    if ! read -r -p "$__q [$__d] " __a; then
+        printf -v "$__var" ""
+        return
+    fi
     printf -v "$__var" "%s" "${__a:-$__d}"
 }
 
