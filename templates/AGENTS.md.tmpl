@@ -50,9 +50,9 @@
 
 ## Runtime 统一契约（vibecoding 工具 = 可替换运行时）
 
-1. **记忆**：正本 `~/.config/devspace/agents/AGENTS.md`，各工具约定路径（`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.gemini/GEMINI.md`、`~/.config/opencode/AGENTS.md`、`~/.zcode/AGENTS.md`）均为 symlink——改指令只改模板后由生成器再生，勿手改正本与链接
-2. **Skill**：正本 `~/.config/devspace/agents/skill/<name>/`；`~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽——ZCode 客户端原生扫描该目录，`~/.zcode/skills` 双根接线曾致同名 skill 重复注册，2026-11-08 实证）逐项 symlink 接线
-3. **MCP**：正本 `~/.config/devspace/agents/mcp.json`——加/删 server 改正本后 `devenv runtime mcp sync` 投影到各工具；工具内手动加的属工具本地，收编时抄入正本
+1. **记忆**：正本 `~/.config/devspace/agents/AGENTS.md`（① 每机器 probe 渲染产物——可复用的是模板，生成物不跨机器共享），各工具约定路径（`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.gemini/GEMINI.md`、`~/.config/opencode/AGENTS.md`、`~/.zcode/AGENTS.md`）均为 symlink——改指令只改模板后由生成器再生，勿手改正本与链接
+2. **Skill**：正本 ③ `$COMMON/config/agents/skill/<name>/`（config 仓库 git 版本化——push/pull 即跨机器复用；`~/.config/devspace/agents/skill` 为 ① 兼容链接）；`~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽——ZCode 客户端原生扫描该目录，`~/.zcode/skills` 双根接线曾致同名 skill 重复注册，2026-11-08 实证）逐项 symlink 接线；枢纽出现真实技能目录时 `devenv runtime skill adopt <name> <路径>` 收编进正本
+3. **MCP**：正本 ③ `$COMMON/config/agents/mcp.json`（版本化；路径写 `${DEV}/${COMMON}/${LOCAL}/${HOME}` 锚点，投影前按本机展开；鉴权/密钥不入 ③ 正本——env 引用或仅工具本地投影）——加/删 server 改正本后 `devenv runtime mcp sync` 投影到各工具；工具内手动加的属工具本地，收编时抄入正本
 4. **会话**：会话库归各工具私有（位置调查：`devenv runtime sessions`），不迁移、不自动清；跨工具续做长任务一律走 `devenv orch`
 5. **注册表**：全部工具登记于 BestDevEnv `modules/agent/runtimes.tsv`——新 runtime 先登记一行，再 `devenv runtime wire`
 6. **配置**：任何服务/软件/工具的配置文件——正本登记于 `modules/cfg/cfg-map.tsv`、内容住 `$COMMON/config/{services,apt,dot_config}/`（git 版本化）；改动只改正本后 `devenv cfg apply`，漂移 `devenv cfg diff`（doctor 巡检）；新装软件用 `devenv cfg adopt <name> <路径>` 收编。服务生命周期（enable/start）归安装体，不归本工程

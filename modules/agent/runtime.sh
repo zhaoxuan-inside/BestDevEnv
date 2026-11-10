@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # modules/agent/runtime.sh — Runtime 统一接线器（M4 扩展，依宪法 §10.9 延伸）
 # 契约：所有 vibecoding 工具 = 可替换 Runtime；记忆/Skill/MCP/会话四域由本工程统一承载
-#   记忆   正本 ~/.config/devspace/agents/AGENTS.md → 各工具约定路径 symlink
-#   Skill  正本 ~/.config/devspace/agents/skill/<name>/ → 各工具 skills 目录逐项 symlink
-#   MCP    正本 ~/.config/devspace/agents/mcp.json → 各工具投影（工具本地条目永不覆盖）
+#   记忆   正本 ① ~/.config/devspace/agents/AGENTS.md（每机器 probe 渲染产物）→ 各工具约定路径 symlink
+#   Skill  正本 ③ $BDE_AGENTS_CANON/skill/<name>/（config 仓库版本化，跨机器复用）→ 各工具 skills 目录逐项 symlink
+#   MCP    正本 ③ $BDE_AGENTS_CANON/mcp.json（版本化；路径写 ${DEV} 等锚点，投影前按本机展开）
+#          → 各工具投影（工具本地条目永不覆盖）；鉴权/密钥不入 ③ 正本（env 引用或仅工具本地投影）
 #   会话   工具私有，只登记调查（devenv runtime sessions）；跨工具长任务续做走 devenv orch
 # 用法：source（init M4:runtime）→ 全量接线；独立执行 → 子命令（见 usage）
 [ -n "${BDE_RUNTIME_LOADED:-}" ] && return 0 2>/dev/null || true
@@ -15,18 +16,19 @@ source "$BDE_ROOT/lib/common.sh"
 source "$BDE_ROOT/lib/ensure.sh"
 
 REG="$BDE_ROOT/modules/agent/runtimes.tsv"
-CANON_DIR="$HOME/.config/devspace/agents"
-CANON_MEM="$CANON_DIR/AGENTS.md"
-CANON_MCP="$CANON_DIR/mcp.json"
-SKILL_CANON_BASE="$CANON_DIR/skill"
+CANON_DIR="$BDE_AGENTS_LOCAL"               # ① 接线/生成区（AGENTS.md 生成物；skill/mcp 为 →③ 兼容链接）
+CANON_MEM="$CANON_DIR/AGENTS.md"            # Memory 正本（① 每机器渲染产物，模板即共享层）
+CANON_MCP="$BDE_AGENTS_CANON/mcp.json"      # MCP 正本（③ 版本化）
+SKILL_CANON_BASE="$BDE_AGENTS_CANON/skill"  # Skill 正本（③ 版本化）
 MCP_SEED="$BDE_ROOT/modules/agent/mcp.seed.json"
 
 _rt_usage() {
     cat <<'EOF'
-用法: runtime.sh list|wire|mcp sync|mcp list|sessions|launch <tool> [args...]
+用法: runtime.sh list|wire|skill adopt <name> <路径>|mcp sync|mcp list|sessions|launch <tool> [args...]
   list        全 runtime 接线现状视图
   wire        幂等接线（memory + skills + mcp）
-  mcp sync    MCP 正本 → 各工具投影（工具本地条目保留）
+  skill adopt 把枢纽真实技能目录收编进 ③ 正本（原位 symlink 接回；commit 后跨机器复用）
+  mcp sync    MCP 正本（③，锚点按本机展开）→ 各工具投影（工具本地条目保留）
   mcp list    MCP 正本内容
   sessions    会话库调查（只读）
   launch      统一启动：source env.sh 后 exec 工具（vibe 入口）
@@ -72,46 +74,99 @@ _rt_wire_skills() {
         [ -d "$_dir" ] || continue
         _n="$(basename "$_dir")"
         if [ -e "$sdir/$_n" ] && [ ! -L "$sdir/$_n" ]; then
-            bde_pending "$sdir/$_n 已有真实内容——人工确认后替换为 symlink"
+            bde_pending "$sdir/$_n 已有真实内容——devenv runtime skill adopt $_n $sdir/$_n 收编进 ③ 正本"
             continue
         fi
         ensure_symlink "$sdir/$_n" "$SKILL_CANON_BASE/$_n"
     done
 }
 
-# ── MCP：正本播种 + 枢纽兜底 + 各工具投影 ─────────────────────────────────
+# ── Skill 收编：枢纽真实目录 → ③ 正本（原位 symlink 接回；config commit 后跨机器复用）──
+_rt_skill_adopt() {
+    local name="$1" src="$2"
+    [ -n "$name" ] && [ -n "$src" ] || { _rt_usage; return 2; }
+    src="${src/#\$HOME/$HOME}"
+    [ -d "$src" ] && [ ! -L "$src" ] || { bde_fail "技能目录不存在或已是链接: $src"; return 1; }
+    case "$src" in "$SKILL_CANON_BASE"/*) bde_fail "已是 ③ 正本内容，无需收编: $src"; return 1 ;; esac
+    [ "$(basename "$src")" = "$name" ] || bde_pending "目录名 $(basename "$src") ≠ 登记名 $name——按登记名收编"
+    local dst="$SKILL_CANON_BASE/$name"
+    if [ -e "$dst" ]; then
+        bde_fail "③ 正本已存在同名技能: $dst（先处理冲突再收编）"; return 1
+    fi
+    ensure_dir "$SKILL_CANON_BASE" || { bde_fail "③ 正本目录不可建：$SKILL_CANON_BASE"; return 1; }
+    if ! cp -r "$src" "$dst"; then
+        bde_fail "拷贝失败（原目录未动）: $src → $dst"; return 1
+    fi
+    bde_ok "收编 $name → $dst（③ 版本化；$COMMON/config commit + push 后跨机器复用）"
+    if rm -rf "$src" && ln -sfn "$dst" "$src"; then
+        bde_ok "原位接回: $src → $dst（symlink 住本机盘，不违反共享盘物理边界）"
+    else
+        bde_pending "$src 替换为 symlink 失败（③ 副本已就位）——人工处理"
+    fi
+}
+
+# ── MCP：正本播种（③）+ 旧区迁移 + 枢纽兜底 + 各工具投影 ──────────────────
 _rt_mcp_seed() {
+    # 旧 ① 正本迁移：真实 mcp.json（旧播种/用户编辑）→ ③ 版本化，原位换兼容链接
+    if [ -f "$CANON_DIR/mcp.json" ] && [ ! -L "$CANON_DIR/mcp.json" ]; then
+        if [ ! -f "$CANON_MCP" ]; then
+            ensure_dir "$BDE_AGENTS_CANON" && mv "$CANON_DIR/mcp.json" "$CANON_MCP" \
+                && bde_ok "MCP 正本迁移 → ③ $CANON_MCP"
+        elif cmp -s "$CANON_DIR/mcp.json" "$CANON_MCP"; then
+            rm -f "$CANON_DIR/mcp.json" && bde_ok "旧 ① mcp.json 与 ③ 正本一致——除名换兼容链接"
+        else
+            ensure_backup "$CANON_DIR/mcp.json"
+            bde_pending "$CANON_DIR/mcp.json 与 ③ 正本不一致（已备份）——人工对账后删旧换链接"
+        fi
+    fi
     if [ ! -f "$CANON_MCP" ]; then
-        ensure_dir "$CANON_DIR" && cp "$MCP_SEED" "$CANON_MCP" \
-            && bde_ok "MCP 正本播种 ~/.config/devspace/agents/mcp.json"
+        ensure_dir "$BDE_AGENTS_CANON" && cp "$MCP_SEED" "$CANON_MCP" \
+            && bde_ok "MCP 正本播种 → $CANON_MCP（③ 版本化）"
     fi
     # ~/.agents/mcp.json 兜底接线：zcode 兜底读取 + arkcli 枢纽（agent-standard 惯例）
     ensure_dir "$HOME/.agents"
     ensure_symlink "$HOME/.agents/mcp.json" "$CANON_MCP"
+    # ① 兼容链接（旧契约路径 ~/.config/devspace/agents/mcp.json 保持有效）
+    ensure_dir "$CANON_DIR"
+    ensure_symlink "$CANON_DIR/mcp.json" "$CANON_MCP"
 }
 
-_mcp_count() {
+# ── MCP ③ 正本的锚点展开视图（正本跨机器共享：路径写 ${DEV}/${COMMON}/${LOCAL}/${HOME}，
+#    投影/展示一律消费本机展开态——bde_expand_anchors 是 cfg copy-expand 同一机制）──
+_mcp_eff_file() {  # <输出文件>
+    if grep -q '\${' "$CANON_MCP" 2>/dev/null; then
+        bde_expand_anchors "$CANON_MCP" > "$1" || cp "$CANON_MCP" "$1"
+    else
+        cp "$CANON_MCP" "$1"
+    fi
+}
+
+_mcp_count() {  # [正本文件]（缺省 ③ 原文）
+    local f="${1:-$CANON_MCP}"
     python3 -c 'import json,sys
 try: print(len(json.load(open(sys.argv[1])).get("mcpServers",{})))
-except Exception: print(0)' "$CANON_MCP" 2>/dev/null || echo 0
+except Exception: print(0)' "$f" 2>/dev/null || echo 0
 }
 
 _mcp_list() {
-    local n; n="$(_mcp_count)"
-    bde_info "MCP 正本：$CANON_MCP（$n 个 server）"
-    [ "$n" -eq 0 ] && bde_info "（空——编辑正本加入 server 后 devenv runtime mcp sync 投影）"
+    local eff; eff="$(mktemp "${TMPDIR:-/tmp}/bde-mcp-x.XXXXXX")"
+    _mcp_eff_file "$eff"
+    local n; n="$(_mcp_count "$eff")"
+    bde_info "MCP 正本：$CANON_MCP（③ 版本化；$n 个 server）"
+    [ "$n" -eq 0 ] && bde_info "（空——编辑 ③ 正本加入 server 后 devenv runtime mcp sync 投影；路径写 \${DEV} 等锚点）"
     python3 -c 'import json,sys
 try:
     d=json.load(open(sys.argv[1])).get("mcpServers",{})
     for k,v in d.items():
         if "url" in v: print(f"  {k}  remote  {v[\"url\"]}")
         else: print(f"  {k}  {v.get(\"command\",\"\")} {\" \".join(v.get(\"args\",[]))}")
-except Exception: pass' "$CANON_MCP" 2>/dev/null
+except Exception: pass' "$eff" 2>/dev/null
+    rm -f "$eff"
 }
 
-# 按工具格式转换正本条目 → name<TAB>json 行文件（$1=格式 $2=输出文件）
+# 按工具格式转换正本条目 → name<TAB>json 行文件（$1=格式 $2=输出文件 $3=正本文件（已展开））
 _mcp_convert() {
-    python3 - "$CANON_MCP" "$1" "$2" <<'PY'
+    python3 - "$3" "$1" "$2" <<'PY'
 import json,sys
 src,fmt,out=sys.argv[1],sys.argv[2],sys.argv[3]
 try: servers=json.load(open(src)).get("mcpServers",{})
@@ -143,9 +198,9 @@ _json_merge() {
 }
 
 # codex：TOML 托管块（BEGIN/END 之间由本工程再生；工具本地条目在块外不动）
-_codex_mcp() {
-    local f="$HOME/.codex/config.toml" tmp
-    local begin="# BEGIN BestDevEnv MCP（托管块：canonical ~/.config/devspace/agents/mcp.json → devenv runtime mcp sync 再生）"
+_codex_mcp() {  # $1=正本文件（已展开）
+    local src="${1:-$CANON_MCP}" f="$HOME/.codex/config.toml" tmp
+    local begin="# BEGIN BestDevEnv MCP（托管块：③ 正本 $CANON_MCP 锚点按本机展开 → devenv runtime mcp sync 再生）"
     local end="# END BestDevEnv MCP"
     ensure_dir "$HOME/.codex" || { bde_fail "codex 目录不可建"; return 0; }
     tmp="$(mktemp)"
@@ -153,7 +208,7 @@ _codex_mcp() {
         awk -v b="$begin" -v e="$end" 'index($0,b)==1{skip=1;next} index($0,e)==1{skip=0;next} !skip' "$f" > "$tmp"
     fi
     { cat "$tmp"; echo "$begin"
-      python3 - "$CANON_MCP" <<'PY'
+      python3 - "$src" <<'PY'
 import json,sys
 try: servers=json.load(open(sys.argv[1])).get("mcpServers",{})
 except Exception: servers={}
@@ -175,8 +230,10 @@ PY
 
 _rt_mcp_sync() {
     _rt_mcp_seed
-    local n; n="$(_mcp_count)"
-    bde_info "MCP 投影：正本 $CANON_MCP（$n 个 server）→ 各工具"
+    local eff; eff="$(mktemp "${TMPDIR:-/tmp}/bde-mcp-x.XXXXXX")"
+    _mcp_eff_file "$eff"
+    local n; n="$(_mcp_count "$eff")"
+    bde_info "MCP 投影：正本 ③ $CANON_MCP（锚点按本机展开）→ 各工具"
     local T; T="$(mktemp -d)"
     mapfile -t _rows < <(_reg_rows)
     local _r name bin mem sk mc sess p
@@ -186,18 +243,18 @@ _rt_mcp_sync() {
         p="${mc/#\$HOME/$HOME}"
         _rt_present "$bin" "$mem|$sk|$mc|$sess" || continue
         case "$name" in
-            claude-code) _mcp_convert claude "$T/c"; _json_merge "$HOME/.claude.json" mcpServers "$T/c" ;;
-            codex)       _codex_mcp ;;
-            gemini-cli)  _mcp_convert gemini "$T/g"; _json_merge "$HOME/.gemini/settings.json" mcpServers "$T/g" ;;
-            opencode)    _mcp_convert opencode "$T/o"; _json_merge "$HOME/.config/opencode/opencode.json" mcp "$T/o" ;;
-            copilot)     _mcp_convert copilot "$T/cp"; _json_merge "$HOME/.copilot/mcp-config.json" mcpServers "$T/cp" ;;
+            claude-code) _mcp_convert claude "$T/c" "$eff"; _json_merge "$HOME/.claude.json" mcpServers "$T/c" ;;
+            codex)       _codex_mcp "$eff" ;;
+            gemini-cli)  _mcp_convert gemini "$T/g" "$eff"; _json_merge "$HOME/.gemini/settings.json" mcpServers "$T/g" ;;
+            opencode)    _mcp_convert opencode "$T/o" "$eff"; _json_merge "$HOME/.config/opencode/opencode.json" mcp "$T/o" ;;
+            copilot)     _mcp_convert copilot "$T/cp" "$eff"; _json_merge "$HOME/.copilot/mcp-config.json" mcpServers "$T/cp" ;;
             zcode)
                 # 正本已由 ~/.agents/mcp.json 兜底 symlink 接入；仅当工具配置已有本地 servers 时受控合并
                 local zf="$HOME/.zcode/cli/config.json"
                 if [ -f "$zf" ] && [ "$(python3 -c 'import json,sys
 try: print(len(json.load(open(sys.argv[1])).get("mcp",{}).get("servers",{})))
 except Exception: print(0)' "$zf" 2>/dev/null || echo 0)" -gt 0 ]; then
-                    _mcp_convert claude "$T/z"; _json_merge "$zf" mcp.servers "$T/z"
+                    _mcp_convert claude "$T/z" "$eff"; _json_merge "$zf" mcp.servers "$T/z"
                 else
                     bde_skip "zcode MCP：config.json 无本地 servers（走 ~/.agents/mcp.json 兜底，不动工具配置）"
                 fi ;;
@@ -205,7 +262,7 @@ except Exception: print(0)' "$zf" 2>/dev/null || echo 0)" -gt 0 ]; then
             *)           bde_pending "MCP 投影适配待定：$name（登记）" ;;
         esac
     done
-    rm -rf "$T"
+    rm -rf "$T"; rm -f "$eff"
     [ "$n" -eq 0 ] && bde_info "正本为空：本次仅枢纽接线，未写任何工具配置"
 }
 
@@ -228,7 +285,7 @@ _rt_sessions() {
 _rt_list() {
     _rt_mcp_seed >/dev/null 2>&1
     local n; n="$(_mcp_count)"
-    bde_info "Runtime 接线现状（正本：记忆 $CANON_MEM ｜ MCP $CANON_MCP=$n ｜ Skill $SKILL_CANON_BASE）"
+    bde_info "Runtime 接线现状（记忆 ① $CANON_MEM ｜ MCP ③ $CANON_MCP ｜ Skill ③ $SKILL_CANON_BASE）"
     printf "  %-12s %-4s %-14s %-14s %-10s %s\n" "RUNTIME" "状态" "记忆" "Skill" "MCP" "会话"
     mapfile -t _rows < <(_reg_rows)
     local _r name bin mem sk mc sess p st ms ss
@@ -295,6 +352,10 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
     case "$_cmd" in
         list)     _rt_list ;;
         wire)     _rt_wire_all ;;
+        skill)    case "${1:-}" in
+                      adopt) shift 2>/dev/null; _rt_skill_adopt "$@" ;;
+                      *) echo "用法: runtime.sh skill adopt <name> <路径>"; exit 2 ;;
+                  esac ;;
         mcp)      case "${1:-sync}" in
                       sync) shift 2>/dev/null; _rt_mcp_sync ;;
                       list) shift 2>/dev/null; _mcp_list ;;

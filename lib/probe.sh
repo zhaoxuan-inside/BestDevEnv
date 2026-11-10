@@ -172,6 +172,13 @@ bde_probe_collect() {
        && [ -n "$(git -C "$BDE_ROOT" ls-files config/ 2>/dev/null | head -1)" ]; then
         P_CFG_BACKUP=1
     fi
+    # agents 正本 ③ 版本化（Skill/MCP 正本入 config 仓库——跨机器复用；非 git 环境判 0 不误报）
+    P_AGENTS_CANON=0
+    if [ -d "$COMMON/config/agents/skill" ] \
+       && command -v git >/dev/null 2>&1 && [ -d "$COMMON/config/.git" ] \
+       && [ -n "$(git -C "$COMMON/config" ls-files agents 2>/dev/null | head -1)" ]; then
+        P_AGENTS_CANON=1
+    fi
 
     # 内核参数
     P_INOTIFY_W="$(cat /proc/sys/fs/inotify/max_user_watches 2>/dev/null || echo 0)"
@@ -274,6 +281,7 @@ doc = {
         "cfg_drift": i("P_CFG_DRIFT"),
         "cfg_dirty": i("P_CFG_DIRTY"),
         "cfg_backup": i("P_CFG_BACKUP"),
+        "agents_canon": i("P_AGENTS_CANON"),
         "ide_ready": i("P_IDE_OK"),
         "xdg_redirect": 1 if p.get("XDG_DOC") else 0,
         "inotify_ok": i("P_INOTIFY_OK"),

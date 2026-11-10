@@ -153,8 +153,8 @@ BestDevEnv/
   → Local 结构（build/cache/data/docs + XDG 八目录）→ `DevEnv` 补齐（deps/code/data/bin/docs/tmp）→
   XDG 重定向（user-dirs.dirs）+ home 兼容 symlink → 归位提示（现有内容对号入座的检查清单）。
 - `windows.ps1`：`C:\Dev` 骨架 → mklink 指向 `\\vmware-host\Shared Folders\{Local,Common}` → S:/L: 兼容盘符。
-- **交互选择点**：锚点路径确认（默认 `/Share`）｜是否迁移旧挂载｜XDG 重定向开关（默认开）｜
-  是否生成全骨架（默认全量）。
+- **选择点**（走档案与旗标，非交互问询）：锚点/后端 ← `storage.toml` 机器段 ｜ 死挂载清理 ←
+  `config/data/mount-fixups.tsv` ｜ XDG 重定向开关 ← `--no-xdg`（默认开）｜ 骨架默认全量。
 
 ### M3 语言开发环境（需求 4）
 
@@ -199,11 +199,11 @@ claude-code  codex  gemini-cli  opencode  zcode  trae/trae-cn  antigravity  qode
 **Runtime 统一管理层**（`runtime.sh`，宪法 §10.9 延伸）：操作系统可能装很多 vibecoding 工具，
 它们只是**可替换的 Runtime**——记忆、Skill、MCP、会话四域由本工程统一承载，切换工具不再丢失环境：
 
-| 域 | 正本（应用层） | 工具落点 | 命令 |
+| 域 | 正本 | 工具落点 | 命令 |
 |---|---|---|---|
-| 记忆 | `~/.config/devspace/agents/AGENTS.md` | 各工具约定路径 symlink（claude/codex/gemini/opencode/zcode/arkcli） | `devenv runtime wire` |
-| Skill | `~/.config/devspace/agents/skill/<name>/` | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽——ZCode 原生扫描该目录，~/.zcode/skills 双根曾致同名 skill 重复注册，2026-11-08 实证）逐项 symlink | `devenv runtime wire` |
-| MCP | `~/.config/devspace/agents/mcp.json`（播种后归用户） | claude `~/.claude.json`、codex TOML 托管块、gemini/opencode/copilot JSON 合并、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
+| 记忆 | ① `~/.config/devspace/agents/AGENTS.md`（每机器 probe 渲染——可复用的是模板） | 各工具约定路径 symlink（claude/codex/gemini/opencode/zcode/arkcli） | `devenv runtime wire` |
+| Skill | ③ `$COMMON/config/agents/skill/<name>/`（config 仓库版本化，跨机器复用） | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽——ZCode 原生扫描该目录，~/.zcode/skills 双根曾致同名 skill 重复注册，2026-11-08 实证）逐项 symlink；枢纽真实技能目录 `devenv runtime skill adopt <name> <路径>` 收编 | `devenv runtime wire` |
+| MCP | ③ `$COMMON/config/agents/mcp.json`（版本化；`${DEV}` 等锚点投影前按本机展开；密钥不入正本） | claude `~/.claude.json`、codex TOML 托管块、gemini/opencode/copilot JSON 合并、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
 | 会话 | 工具私有（注册表登记） | 只调查不迁移；跨工具续做走 `devenv orch` | `devenv runtime sessions` |
 
 - **注册表**：`modules/agent/runtimes.tsv` 是唯一事实源（新 runtime = 加一行）；接线器只按注册表干活
@@ -240,23 +240,25 @@ probe.sh ──→ $DEV/docs/state/probe.json ──→ doctor.sh（校验视图
 挂载健康（Common 可写、fstab 就位）→ 重定向生效（缓存/依赖路径探测）→ 配置漂移
 （config HEAD vs 应用层）→ 占用标记陈旧项 → 根盘水位。
 
-## 5. 交互设计（需求 3 的"支持交互选择"）
+## 5. 交互设计（按开发者需求安装）
 
-`init` 的交互问题清单（均有默认值，一路回车 = 全默认）：
+`init` 交互询问两项需求（回车 = 默认；`--yes` / 非交互终端自动取默认——bootstrap 免疫）：
 
-| # | 问题 | 默认值 | 影响 |
+| # | 询问 | 默认值 | 合法集事实源 |
 |---|---|---|---|
-| 1 | OS 确认（自动检测 + 人工确认） | 检测结果 | 选择 M1/M2/M3/M4 的脚本变体 |
-| 2 | 机器名 | 当前 hostname | 写入 hosts.toml；.claimed-by/提示符引用 |
-| 3 | 目录锚点 | `/Share`（Windows: `C:\Dev` + mklink） | M2 全部路径 |
-| 4 | 是否迁移旧挂载 `/home/hardstone/Share` | 是 | fstab 写法与历史路径兼容 symlink |
-| 5 | XDG 用户目录重定向 | 开 | M2 的 user-dirs + 兼容 symlink |
-| 6 | 语言栈（多选） | node python | M3 执行集合 |
-| 7 | vibecoding 工具（多选） | claude-code codex zcode arkcli | M4 执行集合 |
-| 8 | 镜像源区域 | cn | M1/M3 的镜像清单 |
+| 1 | 语言栈（逗号分隔多选） | node,python | `modules/lang/*.sh`（node/python/rust/go/java/flutter/ai） |
+| 2 | vibecoding 工具（逗号分隔多选） | claude-code,codex,zcode,arkcli | `modules/agent/runtimes.tsv` 注册表 |
 
-实现：Linux 优先 `whiptail`（GNOME 自带），无则 `read` 菜单兜底；Windows 用 `Read-Host` +
-可选 `Out-GridView`。**最后一步输出执行摘要，确认后才动手**。
+非法项响亮剔除并提示可选清单（剔除后为空回退默认）；询问完成后打印**构建计划**
+（OS 变体 ｜ 语言栈 ｜ 工具），确认后才动手；`--dry-run` 只预览不执行；
+EOF（Ctrl+D）一律不开工。**Skill 层硬协议**：会话内由 AI 执行时，调度 bestdevenv-dev
+前必须先向用户确认清单（见 bestdevenv-dev Skill「先确认再装」）。
+
+其余机器差异不走问询，由数据档案承载（宪法 §20，机器段覆盖默认段）：
+锚点/存储后端 → `config/data/storage.toml` ｜ 镜像/代理 → `network.toml` ｜
+机器登记 → `hosts.toml`（克隆 VM 同名时 `--machine` 指定）。
+
+旗标清单：`--yes --resume --rerun --status --reset --dry-run --machine X --langs a,b --tools a,b --no-xdg --no-jetbrains --no-log`
 
 ## 6. 执行流程全景（新机 bootstrap）
 

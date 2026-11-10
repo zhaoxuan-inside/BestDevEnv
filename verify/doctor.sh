@@ -42,6 +42,7 @@ CHECKS = [
     ("系统/服务配置无漂移（cfg-map）", f["cfg_drift"] == 0),
     ("config 仓库干净（无未提交变更）", f["cfg_dirty"] == 0),
     ("config 备份通道（seed 快照随工程仓库 push）", f["cfg_backup"] == 1),
+    ("agents 正本已入 ③ config 仓库（Skill/MCP 版本化）", f["agents_canon"] == 1),
     ("分发器就绪（devenv 在位，旧 env 已除名）", f["dispatcher_ok"] == 1),
     ("Skill/AGENTS 正本与模板同代（gen 指纹）",  f["gen_fresh"] == 1),
     ("本机已登记 hosts.toml（机器数据表）",      f["host_registered"] == 1),

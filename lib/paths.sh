@@ -30,6 +30,13 @@ fi
 BDE_MACHINE="$(printf '%s' "${BDE_MACHINE:-$(hostname)}" | tr '[:upper:]' '[:lower:]')"
 export SHARE COMMON LOCAL DEV BDE_MACHINE BDE_SHARE_STATE
 
+# agents 三域正本区（宪法 §10.9 延伸；Skill/MCP 正本 ③ 版本化跨机器复用，Memory 每机器渲染住 ①）
+#   BDE_AGENTS_CANON = ③ 共享正本（skill/<name>/ + mcp.json；config 仓库 git 版本化，push/pull 即复用）
+#   BDE_AGENTS_LOCAL = ① 接线/生成区（AGENTS.md 每机器渲染产物；skill/mcp 为指向 ③ 的兼容链接）
+BDE_AGENTS_CANON="$COMMON/config/agents"
+BDE_AGENTS_LOCAL="$HOME/.config/devspace/agents"
+export BDE_AGENTS_CANON BDE_AGENTS_LOCAL
+
 # 锚点变量展开（cfg-map copy-expand 机制用）：③ 共享正本里的 ${DEV}/${COMMON}/${LOCAL}/
 # ${SHARE}/${HOME} → 本机锚点值。用户名/主机差异永不住共享正本——机器数据只走锚点，
 # 换用户/换机器/换挂载点后同一份正本自然指向正确落位（home 由用户指定，不写死）。

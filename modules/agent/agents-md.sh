@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # M4: AGENTS.md 统一构建（数据与视图分离：模板 + hosts.toml + probe → 视图）
-# 正本：~/.config/devspace/agents/AGENTS.md（应用层规范位置）
-# 接线：各工具约定路径（~/.claude/CLAUDE.md、~/.gemini/GEMINI.md、~/.codex/AGENTS.md 等）symlink 指向正本
+# 正本分层（宪法 §10.9 延伸 + §20 作用域）：
+#   Memory（AGENTS.md）→ ① 每机器渲染产物（含本机 probe 环境地图，不跨机器共享；可复用的是模板）
+#   Skill 家族         → ③ $BDE_AGENTS_CANON/skill（config 仓库 git 版本化，push/pull 即跨机器复用）
+# 接线：各工具约定路径（~/.claude/CLAUDE.md、~/.gemini/GEMINI.md 等）symlink 指向正本（runtime.sh 按注册表执行）
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
@@ -16,7 +18,7 @@ F_PROBE_JSON="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}/probe.json"
 TPL="$BDE_ROOT/templates/AGENTS.md.tmpl"
 if [ ! -f "$TPL" ]; then bde_pending "AGENTS.md 模板缺失：$TPL"; return 0; fi
 
-CANON_DIR="$HOME/.config/devspace/agents"
+CANON_DIR="$BDE_AGENTS_LOCAL"      # ① 生成物区（AGENTS.md）；skill/mcp 正本已上移 ③（paths.sh 定义）
 CANON="$CANON_DIR/AGENTS.md"
 
 _anchors="| 档 | 作用域 | 路径 |
@@ -92,8 +94,9 @@ done
 
 # ── SKILL 家族：主 Skill（调度）+ 子 Skill（单一职责），templates/skills/<name>/ 统一再生 ──
 SKILLS_SRC="$BDE_ROOT/templates/skills"
-SKILL_CANON_BASE="$CANON_DIR/skill"
+SKILL_CANON_BASE="$BDE_AGENTS_CANON/skill"   # 正本 ③（config 仓库版本化，跨机器复用）
 if [ -d "$SKILLS_SRC" ]; then
+    mkdir -p "$SKILL_CANON_BASE"
     # 旧单体 skill 正本清理（v0.x 生成物 BestDevEnv/，已被 skills/ 家族取代）
     if [ -d "$SKILL_CANON_BASE/BestDevEnv" ] && [ ! -L "$SKILL_CANON_BASE/BestDevEnv" ]; then
         rm -rf "$SKILL_CANON_BASE/BestDevEnv" && bde_ok "清理旧单体 skill 正本 skill/BestDevEnv/"
@@ -106,9 +109,33 @@ if [ -d "$SKILLS_SRC" ]; then
         _scontent="$(<"$_tpl")"
         _scontent="$(bde_tpl_render "$_scontent")"
         printf '%s\n' "$_scontent" > "$SKILL_CANON_BASE/$_name/SKILL.md" \
-            && bde_ok "生成 skill: $_name"
+            && bde_ok "生成 skill: $_name（③ 版本化）" || bde_pending "skill 生成失败（③ 不可写？）: $_name"
     done
-    # 接线（~/.claude/skills、~/.agents/skills、~/.zcode/skills 等）统一由 runtime.sh
+    # ── 旧 ① 正本区迁移：~/.config/devspace/agents/skill 真实目录 → 目录级 symlink → ③ ──
+    # 正本上移 ③ 版本化，① 区降级为兼容接线层；diff 检测防手改正本丢失——有差异先整目录备份
+    if [ -d "$CANON_DIR/skill" ] && [ ! -L "$CANON_DIR/skill" ]; then
+        _migrate=1; _drift=0
+        for _od in "$CANON_DIR/skill"/*/; do
+            [ -d "$_od" ] || continue
+            _on="$(basename "$_od")"
+            cmp -s "$_od/SKILL.md" "$SKILL_CANON_BASE/$_on/SKILL.md" 2>/dev/null || { _drift=1; break; }
+        done
+        if [ "$_drift" = "1" ]; then
+            _bk="$DEV/docs/backup/$(date +%Y%m%d)-agents-skill-old"
+            mkdir -p "$DEV/docs/backup" 2>/dev/null
+            if cp -r "$CANON_DIR/skill" "$_bk" 2>/dev/null; then
+                bde_pending "旧 skill 正本与再生产物有差异——整目录已备份 $_bk（人工对账后可清）"
+            else
+                bde_pending "旧 skill 正本备份失败，跳过迁移（保留 $CANON_DIR/skill）"
+                _migrate=0
+            fi
+        fi
+        if [ "$_migrate" = "1" ]; then
+            rm -rf "$CANON_DIR/skill" && ln -sfn "$SKILL_CANON_BASE" "$CANON_DIR/skill" \
+                && bde_ok "旧 ① skill 正本区 → 目录级 symlink（正本住 ③ $SKILL_CANON_BASE）"
+        fi
+    fi
+    # 接线（~/.claude/skills、~/.agents/skills、~/.hermes/skills 等）统一由 runtime.sh
     # 按 modules/agent/runtimes.tsv 注册表执行——本脚本只负责正本再生
 else
     bde_pending "skill 模板目录缺失：$SKILLS_SRC"
