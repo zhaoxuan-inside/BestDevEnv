@@ -6,10 +6,10 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v0.18（**差异屏蔽缺口全量修复**：用户名/home 零写死——daemon.json `copy-expand` 锚点展开、user-dirs/npmrc/profile 锚点化；cfg-map 条件列 `os=`/`backend_*=` 非适用机器自动缺席；doctor 非 Linux 结构性条件化（fstab 持久化/mac 误判修复）；挂载对账便携化（mountpoint 缺失回退 mount 解析）；ubuntu.sh/ide.sh 模块级 OS 守卫；code-nm/out 按 probe symlink 能力分支；`devenv gen` 再生闭环；doctor 24 项） |
-| 日期 | 2026-11-08 |
+| 版本 | **v0.19（能力总线架构：先抽象能力，再按平台实现——L2 `lib/cap.sh` 能力总线（pkg/svc/kernel/limits/logs/trim/timesync/hostname/fonts/shell/im/terminal/group 13 契约 + 优雅降级） + `_linux-systemd` 基座 + debian/fedora/arch/suse/darwin 适配器族（ubuntu.sh/arch.sh 单体退役，L3 编排零平台字面量）；系统优化默认集（swappiness=10/vfs_cache_pressure=50/file-max/journald 上限/nofile 65535/fstrim.timer）经 cfg 治理自动生效；cfg-map 新增 hosts 动态机制（hosts.toml→/etc/hosts 标记片段）与 `os_family` 条件键；漂移判定同源化（bde_cfg_diff_one 唯一出处，probe/cfg 共用）；存储后端 +nfs/smb/rclone（NAS/云盘，options 键携带 credentials）；开发者角色 profiles.tsv（java-web/python/go/cpp/ml-trainer/fullstack）+ `init --profile` 按需装配；新增 cpp 栈；ai 栈充实（Miniconda tuna + condarc 正本 + CUDA 体检）；字体统一（JetBrainsMono Nerd Font）；doctor 扩至 27 项）** |
+| 日期 | 2026-11-12 |
 | 上游宪法 | devspace-design.md **v10.3**（位于 `/Share/Common/docs/dev-env/design.md`）；MCP/会话/Skill 统一为 §10.9 延伸、配置治理落实 §19.3，提请宪法增补 |
-| 适用范围 | **跨系统：Linux（Ubuntu/Arch）/ macOS / Windows 为目标**；Common/Local 为逻辑目录（本机盘/宿主机盘/云盘皆可为后端）。**当前生产实装 = Ubuntu 系**（ubuntu.sh）；Arch/Windows/macOS 为占位适配器（P2/P3 里程碑，实机验证后才算数） |
+| 适用范围 | **跨系统：Linux（Ubuntu/Arch）/ macOS / Windows 为目标**；Common/Local 为逻辑目录（本机盘/宿主机盘/云盘皆可为后端）。**当前生产实装 = Ubuntu 系**（adapters/debian.sh）；fedora/arch/suse 适配器代码就绪（未实机验证），darwin 最小实装（brew），windows 走 init.ps1 占位（P2/P3 里程碑，实机验证后才算数） |
 | 远端 | `git@github.com:zhaoxuan-inside/BestDevEnv.git` |
 
 ---

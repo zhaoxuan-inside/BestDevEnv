@@ -29,7 +29,8 @@ chezmoi apply -S "$CFG" --destination "$HOME" --force   # 应用到本机（改�
 ```bash
 devenv cfg list                # 清单：项|类|正本|应用层|机制|漂移（devenv svc 只看服务类）
 devenv cfg diff                # 全量漂移检测（非零退出 = 有漂移；doctor 亦巡检）
-devenv cfg apply [name]        # 正本 → 应用层（copy: 备份+落位；append: 逐行追加；幂等）
+devenv cfg apply [name]        # 正本 → 应用层（copy/copy-expand: 备份+落位；append: 逐行追加；hosts: 动态片段；幂等）
+                               # 落位成功自动触发生效动作（sysctl --system / journald 重启）
 devenv cfg adopt <name> <应用层路径> [类] [root]   # 新装软件的配置收编：拷为正本 + 登记一行
 devenv cfg snapshot            # 备份：③ 正本 → 工程仓库 config/ seed 快照 + commit（工程仓库 git push 即异地备份）
 ```
@@ -53,6 +54,11 @@ config 正本（③）跨机同步靠共享盘；**异地备份 = `devenv cfg sn
 ## 机器数据表
 
 `$CFG/hosts.toml`：与工程仓库同源，由 apply-config 单向同步；改机器数据去工程仓库 `hosts.toml`。
+
+**/etc/hosts 生成（v0.19）**：cfg-map `hosts-fragment` 动态机制——`devenv cfg apply` 从 hosts.toml
+生成带标记块（`# >>> generated-by-BestDevEnv >>>`）的片段幂等替换进 /etc/hosts（ip 空的机器段跳过、
+块外内容永不触碰）。给机器分配 ip = 改 hosts.toml `ip` 字段 → apply。hostname 漂移（登记 vs 实际）
+由 doctor 报警，不自动改（克隆 VM 场景防误改；对齐命令 `sudo hostnamectl set-hostname <登记名>`）。
 
 ## 验收
 

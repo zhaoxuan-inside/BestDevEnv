@@ -13,7 +13,8 @@ description: BestDevEnv 新机初始化——装完 OS 后从空白到 devenv do
 ```bash
 source "$HOME/.config/devspace/env.sh"
 BDE="$COMMON/code/BestDevEnv"
-cd "$BDE" && ./init.sh          # 交互询问语言栈与 vibecoding 工具（回车=默认）；会话内执行先与用户确认清单，经 --langs/--tools 显式传入
+cd "$BDE" && ./init.sh          # 交互询问：开发者角色（profiles.tsv，回车=跳过）→ vibecoding 工具 → 语言栈；会话内执行先与用户确认清单，经 --profile/--langs/--tools 显式传入
+./init.sh --profile ml-trainer  # 按角色装配（java-web/python/go/cpp/ml-trainer/fullstack；展开为栈并集）
 ```
 
 - 交互契约：构建计划（OS/语言栈/工具/阶段）确认后才动手；`--yes`/非交互终端自动取默认（bootstrap 免疫）；EOF（Ctrl+D）一律不开工
@@ -24,7 +25,7 @@ cd "$BDE" && ./init.sh          # 交互询问语言栈与 vibecoding 工具（�
 ## 进度管理
 
 ```bash
-./init.sh --dry-run   # 预览构建计划（OS/语言栈/工具/阶段），不询问不执行
+./init.sh --dry-run --profile cpp   # 预览构建计划（family/角色/语言栈/工具/阶段），不询问不执行
 ./init.sh --status    # 各阶段最近状态（状态文件 ~/DevEnv/docs/progress/<机器名>.state）
 ./init.sh --resume    # 跳过 done 阶段，失败阶段重跑
 ./init.sh --rerun     # 强制全量
