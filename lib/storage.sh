@@ -4,7 +4,7 @@
 #   shared  跨主机级（多机多用户共享）   ← 兼容别名 ③ COMMON
 #   host    主机级  （同机多用户共享）   ← 兼容别名 ② LOCAL
 #   user    用户级  （本机本用户）       ← 兼容别名 ① DEV
-# 后端：passthrough（已有挂载）| hgfs | local（预留 nfs/smb/sync——环境其余部分不感知）
+# 后端：passthrough（已有挂载）| hgfs | local | nfs | smb（options 键携带 credentials 等）| rclone（云盘）
 # 档案解析顺序（bootstrap 免疫）：$BDE_STORAGE_PROFILE → ① docs/state/storage.toml
 #   → ③ 正本 config/data/storage.toml（可达则用）→ 内置默认（auto 探测）
 # 本文件不依赖 paths.sh/common.sh；对上层只暴露 bde_storage_load / bde_storage_ensure /
@@ -76,17 +76,19 @@ for scope, dmnt, dsrc in (("shared", "/Share/Common", ".host:/Common"),
     backend = get(scope, "backend", "auto")
     mount   = abspath(get(scope, "mount",   dmnt))
     source  = get(scope, "source",  dsrc)
+    options = get(scope, "options", "")   # smb credentials/vers、rclone 额外旗标等后端私有选项
     print(f"BDE_SCOPE_{scope.upper()}_BACKEND={shlex.quote(backend)}")
     print(f"BDE_SCOPE_{scope.upper()}_MOUNT={shlex.quote(mount)}")
     print(f"BDE_SCOPE_{scope.upper()}_SOURCE={shlex.quote(source)}")
+    print(f"BDE_SCOPE_{scope.upper()}_OPTIONS={shlex.quote(options)}")
 u_root = abspath(d.get(f"{machine}.user", {}).get("root") or d.get("user", {}).get("root", "DevEnv"))
 print(f"BDE_SCOPE_USER_ROOT={shlex.quote(u_root)}")
 PY
 )"
     else
         # 内置默认：shared/host 走 auto 探测，user 走 $HOME/DevEnv
-        BDE_SCOPE_SHARED_BACKEND=auto; BDE_SCOPE_SHARED_MOUNT=/Share/Common; BDE_SCOPE_SHARED_SOURCE=.host:/Common
-        BDE_SCOPE_HOST_BACKEND=auto;   BDE_SCOPE_HOST_MOUNT=/Share/Local;  BDE_SCOPE_HOST_SOURCE=.host:/Local
+        BDE_SCOPE_SHARED_BACKEND=auto; BDE_SCOPE_SHARED_MOUNT=/Share/Common; BDE_SCOPE_SHARED_SOURCE=.host:/Common; BDE_SCOPE_SHARED_OPTIONS=""
+        BDE_SCOPE_HOST_BACKEND=auto;   BDE_SCOPE_HOST_MOUNT=/Share/Local;  BDE_SCOPE_HOST_SOURCE=.host:/Local;  BDE_SCOPE_HOST_OPTIONS=""
         BDE_SCOPE_USER_ROOT="$HOME/DevEnv"
     fi
     # auto → 探测（含挂载动作）
@@ -111,7 +113,7 @@ bde_storage_ensure() {  # <shared|host>
     bde_storage_load
     local scope=$1
     local U="${scope^^}"
-    eval "local root=\$BDE_SCOPE_${U}_ROOT backend=\$BDE_SCOPE_${U}_BACKEND source=\$BDE_SCOPE_${U}_SOURCE"
+    eval "local root=\$BDE_SCOPE_${U}_ROOT backend=\$BDE_SCOPE_${U}_BACKEND source=\$BDE_SCOPE_${U}_SOURCE options=\${BDE_SCOPE_${U}_OPTIONS:-}"
     local S; S="$(bde_storage_sudo)"
     if [ -d "$root" ] && [ -w "$root" ]; then
         if [ "$backend" = "local" ] || mountpoint -q "$root" 2>/dev/null; then
@@ -141,6 +143,43 @@ bde_storage_ensure() {  # <shared|host>
             chmod 1777 "$root" 2>/dev/null
             [ -d "$root" ] && [ -w "$root" ] && { echo "ok $scope local 目录 $root（1777）"; return 0; }
             echo "fail $scope local 目录创建失败"; return 1 ;;
+        nfs)
+            [ -n "$S" ] || { echo "fail $scope 需 sudo 免密"; return 1; }
+            $S mkdir -p "$root" 2>/dev/null
+            if $S mount -t nfs "$source" "$root" 2>/dev/null; then
+                echo "ok $scope nfs 挂载 $root"
+                _fl="$source $root nfs defaults,_netdev,nofail 0 0"
+                grep -qF -- "$_fl" /etc/fstab 2>/dev/null \
+                    || echo "$_fl" | $S tee -a /etc/fstab >/dev/null 2>&1 \
+                    || echo "pending $scope fstab 写入失败"
+                return 0
+            fi
+            echo "fail $scope nfs 挂载失败（服务端可达？showmount -e <server> 检查）"; return 1 ;;
+        smb)
+            [ -n "$S" ] || { echo "fail $scope 需 sudo 免密"; return 1; }
+            $S mkdir -p "$root" 2>/dev/null
+            # options 键携带 vers/credentials 等（正本 storage.toml options="vers=3.0,credentials=/path,…"）；
+            # 未配置时用保守默认（uid/gid 映射当前用户）
+            [ -n "$options" ] || options="vers=3.0,uid=$(id -u),gid=$(id -g),file_mode=0664,dir_mode=0775"
+            if $S mount -t cifs -o "$options" "$source" "$root" 2>/dev/null; then
+                echo "ok $scope smb 挂载 $root"
+                _fl="$source $root cifs $options,_netdev,nofail 0 0"
+                grep -qF -- "$_fl" /etc/fstab 2>/dev/null \
+                    || echo "$_fl" | $S tee -a /etc/fstab >/dev/null 2>&1 \
+                    || echo "pending $scope fstab 写入失败"
+                return 0
+            fi
+            echo "fail $scope smb 挂载失败（credentials 文件/vers 检查；options 见 storage.toml 注释示例）"; return 1 ;;
+        rclone)
+            # 云盘（webdav/s3/onedrive…）：rclone remote 由运维预配置（密钥绝不入 ③ 正本）
+            command -v rclone >/dev/null 2>&1 || { echo "fail $scope rclone 未安装（ops 预装）"; return 1; }
+            mkdir -p "$root" 2>/dev/null
+            if rclone mount "$source" "$root" --daemon --vfs-cache-mode writes 2>/dev/null; then
+                echo "ok $scope rclone 挂载 $root（daemon；--vfs-cache-mode writes）"
+                echo "pending $scope 持久化：重启后需重新挂载——建议 systemd 用户单元（rclone mount …）或 fstab+mount.rclone 链接，见 bestdevenv-dirs skill"
+                return 0
+            fi
+            echo "fail $scope rclone 挂载失败（remote 已配置？rclone listremotes 检查）"; return 1 ;;
         *)
             echo "fail $scope 未知后端: $backend"; return 1 ;;
     esac
