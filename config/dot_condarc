@@ -1,0 +1,17 @@
+# conda 全局配置（cfg-map: condarc；copy-expand 落 $HOME/.condarc）
+# v0.19 ml-trainer 栈：清华 TUNA 镜像 + 环境/包缓存 → ① 本机盘（symlink 需要，绝不落共享盘）
+# 权重缓存另见 env.sh（HF_HOME/MODELSCOPE_CACHE → ③ data/models 全机单份共享）
+channels:
+  - defaults
+show_channel_urls: true
+default_channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r
+custom_channels:
+  conda-forge: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  pytorch: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+envs_dirs:
+  - ${DEV}/deps/conda/envs
+pkgs_dirs:
+  - ${DEV}/deps/conda/pkgs
+auto_activate_base: false

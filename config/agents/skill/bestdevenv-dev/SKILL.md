@@ -1,7 +1,7 @@
 ---
 name: bestdevenv-dev
 version: 0.0.2
-description: BestDevEnv 部署开发环境——语言栈（node/python/rust/go/java/flutter/ai：安装+国内镜像+缓存重定向）、vibecoding 工具（claude-code/codex/gemini/opencode/zcode/arkcli）、VS Code 离线安装与语言扩展档案、JetBrains 需求推导时使用。触发：装语言、装 agent 工具、装 IDE、扩展档案。
+description: BestDevEnv 部署开发环境——按开发者角色（profiles.tsv：java-web/python/go/cpp/ml-trainer/fullstack）或语言栈（node/python/rust/go/java/flutter/ai/cpp：安装+国内镜像+缓存重定向）、vibecoding 工具（claude-code/codex/gemini/opencode/zcode/arkcli）、VS Code 离线安装与语言扩展档案、JetBrains 需求推导时使用。触发：装语言、装 agent 工具、装 IDE、按角色配环境、扩展档案。
 ---
 
 # 部署开发环境（M3 语言栈 + M4 工具 + M6 IDE）
@@ -12,7 +12,8 @@ description: BestDevEnv 部署开发环境——语言栈（node/python/rust/go/
 
 执行任何安装前，必须先向用户列出可选清单并确认，**不得按默认静默安装**：
 
-- **语言栈**（七选 N，合法集以 `modules/lang/` 脚本为准）：node / python / rust / go / java / flutter / ai
+- **开发者角色**（首选；`modules/lang/profiles.tsv` 数据驱动）：java-web / python / go / cpp / ml-trainer / fullstack——角色展开为栈集合并集，`./init.sh --profile ml-trainer` 或交互首问
+- **语言栈**（八选 N，合法集以 `modules/lang/` 脚本为准）：node / python / rust / go / java / flutter / ai / cpp
 - **vibecoding 工具**（合法集以 `modules/agent/runtimes.tsv` 注册表为准）：claude-code / codex / gemini-cli / opencode / zcode / arkcli / copilot / antigravity / trae / qoder / hermes
 
 用户确认后才执行；确认结果经 `BDE_LANGS`/`BDE_TOOLS` 显式传参落位。两个例外场景不必二次确认：
@@ -32,9 +33,10 @@ bash "$BDE/modules/lang/node.sh"      # 或 python/rust/go/java/flutter/ai.sh
 | python | uv | venv → DevEnv/virtualenvs；cache → Common/cache/linux |
 | rust | rustup（rsproxy） | CARGO_HOME=DevEnv/cargo；target → Local/build |
 | go | 官方 tarball（goproxy.cn） | GOPATH=DevEnv/go |
-| java | mise temurin（aliyun maven） | GRADLE_USER_HOME=Local/cache/gradle |
+| java | 语义包 java-21（适配器别名，apt=openjdk-21-jdk） | GRADLE_USER_HOME=Local/cache/gradle + gradle-properties 正本 |
 | flutter | DevEnv/flutter（flutter-io.cn） | PUB_CACHE=DevEnv/pub-cache |
-| ai | hf/modelscope（hf-mirror） | HF_HOME → Common/data/models |
+| cpp | 语义包 build-base + cmake/ninja/gdb/ccache/clangd | CCACHE_DIR=Local/cache/ccache |
+| ai | Miniconda（tuna → DevEnv/services/miniconda3；.condarc 正本：envs/pkgs → DevEnv/deps/conda）+ CUDA 体检 | HF_HOME/MODELSCOPE_CACHE → Common/data/models |
 
 ## vibecoding 工具与 IDE
 

@@ -52,7 +52,7 @@ code-close <repo>           # 释放；有未提交变更会提醒 push（工作
 
 > 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `/home/hardstone/DevEnv`；代码单份 /Share/Common/code；
 > 实体住 /home/hardstone/DevEnv bind 接回；用户目录住 /Share/Local；配置改仓库（`$COMMON/config`）；备份靠 push。
-> 物理红线（能力探测 2026-11-10 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；命名一律小写 kebab-case；跨机成品走 `$COMMON/exchange/<repo>/`。
+> 物理红线（能力探测 2026-11-12 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；命名一律小写 kebab-case；跨机成品走 `$COMMON/exchange/<repo>/`。
 
 ## 故障速查
 

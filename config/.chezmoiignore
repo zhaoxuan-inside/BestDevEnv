@@ -11,3 +11,5 @@
 {{ end }}
 hosts.toml
 
+.condarc
+.gradle

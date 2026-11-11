@@ -1,0 +1,3 @@
+
+# 密钥不入库：技能自管 .env（API key 磁盘留存，仓库面除名）
+agents/skill/*/.env

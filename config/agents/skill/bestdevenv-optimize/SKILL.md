@@ -1,34 +1,38 @@
 ---
 name: bestdevenv-optimize
 version: 0.0.1
-description: BestDevEnv 系统基线与参数优化——内核参数（inotify）、docker daemon.json、apt 源检测、默认终端 konsole/shell zsh、fcitx5、starship 的落地与幂等重放时使用。触发：优化系统参数、内核参数、inotify、docker 配置、镜像源、终端、输入法。
+description: BestDevEnv 系统基线与参数优化——经能力总线（lib/cap.sh）落地的系统优化默认集（inotify/swappiness/journald 上限/nofile/fstrim）、docker 三件套、apt 源检测、默认终端 konsole/shell zsh、fcitx5、starship、Nerd Font 的落地与幂等重放时使用。触发：优化系统参数、内核参数、swappiness、日志上限、文件句柄、docker 配置、镜像源、终端、输入法、字体。
 ---
 
 # 系统基线与参数优化（M1）
 
 单一职责：OS 层基线与参数。目录/挂载归 `bestdevenv-dirs`，用户配置文件归 `bestdevenv-config`。
 
-## 执行（幂等；脚本按检测到的 OS 选变体）
+## 执行（幂等；L3 编排平台无关——平台差异全部在 adapters/<family>.sh）
 
 ```bash
 source "$HOME/.config/devspace/env.sh"
 BDE="$COMMON/code/BestDevEnv"
-OS="$(. /etc/os-release; echo "$ID")"
-case "$OS" in
-    ubuntu|debian|linuxmint)      bash "$BDE/modules/os/ubuntu.sh" ;;
-    arch|manjaro|endeavouros)     bash "$BDE/modules/os/arch.sh" ;;
-    *)                            echo "OS 未支持: $OS（arch/windows 为里程碑占位）" ;;
-esac
+bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器（debian/fedora/arch/suse/darwin）
 ```
+
+分层契约（v0.19 起）：先抽象能力（`lib/cap.sh` 能力总线：pkg/svc/kernel/limits/logs/trim/timesync/hostname/fonts/shell/im/terminal/group），
+再按平台实现（`modules/os/adapters/`）——`devenv cap` 看本机能力矩阵；上层编排零平台字面量。
 
 ## 已落盘参数清单（重跑即重放）
 
 | 项 | 落点 | 验收 |
 |---|---|---|
-| inotify 上限 | `/etc/sysctl.d/99-devspace.conf`（watches=524288 / instances=1024） | `sysctl fs.inotify.max_user_watches` |
+| 内核参数 | 正本 ③ `config/services/sysctl/99-devspace.conf` → `/etc/sysctl.d/`（inotify + **swappiness=10 + vfs_cache_pressure=50 + file-max=2097152**；cfg-map `sysctl-devspace`，落位后自动 `sysctl --system`） | `sysctl vm.swappiness` ｜ doctor |
+| journald 上限 | 正本 ③ `config/services/systemd/journald-devspace.conf` → drop-in（512M/KeepFree 1G/14day；落位后自动重启 journald） | `ls /etc/systemd/journald.conf.d/` |
+| nofile 上限 | 正本 ③ `config/services/limits/99-devspace.conf` → `/etc/security/limits.d/`（65535，登录会话生效） | `ulimit -n`（新会话） |
+| SSD TRIM | `fstrim.timer` enable --now（对机械盘无操作=无害） | `systemctl is-enabled fstrim.timer` |
+| 时间同步 | 只体检不装（timesyncd/chronyd 运行态 → doctor 项） | doctor「时间同步服务运行中」 |
+| 开发者字体 | JetBrainsMono Nerd Font 用户级（③ install/fonts 本地投放优先 → ② 缓存网络兜底 → fonts 能力落位） | `fc-list \| grep -c JetBrains` |
+| inotify 上限 | 同内核参数行（watches=524288 / instances=1024） | `sysctl fs.inotify.max_user_watches` |
 | docker 配置 | cfg-map 收编：正本 ③ `config/services/docker/daemon.json` → `/etc/docker/daemon.json`（`devenv cfg apply`） | `devenv cfg diff` ｜ `docker info` |
 | docker 数据根 | ① `DevEnv/services/docker`（2026-11-08 迁移，服务三分离首例） | `docker info` Docker Root Dir ｜ `docker system df` |
-| docker 安装体 | apt docker.io + `enable --now` + docker 组（M1 三件套） | `systemctl is-active docker` |
+| docker 安装体 | 语义包 `docker-engine`（适配器别名：apt=docker.io）+ svc ensure + group ensure | `systemctl is-active docker` |
 | apt 源 | 只检测报告，不自动切（人工切阿里/清华） | 执行输出 pending 项 |
 | 默认终端/shell | konsole + Ctrl+Alt+T；zsh；`.bashrc` 接 env.sh | `echo $SHELL` |
 | 输入法 | fcitx5 全家桶 + **macOS12 皮肤**（macos12-light/dark → ① `$DEV/xdg/local/fcitx5/themes/`，git→jsDelivr→API 三链路拉取）+ rime 简体默认；皮肤选择在 config 仓库 `classicui.conf`；**IM 环境变量由 config 仓库 `dot_config/environment.d/50-devspace.conf.tmpl` 下发**（GTK/QT/XMODIFIERS → fcitx：GNOME Wayland 的 Mutter 只支持 IBus，必须让客户端自己加载 fcitx 模块直连 D-Bus）；启用/雾凇为人工 | `im-config -n fcitx5` + 重登；`systemctl --user show-environment \| grep IM_MODULE` 应为 fcitx ｜ 皮肤重放：`bash modules/os/fcitx5-theme.sh` |
@@ -37,6 +41,7 @@ esac
 ## 边界
 
 - 写操作依赖 `sudo -n` 免密——批量 pending 先查 sudo
-- locale/时区不在脚本内盲改（人工确认后手改）
+- locale/时区不在脚本内盲改（人工确认后手改；doctor/report 提示建议值）
 - GNOME Wayland 下 Mutter 只认 IBus：不走 GTK/Qt IM 模块的客户端（`--ozone-platform=wayland` 的 Chromium/Electron、GNOME Shell 自身界面）用不了 fcitx5；需要中文输入时让该客户端走 XWayland（`--ozone-platform=x11`），或整体改用 IBus
-- kernel 参数文件已存在即跳过——改参数需先改 `/etc/sysctl.d/99-devspace.conf` 内容或删文件重跑
+- 改内核参数只改 ③ 正本再 `devenv cfg apply`（落位即自动生效）——绝不手改应用层
+- **建议集（不自动，需人工确认）**：zram、TLP 电源（笔记本）、DNS（systemd-resolved）、静态 IP/netplan——硬件/网络行为相关，盲改是生产事故源；需要时经 cfg 治理通道收编后手动 apply

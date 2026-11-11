@@ -1,8 +1,26 @@
 # storage.toml — 存储档案（宪法 §20：作用域→后端解析；介质差异只存在于本文件）
 # 作用域：shared 跨主机级(③ COMMON) ｜ host 主机级(② LOCAL) ｜ user 用户级(① DEV)
-# backend：auto（探测：已有挂载→hgfs→local）| passthrough | hgfs | local（预留 nfs/smb/sync）
+# backend：auto（探测：已有挂载→hgfs→local）| passthrough | hgfs | local | nfs | smb | rclone
 # 解析顺序：机器段（<hostname>.<scope>）覆盖默认段；档案本体在 ③ 正本，bootstrap 时内置默认兜底
 # 相对 root 相对 $HOME（用户空间优先）
+#
+# —— NAS/云盘后端示例（拷进机器段改值即用；密钥/credentials 绝不入本正本）——
+# [nas.shared]
+# backend = "nfs"
+# mount = "/Share/Common"
+# source = "nas.lan:/volume1/devspace-common"       # export 路径（showmount -e nas.lan 核对）
+#
+# [nas2.shared]
+# backend = "smb"
+# mount = "/Share/Common"
+# source = "//nas.lan/devspace-common"
+# options = "vers=3.0,credentials=/etc/cifs-cred-devspace,uid=1000,gid=1000,file_mode=0664,dir_mode=0775"
+#                                                   # credentials 文件归运维本机预置（root:root 600）；uid/gid 按机器改
+#
+# [cloud.shared]
+# backend = "rclone"                                # remote 由运维 rclone config 预配置（密钥在本机 rclone.conf）
+# mount = "/Share/Common"
+# source = "devspace-common:data/common"            # <remote>:<bucket/path>
 
 [shared]
 backend = "auto"

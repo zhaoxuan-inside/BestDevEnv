@@ -17,3 +17,6 @@ command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 export PATH="$HOME/.local/bin:$PATH"
 
 command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+
+# conda（模型训练栈；实体 ① services/miniconda3，envs/pkgs → ① deps/conda，见 .condarc）
+[ -f "$DEV/services/miniconda3/etc/profile.d/conda.sh" ] && . "$DEV/services/miniconda3/etc/profile.d/conda.sh"
