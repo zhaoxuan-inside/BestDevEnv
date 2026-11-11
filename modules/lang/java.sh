@@ -10,7 +10,7 @@ bde_info "M3 java"
 if command -v java >/dev/null 2>&1; then
     bde_ok "java 已装：$(java -version 2>&1 | head -1)"
 else
-    ensure_pkg "openjdk-21-jdk"
+    ensure_pkg "java-21"   # 语义名：apt=openjdk-21-jdk / dnf=java-21-openjdk / pacman=jdk21-openjdk
     command -v java >/dev/null 2>&1 && bde_ok "java 安装：$(java -version 2>&1 | head -1)"
 fi
 
