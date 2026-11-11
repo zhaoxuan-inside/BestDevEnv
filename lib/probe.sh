@@ -136,27 +136,15 @@ bde_probe_collect() {
         P_RUNTIME_OK=1
     fi
 
-    # 配置治理漂移（M1.6：cfg-map 逐项；正本缺失不计漂移——只提示未收编；
-    # 条件不适用项本机缺席不计漂移；copy-expand/chezmoi .tmpl 按本机展开后比对——与 cfg.sh 同一套判定）
+    # 配置治理漂移（M1.6：cfg-map 逐项；判定唯一实现在 bde_cfg_diff_one——与 cfg.sh diff/apply 同源 §19.5；
+    # 正本缺失不计漂移——只提示未收编；条件不适用项本机缺席不计漂移）
     P_CFG_DRIFT=0
     if [ -f "$BDE_ROOT/modules/cfg/cfg-map.tsv" ]; then
         while IFS='|' read -r _cn _cc _cs _cd _cm _cr _ccond _cnote; do
             [ -n "$_cn" ] || continue
-            _cs="${_cs/#\$COMMON/$COMMON}"; _cd="${_cd/#\$HOME/$HOME}"
-            [ -f "$_cs" ] || continue
-            bde_cfg_cond_ok "$_ccond" || continue
-            case "$_cm" in
-                append)
-                    while IFS= read -r _cl; do
-                        [ -n "$_cl" ] || continue
-                        grep -qF -- "$_cl" "$_cd" 2>/dev/null || { P_CFG_DRIFT=$((P_CFG_DRIFT+1)); break; }
-                    done < "$_cs" ;;
-                *)
-                    [ -f "$_cd" ] || continue
-                    _es="$(bde_cfg_effective_src "$_cs" "$_cm")"
-                    [ -n "$_es" ] && ! cmp -s "$_es" "$_cd" && P_CFG_DRIFT=$((P_CFG_DRIFT+1))
-                    [[ "$_es" == "${TMPDIR:-/tmp}/bde-cfg-x."* ]] && rm -f "$_es" ;;
-            esac
+            [ -f "${_cs/#\$COMMON/$COMMON}" ] || continue
+            _d="$(bde_cfg_diff_one "$_cn" "$_cc" "$_cs" "$_cd" "$_cm" "$_ccond")"
+            [ -n "$_d" ] && P_CFG_DRIFT=$((P_CFG_DRIFT+1))
         done < <(grep -v '^[[:space:]#]' "$BDE_ROOT/modules/cfg/cfg-map.tsv" | grep -v '^[[:space:]]*$')
     fi
     # config 事实源仓库干净度（未提交/未收编变更）
@@ -183,6 +171,18 @@ bde_probe_collect() {
     # 内核参数
     P_INOTIFY_W="$(cat /proc/sys/fs/inotify/max_user_watches 2>/dev/null || echo 0)"
     P_INOTIFY_OK=0; [ "${P_INOTIFY_W:-0}" -ge 524288 ] 2>/dev/null && P_INOTIFY_OK=1
+
+    # 系统优化运行态事实（v0.19 默认集；文件落位漂移由 cfg-map 巡检覆盖，这里只测"生效值"——
+    # 文件落位 ≠ 已生效：sysctl 需 sysctl --system、timer 需 enable。非 Linux 时各项为 0，doctor OS 条件化缺席）
+    P_SYSCTL_SWAP="$(cat /proc/sys/vm/swappiness 2>/dev/null || echo 0)"
+    P_SYSCTL_OK=0; [ -n "$P_SYSCTL_SWAP" ] && [ "$P_SYSCTL_SWAP" -le 10 ] 2>/dev/null && P_SYSCTL_OK=1
+    P_FSTRIM_OK=0; systemctl is-enabled --quiet fstrim.timer 2>/dev/null && P_FSTRIM_OK=1
+    P_TIMESYNC_OK=0
+    if systemctl is-active --quiet systemd-timesyncd 2>/dev/null \
+       || systemctl is-active --quiet chronyd 2>/dev/null \
+       || systemctl is-active --quiet chrony 2>/dev/null; then
+        P_TIMESYNC_OK=1
+    fi
 
     # 工具链版本表（存在才列；15s 超时——网络劣化时 CLI 版本探测可能挂起）
     P_TOOL_ROWS=""
@@ -285,6 +285,9 @@ doc = {
         "ide_ready": i("P_IDE_OK"),
         "xdg_redirect": 1 if p.get("XDG_DOC") else 0,
         "inotify_ok": i("P_INOTIFY_OK"),
+        "sysctl_ok": i("P_SYSCTL_OK"),
+        "fstrim_ok": i("P_FSTRIM_OK"),
+        "timesync_ok": i("P_TIMESYNC_OK"),
     },
     "storage": {
         "backend_common": p.get("BACKEND_COMMON", "unknown"),
@@ -308,6 +311,7 @@ doc = {
         "disk_root_used": p.get("DISK_ROOT_USE", ""),
         "disk_root_free_mb": i("P_DISK_ROOT_FREE_MB"),
         "inotify_watches": i("P_INOTIFY_W"),
+        "swappiness": i("P_SYSCTL_SWAP"),
         "xdg_doc": p.get("XDG_DOC", ""),
     },
     "tools": tools,

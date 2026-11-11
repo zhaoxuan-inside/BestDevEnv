@@ -52,6 +52,7 @@ CHECKS = [
 # Linux 专属项（非 Linux 系自动缺席，不误报）：
 # - 持久化：fstab 是 Linux 机制（mac/win 无此概念，对应物为里程碑适配器）
 # - IDE/XDG/inotify：Linux 桌面开发栈专属
+# - 系统优化默认集运行态（v0.19）：文件落位漂移已由 cfg-map 巡检覆盖，此处只验"生效值"
 if is_linux:
     CHECKS += [
         (f"存储已持久化（③ {st['backend_common']}）",  st["persisted_common"] == 1),
@@ -59,6 +60,9 @@ if is_linux:
         ("IDE 就绪（code + settings + 语言档案）", f["ide_ready"] == 1),
         ("XDG 用户目录已重定向",                f["xdg_redirect"] == 1),
         ("inotify 上限已调高",                  f["inotify_ok"] == 1),
+        ("vm.swappiness ≤ 10（换页保守，现值见 probe）", f["sysctl_ok"] == 1),
+        ("fstrim.timer 已启用（SSD 周期 TRIM）",  f["fstrim_ok"] == 1),
+        ("时间同步服务运行中",                  f["timesync_ok"] == 1),
     ]
 
 # 叠层检查仅挂载型后端有意义（local 目录无挂载点概念）

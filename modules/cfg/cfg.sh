@@ -25,10 +25,13 @@ _cfg_usage() {
     cat <<'EOF'
 用法: cfg.sh list|apply [name]|diff|adopt <name> <target> [类=system] [root=y|n]|snapshot   （--svc 前缀=只看 service 类）
   list              配置清单视图（项|类|正本|应用层|机制|漂移）
-  apply [name]      正本 → 应用层（幂等；root 项走 sudo -n；copy-expand 按本机锚点展开）
+  apply [name]      正本 → 应用层（幂等；root 项走 sudo -n；copy-expand 按本机锚点展开；
+                    落位后自动触发该文件类型的生效动作——sysctl --system / journald 重启）
   diff              全量漂移检测（非零退出 = 有漂移；条件不适用项自动缺席）
   adopt             收编：应用层现有文件 → $COMMON/config/services/<name>/ 正本并登记
   snapshot          备份：③ 正本 → 工程仓库 config/ seed 快照（rsync 镜像 + commit；工程 git push 即异地备份）
+机制列: copy（整文件落位）/ copy-expand（锚点展开落位）/ append（逐行追加）/ chezmoi（chezmoi 事实源）/
+        hosts（动态：hosts.toml 数据源 → /etc/hosts 标记块幂等替换，块外内容永不触碰）
 EOF
 }
 
@@ -46,41 +49,64 @@ _cfg_rows() {
 # 漂移比对用的"生效正本"：统一委托 lib/common.sh（probe 巡检与 cfg diff/apply 同一套判定）
 _cfg_effective_src() { bde_cfg_effective_src "$1" "$2"; }
 
-_cfg_diff_one() {  # $1=name $2=类 $3=正本 $4=应用层 $5=机制 $6=cond → echo 漂移描述（空=一致）
-    local name="$1" cls="$2" src="${3/#\$COMMON/$COMMON}" dst="$4" mech="$5" cond="$6"
-    dst="${dst/#\$HOME/$HOME}"
-    bde_cfg_cond_ok "$cond" || return 0          # 条件不适用：本机自动缺席，不计漂移
-    [ -f "$src" ] || { echo "$name:正本缺失"; return; }
-    case "$mech" in
-        append)
-            while IFS= read -r _l; do
-                [ -n "$_l" ] || continue
-                grep -qF -- "$_l" "$dst" 2>/dev/null || { echo "$name:缺行[$_l]"; return; }
-            done < "$src" ;;
-        *)
-            [ -f "$dst" ] || { echo "$name:应用层缺失"; return; }
-            local _es; _es="$(_cfg_effective_src "$src" "$mech")"
-            if [ -z "$_es" ]; then
-                [[ "$mech" == "copy-expand" ]] || echo "$name:展开/渲染失败（工具缺失？）"
-                return
-            fi
-            cmp -s "$_es" "$dst" || echo "$name:内容漂移"
-            [[ "$_es" == "${TMPDIR:-/tmp}/bde-cfg-x."* ]] && rm -f "$_es" ;;
+# 生效动作（声明落位后的 activate）：文件归 cfg 治理、行为归能力总线；
+# 此处只登记"该文件类型的已知生效方式"——落位成功后自动触发，skip（已一致）不触发。
+_cfg_post_apply() {  # <name>
+    case "$1" in
+        sysctl-devspace)
+            sudo -n sysctl --system >/dev/null 2>&1 \
+                && bde_ok "sysctl --system 生效" \
+                || bde_pending "sysctl --system 失败（人工执行或重跑 M1 kernel.ensure）" ;;
+        journald-devspace)
+            sudo -n systemctl restart systemd-journald >/dev/null 2>&1 \
+                && bde_ok "systemd-journald 重启生效" \
+                || bde_pending "journald 重启失败（人工执行或下次重启生效）" ;;
     esac
+}
+
+_cfg_diff_one() {  # 逐行漂移判定（唯一实现在 lib/common.sh bde_cfg_diff_one——§19.5 同源）
+    bde_cfg_diff_one "$@"
 }
 
 # ── apply：正本 → 应用层（幂等）──────────────────────────────────────────
 _cfg_apply_one() {
     local name="$1" cls="$2" src="${3/#\$COMMON/$COMMON}" dst="$4" mech="$5" root="$6" cond="$7"
-    dst="${dst/#\$HOME/$HOME}"
+    dst="$(bde_expand_anchors_str "$dst")"
     if ! bde_cfg_cond_ok "$cond"; then
-        bde_skip "$name 条件不适用（$cond；本机 os=$(bde_os_id) ③=$BDE_SCOPE_SHARED_BACKEND ②=$BDE_SCOPE_HOST_BACKEND），跳过"
+        bde_skip "$name 条件不适用（$cond；本机 os=$(bde_os_id) family=$(bde_os_family) ③=$BDE_SCOPE_SHARED_BACKEND ②=$BDE_SCOPE_HOST_BACKEND），跳过"
         return 0
     fi
     [ -f "$src" ] || { bde_pending "$name 正本缺失（先收编或手工放置）：$src"; return 0; }
     case "$mech" in
+        hosts)   # 动态机制：hosts.toml → 生成片段 → /etc/hosts 标记块幂等替换（块外内容永不触碰）
+            local _frag _tmp
+            _frag="$(bde_hosts_fragment "$src")" || { bde_fail "$name hosts.toml 解析失败"; return 0; }
+            if [ -z "$_frag" ]; then
+                bde_skip "$name 无 ip 登记（片段为空，无事可做）"
+                return 0
+            fi
+            _tmp="$(mktemp "${TMPDIR:-/tmp}/bde-hosts.XXXXXX")"
+            if grep -q "# >>> $BDE_HOSTS_TAG" "$dst" 2>/dev/null; then
+                awk -v b="$BDE_HOSTS_TAG" \
+                    'index($0, "# >>> " b)==1 {inblk=1; next}
+                     index($0, "# <<< " b)==1 {inblk=0; next}
+                     !inblk {print}' "$dst" > "$_tmp"
+            elif [ -f "$dst" ]; then
+                cp "$dst" "$_tmp"
+            else
+                : > "$_tmp"
+            fi
+            { echo "# >>> $BDE_HOSTS_TAG >>>"; printf '%s\n' "$_frag"; echo "# <<< $BDE_HOSTS_TAG <<<"; } >> "$_tmp"
+            if [ "$root" = "y" ]; then
+                sudo -n cp "$_tmp" "$dst" \
+                    && bde_ok "$name hosts 片段已同步（标记块幂等，块外内容不动）" \
+                    || bde_fail "$name hosts 写入失败（需 sudo 免密）"
+            else
+                cp "$_tmp" "$dst" && bde_ok "$name hosts 片段已同步"
+            fi
+            rm -f "$_tmp" ;;
         copy|copy-expand)
-            local _es; _es="$(_cfg_effective_src "$src" "$mech")"
+            local _es _chg=0; _es="$(_cfg_effective_src "$src" "$mech")"
             if [ -z "$_es" ]; then bde_fail "$name 正本展开/渲染失败"; return 0; fi
             ensure_dir "$(dirname "$dst")"
             if cmp -s "$_es" "$dst" 2>/dev/null; then
@@ -88,12 +114,13 @@ _cfg_apply_one() {
             else
                 ensure_backup "$dst"
                 if [ "$root" = "y" ]; then
-                    sudo -n cp "$_es" "$dst" && bde_ok "$name 落位 ${dst/#$HOME/~}（root${mech:+·$mech}）" \
+                    sudo -n cp "$_es" "$dst" && { bde_ok "$name 落位 ${dst/#$HOME/~}（root${mech:+·$mech}）"; _chg=1; } \
                         || bde_fail "$name 落位失败（需 sudo 免密）"
                 else
-                    cp "$_es" "$dst" && bde_ok "$name 落位 ${dst/#$HOME/~}"
+                    cp "$_es" "$dst" && { bde_ok "$name 落位 ${dst/#$HOME/~}"; _chg=1; }
                 fi
             fi
+            [ "$_chg" = "1" ] && _cfg_post_apply "$name"
             [[ "$_es" == "${TMPDIR:-/tmp}/bde-cfg-x."* ]] && rm -f "$_es" ;;
         append)
             local _miss=0 _l
@@ -108,7 +135,7 @@ _cfg_apply_one() {
                 fi
             done < "$src"
             [ "$_miss" -eq 0 ] && bde_skip "$name 已一致（append ${dst/#$HOME/~}）" \
-                || bde_ok "$name 追加 $_miss 行 → ${dst/#$HOME/~}" ;;
+                || { bde_ok "$name 追加 $_miss 行 → ${dst/#$HOME/~}"; _cfg_post_apply "$name"; } ;;
         chezmoi)
             bde_skip "$name 归 chezmoi 事实源管（apply 走 chezmoi apply；本模块只查漂移）" ;;
         *)
