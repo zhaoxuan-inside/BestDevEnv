@@ -1,0 +1,10 @@
+# profiles.tsv — 开发者角色 → 语言栈集合（宪法：数据驱动注册表，与 runtimes.tsv/cfg-map 同范式）
+# 格式: role|描述|栈csv|备注
+# - 栈合法集 = modules/lang/*.sh 文件名（init.sh bde_csv_validate 校验）
+# - 新增角色 = 加一行；新增栈 = modules/lang/<stack>.sh + 此处引用
+java-web|Java Web 开发者|java,node|后端 + 前端联调
+python|Python 开发者|python|
+go|Go 开发者|go|
+cpp|C++ 开发者|cpp|cmake/ninja/clangd/ccache
+ml-trainer|模型训练师|python,ai|conda + 模型权重 ③ 共享 + CUDA 体检
+fullstack|全栈开发者|java,python,go,node|

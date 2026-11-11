@@ -73,7 +73,14 @@ bde_cfg_effective_src() {  # <src> <mech> → echo 路径（可能为空）
         chezmoi)
             if [[ "$src" == *.tmpl ]] && command -v chezmoi >/dev/null 2>&1; then
                 _t="$(mktemp "${TMPDIR:-/tmp}/bde-cfg-x.XXXXXX" 2>/dev/null)" || return 0
-                if chezmoi execute-template < "$src" > "$_t" 2>/dev/null && [ -s "$_t" ]; then
+                # 模板数据正本：state-env 双落位的 chezmoi.toml（缺它 .tmpl 键渲染失败——曾致 user-dirs 假漂移）
+                _czc=""
+                for _c in "$DEV/xdg/config/chezmoi/chezmoi.toml" \
+                          "${XDG_CONFIG_HOME:-$HOME/.config}/chezmoi/chezmoi.toml" \
+                          "$HOME/.config/chezmoi/chezmoi.toml"; do
+                    [ -f "$_c" ] && { _czc="$_c"; break; }
+                done
+                if [ -n "$_czc" ] && chezmoi execute-template --config "$_czc" < "$src" > "$_t" 2>/dev/null && [ -s "$_t" ]; then
                     printf '%s\n' "$_t"
                 else
                     rm -f "$_t"
@@ -85,9 +92,26 @@ bde_cfg_effective_src() {  # <src> <mech> → echo 路径（可能为空）
     esac
 }
 
+# OS 家族归并（能力适配器选择 + cfg cond os_family 键共用；BDE_OS_FAMILY 可外部注入——测试钩子）
+# 家族 = 能力实现等价类：包管理器/服务管理/内核参数机制相同 → 同一适配器
+bde_os_family() {
+    if [ -n "${BDE_OS_FAMILY:-}" ]; then printf '%s\n' "$BDE_OS_FAMILY"; return; fi
+    case "$(uname -s)" in
+        Darwin) printf 'darwin\n'; return ;;
+    esac
+    case "$(bde_os_id)" in
+        ubuntu|debian|linuxmint|pop|kali)       printf 'debian\n' ;;
+        fedora|rhel|centos|rocky|alma)          printf 'fedora\n' ;;
+        arch|manjaro|endeavouros|garuda)        printf 'arch\n' ;;
+        opensuse-leap|opensuse-tumbleweed|sles) printf 'suse\n' ;;
+        *)                                      printf 'unknown\n' ;;
+    esac
+}
+
 # cfg-map 条件列判定（G3/G5：登记表支持按 OS/存储后端条件生效，非适用机器自动缺席不误报）
-# 语法：空 = 无条件；`&` 连接多个子句；子句 `key=v1,v2`。key ∈ os | backend_common | backend_host
+# 语法：空 = 无条件；`&` 连接多个子句；子句 `key=v1,v2`。key ∈ os | os_family | backend_common | backend_host
 #   os=ubuntu,debian,linuxmint        ← bde_os_id（OS 变体）
+#   os_family=linux,darwin            ← bde_os_family（能力家族：debian/fedora/arch/suse/darwin/unknown 归并为 linux 系）
 #   backend_common=hgfs               ← BDE_SCOPE_SHARED_BACKEND（存储档案解析值）
 # 依赖调用方先 source paths.sh（后端变量由 L0 解析层导出）
 bde_cfg_cond_ok() {  # <cond> → 0=适用
@@ -99,9 +123,11 @@ bde_cfg_cond_ok() {  # <cond> → 0=适用
         _k="${_tok%%=*}"; _v="${_tok#*=}"
         case "$_k" in
             os)             _val="$(bde_os_id)" ;;
+            os_family)      _val="$(bde_os_family)"
+                            case "$_val" in debian|fedora|arch|suse) _val="linux" ;; esac ;;
             backend_common) _val="${BDE_SCOPE_SHARED_BACKEND:-unknown}" ;;
             backend_host)   _val="${BDE_SCOPE_HOST_BACKEND:-unknown}" ;;
-            *) bde_pending "cfg-map 条件键未知: $_k（支持 os/backend_common/backend_host）"; return 1 ;;
+            *) bde_pending "cfg-map 条件键未知: $_k（支持 os/os_family/backend_common/backend_host）"; return 1 ;;
         esac
         _ok=0
         local _vs=()
@@ -110,6 +136,89 @@ bde_cfg_cond_ok() {  # <cond> → 0=适用
         [ "$_ok" = "1" ] || return 1
     done
     return 0
+}
+
+# 锚点变量展开·字符串版（cfg-map 登记行中的应用层路径用——dst 含 ${LOCAL}/${DEV} 等；
+# 文件内容版见 lib/paths.sh bde_expand_anchors）
+bde_expand_anchors_str() {  # <string> → stdout（展开后）
+    local s="$1"
+    s="${s//'${DEV}'/$DEV}"
+    s="${s//'${COMMON}'/$COMMON}"
+    s="${s//'${LOCAL}'/$LOCAL}"
+    s="${s//'${SHARE}'/$SHARE}"
+    s="${s//'$DEV'/$DEV}"
+    s="${s//'$COMMON'/$COMMON}"
+    s="${s//'$LOCAL'/$LOCAL}"
+    s="${s//'$SHARE'/$SHARE}"
+    s="${s/'$HOME'/$HOME}"
+    printf '%s\n' "$s"
+}
+
+# cfg-map 逐行漂移判定（宪法 §19.5 同源：cfg.sh diff/apply 与 probe 巡检共用同一套判定——
+# 曾经双实现漂移判定语义漂移，2026-11-11 收敛为唯一出处）
+# 输入：name|类|正本|应用层|机制|cond → echo 漂移描述（空=一致）；不产生日志
+bde_cfg_diff_one() {
+    local name="$1" src="${3/#\$COMMON/$COMMON}" dst="$4" mech="$5" cond="$6"
+    dst="$(bde_expand_anchors_str "$dst")"
+    bde_cfg_cond_ok "$cond" || return 0          # 条件不适用：本机自动缺席，不计漂移
+    [ -f "$src" ] || { echo "$name:正本缺失"; return 0; }
+    case "$mech" in
+        hosts)   # 动态机制：正本列=hosts.toml 数据源 → 生成片段 vs /etc/hosts 标记块
+            local _frag _blk
+            _frag="$(bde_hosts_fragment "$src")" || { echo "$name:hosts.toml 解析失败"; return 0; }
+            _blk="$(bde_hosts_block_extract "$dst")"
+            [ -z "$_frag" ] && [ -z "$_blk" ] && return 0
+            [ "$_frag" = "$_blk" ] || echo "$name:hosts 片段漂移" ;;
+        append)
+            local _l
+            while IFS= read -r _l; do
+                [ -n "$_l" ] || continue
+                grep -qF -- "$_l" "$dst" 2>/dev/null || { echo "$name:缺行[$_l]"; return 0; }
+            done < "$src" ;;
+        *)
+            [ -f "$dst" ] || { echo "$name:应用层缺失"; return 0; }
+            local _es; _es="$(bde_cfg_effective_src "$src" "$mech")"
+            if [ -z "$_es" ]; then
+                [[ "$mech" == "copy-expand" ]] || echo "$name:展开/渲染失败（工具缺失？）"
+                return 0
+            fi
+            cmp -s "$_es" "$dst" || echo "$name:内容漂移"
+            [[ "$_es" == "${TMPDIR:-/tmp}/bde-cfg-x."* ]] && rm -f "$_es" ;;
+    esac
+    return 0
+}
+
+# hosts.toml → /etc/hosts 片段（唯一生成器：cfg hosts 机制与 probe 事实共用）
+# 只产出登记了 ip 的机器段行（ip 空 = 暂不分配，跳过不误报）；空输出 = 无事可做
+bde_hosts_fragment() {  # [toml 路径] → stdout（片段行，默认 $BDE_ROOT/hosts.toml）；失败响亮退非零
+    command -v python3 >/dev/null 2>&1 || { echo "python3 缺失" >&2; return 1; }
+    python3 -c 'import tomllib' 2>/dev/null || { echo "python3 缺少 tomllib（需 ≥3.11）" >&2; return 1; }
+    python3 - "${1:-${BDE_ROOT:-/Share/Common/code/BestDevEnv}/hosts.toml}" <<'PY'
+import sys, tomllib
+try:
+    with open(sys.argv[1], "rb") as fh:
+        d = tomllib.load(fh)
+except Exception as e:
+    sys.exit(f"hosts.toml 解析失败: {e}")
+for host, sec in d.items():
+    if not isinstance(sec, dict):
+        continue
+    ip = str(sec.get("ip") or "").strip()
+    if not ip:
+        continue
+    names = [host] + [a.strip() for a in str(sec.get("alias") or "").split(",") if a.strip()]
+    print(f"{ip} " + " ".join(names))
+PY
+}
+
+BDE_HOSTS_TAG="generated-by-BestDevEnv"
+
+# /etc/hosts 标记块提取（cfg hosts 机制漂移比对用）：无块 → 空；有块 → 块内容
+bde_hosts_block_extract() {  # <hosts 文件> → stdout
+    awk -v b="$BDE_HOSTS_TAG" \
+        'index($0, "# >>> " b)==1 {inblk=1; next}
+         index($0, "# <<< " b)==1 {inblk=0; next}
+         inblk {print}' "$1" 2>/dev/null
 }
 
 # Linux 专属操作守卫（bind mount 等内核机制；非 Linux 响亮 pending，不静默错乱）

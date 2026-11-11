@@ -14,22 +14,17 @@ ensure_dir() {
     return 1
 }
 
-# 确保软件包已安装（apt/pacman 自适应）
+# 确保软件包已安装（委托 L2 能力总线 pkg.install——apt/dnf/pacman/zypper/brew 差异收敛在适配器；
+# 语义包名经适配器别名表解析，未知名原样透传。惰性 source cap.sh 防循环依赖）
 ensure_pkg() {
-    local pkg=$1
-    if dpkg -s "$pkg" >/dev/null 2>&1 || pacman -Qi "$pkg" >/dev/null 2>&1; then
-        bde_skip "软件包已装 $pkg"; return 0
-    fi
-    if command -v apt-get >/dev/null 2>&1; then
-        if sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg" >/dev/null 2>&1; then
-            bde_ok "安装软件包 $pkg"; return 0
-        fi
-    elif command -v pacman >/dev/null 2>&1; then
-        if sudo -n pacman -S --noconfirm --needed "$pkg" >/dev/null 2>&1; then
-            bde_ok "安装软件包 $pkg"; return 0
-        fi
-    fi
-    bde_pending "安装 $pkg 失败（需检查网络/源）"; return 1
+    [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    # shellcheck disable=SC1091
+    source "$BDE_ROOT/lib/cap.sh"
+    local _rc=0 p
+    for p in "$@"; do
+        cap_pkg_install "$p" || _rc=1
+    done
+    return $_rc
 }
 
 # 确保文件中存在一行（幂等追加）
