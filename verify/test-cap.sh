@@ -258,6 +258,38 @@ assert_contains "hosts 片段含 alias 展开" "$_hf" "10.0.0.5 h3 api"
 assert_not_contains "hosts 片段 ip 空机器段跳过" "$_hf" "h2"
 assert_contains "hosts 片段含自身 127.0.1.1 行" "$_hf" "127.0.1.1 $(hostname | tr '[:upper:]' '[:lower:]')"
 
+# ── 数据/视图分离护栏（防回归）──
+# 1) 家族组归并唯一出处（曾双定义：cond 白名单 vs doctor os_id 黑名单）
+for _spec in "debian:linux" "darwin:darwin" "unknown:unknown"; do
+    _fam="${_spec%%:*}"; _want="${_spec##*:}"
+    env -i PATH="$PATH" HOME="$HOME" BDE_OS_FAMILY="$_fam" bash -c '
+        source "'"$BDE_ROOT"'/lib/common.sh" 2>/dev/null; bde_os_family_group
+    ' > "$SBX/out" 2>/dev/null
+    assert_contains "家族组归并 $_fam → $_want" "$(cat "$SBX/out")" "$_want"
+done
+grep -q "bde_os_family_group" "$BDE_ROOT/lib/probe.sh"     && ok "probe 事实化 family/group（消费唯一出处）" || bad "probe 未消费 bde_os_family_group"
+
+# 2) 静态护栏：视图禁止活采集（doctor/report 曾是旁路源）
+for _v in verify/doctor.sh modules/doc/report.sh; do
+    grep -q "bde_probe_collect" "$BDE_ROOT/$_v"         && bad "视图护栏：$_v 出现活采集调用" || ok "视图护栏：$_v 零活采集（只读快照）"
+done
+
+# 3) cfgval 键值解析（key=value 与空格分隔两种正本形态）
+printf 'fs.inotify.max_user_watches=524288\nvm.swappiness=10\n' > "$SBX/kv.conf"
+printf '* soft nofile 65535\nroot hard nofile 65535\n' > "$SBX/sp.conf"
+env -i PATH="$PATH" HOME="$HOME" bash -c '
+    source "'"$BDE_ROOT"'/lib/common.sh" 2>/dev/null
+    printf "KV=%s\n" "$(bde_cfgval "'"$SBX"'/kv.conf" "^vm\.swappiness")"
+    printf "SP=%s\n" "$(bde_cfgval "'"$SBX"'/sp.conf" "^root hard nofile")"
+' > "$SBX/out" 2>/dev/null
+assert_contains "cfgval 解析 key=value 形态" "$(cat "$SBX/out")" "KV=10"
+assert_contains "cfgval 解析空格分隔形态（limits）" "$(cat "$SBX/out")" "SP=65535"
+
+# 4) 来源哈希确定性（同输入两次一致——指纹可比对的前提）
+_h1="$(bash -c "source $BDE_ROOT/lib/probe.sh 2>/dev/null; bde_cfg_sources_hash" 2>/dev/null)"
+_h2="$(bash -c "source $BDE_ROOT/lib/probe.sh 2>/dev/null; bde_cfg_sources_hash" 2>/dev/null)"
+[ -n "$_h1" ] && [ "$_h1" = "$_h2" ] && ok "cfg_sources_hash 确定性（两次一致且非空）" || bad "cfg_sources_hash 不确定或为空"
+
 # cfg hosts 机制漂移判定（同源实现）
 printf '# other content\n# >>> generated-by-BestDevEnv >>>\n%s\n# <<< generated-by-BestDevEnv <<<\n' "$_hf" > "$SBX/hosts-fake"
 cat > "$SBX/t3.sh" <<'EOS'

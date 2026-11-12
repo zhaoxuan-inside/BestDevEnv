@@ -10,10 +10,48 @@ source "$BDE_ROOT/lib/common.sh"
 source "$BDE_ROOT/lib/ensure.sh"
 source "$BDE_ROOT/lib/probe.sh"
 
-bde_info "M4 AGENTS.md 统一构建（指令视图：消费 probe.json 快照）"
-bde_probe_collect             # P_* 事实进当前 shell（占位符渲染用；子命令替换会丢变量）
-bde_probe_save >/dev/null     # 落快照（内部幂等再采集）
+bde_info "M4 AGENTS.md 统一构建（指令视图：消费 probe.json 快照——纯视图零采集，§19.5）"
+bde_probe_save >/dev/null     # 采集+落快照（唯一采集入口；渲染一律取自快照文件）
 F_PROBE_JSON="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}/probe.json"
+
+# 物理边界/OS/日期一律从快照渲染（曾从活采集的 P_* shell 变量渲染——同一进程两次采集，结构上是旁路）
+_phys_dir="$(mktemp -d "${TMPDIR:-/tmp}/bde-phys.XXXXXX")"
+BDE_PROBE_JSON="$F_PROBE_JSON" BDE_PHYS_DIR="$_phys_dir" python3 - <<'PY'
+import json, os
+d = json.load(open(os.environ["BDE_PROBE_JSON"]))
+caps, date, be = d["share_caps"], d["date"], d["storage"]["backend_common"]
+out, full = os.path.join(os.environ["BDE_PHYS_DIR"], "brief"), os.path.join(os.environ["BDE_PHYS_DIR"], "full")
+cons = []
+if caps["probed"] == 1:
+    if not caps["symlink"]:   cons.append("无 symlink")
+    if not caps["hardlink"]:  cons.append("无 hardlink")
+    if not caps["case_sensitive"]: cons.append("不区分大小写")
+    if not caps["perm"]:      cons.append("权限恒 777")
+    if not caps["name255"]:   cons.append("文件名上限 255B")
+    brief = (f"物理红线（能力探测 {date} · 后端 {be}）：" + " · ".join(cons) +
+             "——依赖实体与私钥绝不上去；命名一律小写 kebab-case") if cons else \
+            (f"共享盘能力（探测 {date} · 后端 {be}）：symlink/hardlink/大小写/权限/长文件名均可用——"
+             "依赖实体仍住 ①（跨机一致），命名仍小写 kebab-case")
+    full = "\n".join(f"- {c}（probe 实测）" for c in cons) + "\n" if cons else \
+           "- 共享盘能力探测全部可用（symlink/hardlink/大小写/权限/文件名 ≥255B）\n"
+else:
+    brief = ("物理红线（能力未探测——共享盘当前不可写，按最保守假设）：无 symlink/不分大小写/权限 777"
+             "——依赖实体与私钥绝不上去；命名一律小写 kebab-case")
+    full = "- 共享盘能力未探测（probe 时共享盘不可写）——按最保守假设对待：无 symlink、不区分大小写、权限 777\n"
+full += "- 依赖实体（node_modules/venv）与私钥绝不放共享盘——住 ①（跨机一致性；bind 接回）\n"
+if caps["probed"] == 1 and not caps["name255"]:
+    full += "- 单文件名/深层路径超 255B 上限——gradle/flutter 类缓存留本机盘\n"
+full += "- 命名一律小写 kebab-case"
+open(out, "w").write(brief)
+open(full, "w").write(full)
+open(os.path.join(os.environ["BDE_PHYS_DIR"], "os"), "w").write(d.get("os", ""))
+open(os.path.join(os.environ["BDE_PHYS_DIR"], "date"), "w").write(date)
+PY
+_PHYS_BRIEF="$(cat "$_phys_dir/brief")"
+_PHYS_FULL="$(cat "$_phys_dir/full")"
+P_OS="$(cat "$_phys_dir/os")"
+P_DATE="$(cat "$_phys_dir/date")"
+rm -rf "$_phys_dir"
 
 TPL="$BDE_ROOT/templates/AGENTS.md.tmpl"
 if [ ! -f "$TPL" ]; then bde_pending "AGENTS.md 模板缺失：$TPL"; return 0; fi
@@ -64,7 +102,26 @@ else
     _PHYS_FULL+="- 命名一律小写 kebab-case"
 fi
 
-# ── 统一占位符渲染（AGENTS.md 与 SKILL.md 同一套；新增锚点/物理边界占位符）──
+# ── SKILL 数值来源（@CFGVAL@ 渲染：③ 正本优先，seed 兜底——文档零复述，改值必经正本+再生）──
+_cfg_src() {  # <③ 相对路径 config/...> → 实际可读正本路径
+    local f="$COMMON/config/${1#config/}"
+    [ -f "$f" ] && { printf '%s\n' "$f"; return; }
+    printf '%s\n' "$BDE_ROOT/$1"
+}
+_V_INOTIFY="$(bde_cfgval "$(_cfg_src config/services/sysctl/99-devspace.conf)" '^fs\.inotify\.max_user_watches')"
+_V_SWAP="$(bde_cfgval "$(_cfg_src config/services/sysctl/99-devspace.conf)" '^vm\.swappiness')"
+_V_JMAX="$(bde_cfgval "$(_cfg_src config/services/systemd/journald-devspace.conf)" '^SystemMaxUse')"
+_V_JKEEP="$(bde_cfgval "$(_cfg_src config/services/systemd/journald-devspace.conf)" '^SystemKeepFree')"
+_V_JRET="$(bde_cfgval "$(_cfg_src config/services/systemd/journald-devspace.conf)" '^MaxRetentionSec')"
+_V_NOFILE="$(bde_cfgval "$(_cfg_src config/services/limits/99-devspace.conf)" '^root hard nofile')"
+_V_ZRAM_PCT="$(bde_cfgval "$(_cfg_src config/services/zram/zramswap)" '^PERCENT')"
+_V_ZRAM_ALGO="$(bde_cfgval "$(_cfg_src config/services/zram/zramswap)" '^ALGO')"
+_missing=0
+for _v in "$_V_INOTIFY" "$_V_SWAP" "$_V_JMAX" "$_V_JKEEP" "$_V_JRET" "$_V_NOFILE" "$_V_ZRAM_PCT" "$_V_ZRAM_ALGO"; do
+    [ -n "$_v" ] || { _missing=$((_missing+1)); bde_pending "SKILL 数值来源缺失（cfgval 取空——③ 正本未就绪？gen 后需复查）"; break; }
+done
+
+# ── 统一占位符渲染（AGENTS.md 与 SKILL.md 同一套；锚点/物理边界/CFGVAL 数值）──
 bde_tpl_render() {  # <模板内容> → stdout
     local _c="$1"
     _c="${_c//@MACHINE@/${BDE_MACHINE:-$(hostname)}}"
@@ -78,6 +135,14 @@ bde_tpl_render() {  # <模板内容> → stdout
     _c="${_c//@PHYSICAL@/$_PHYS_FULL}"
     _c="${_c//@PHYSICAL_BRIEF@/$_PHYS_BRIEF}"
     _c="${_c//@TOOLS_TABLE@/$_tools}"
+    _c="${_c//@CFG_INOTIFY@/$_V_INOTIFY}"
+    _c="${_c//@CFG_SWAP@/$_V_SWAP}"
+    _c="${_c//@CFG_JMAX@/$_V_JMAX}"
+    _c="${_c//@CFG_JKEEP@/$_V_JKEEP}"
+    _c="${_c//@CFG_JRET@/$_V_JRET}"
+    _c="${_c//@CFG_NOFILE@/$_V_NOFILE}"
+    _c="${_c//@CFG_ZRAM_PCT@/$_V_ZRAM_PCT}"
+    _c="${_c//@CFG_ZRAM_ALGO@/$_V_ZRAM_ALGO}"
     printf '%s' "$_c"
 }
 
@@ -145,7 +210,8 @@ fi
 mkdir -p "$DEV/docs/state" 2>/dev/null
 {
     echo "templates_hash=$(bde_templates_hash)"
+    echo "cfg_sources_hash=$(bde_cfg_sources_hash)"
     echo "bde_commit=$(git -C "$BDE_ROOT" rev-parse --short HEAD 2>/dev/null || echo none)"
     echo "machine=${BDE_MACHINE:-$(hostname)}"
     echo "date=$(date '+%F %T')"
-} > "$DEV/docs/state/gen-fingerprint" && bde_ok "生成指纹 → $DEV/docs/state/gen-fingerprint（doctor 巡检代际）"
+} > "$DEV/docs/state/gen-fingerprint" && bde_ok "生成指纹（模板+CFGVAL 来源正本）→ gen-fingerprint（doctor 巡检代际）"

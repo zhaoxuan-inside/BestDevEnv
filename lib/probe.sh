@@ -20,6 +20,18 @@ bde_templates_hash() {
         | xargs -0 sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1)
 }
 
+# SKILL 数值来源正本哈希（gen 指纹第二分量）：@CFGVAL@ 占位符渲染所消费的 ③ 正本集合——
+# 改值未重跑 devenv gen = 代际漂移，doctor「正本与模板同代」项检出（闭环：数据变更必经再生）
+bde_cfg_sources_hash() {
+    for f in \
+        "$COMMON/config/services/sysctl/99-devspace.conf" \
+        "$COMMON/config/services/systemd/journald-devspace.conf" \
+        "$COMMON/config/services/limits/99-devspace.conf" \
+        "$COMMON/config/services/zram/zramswap"; do
+        [ -f "$f" ] && sha256sum "$f" 2>/dev/null
+    done | LC_ALL=C sort | sha256sum | cut -d' ' -f1
+}
+
 # —— 挂载判定（便携）：mountpoint 是 util-linux 命令，mac/BSD 没有——缺失时回退解析 mount 输出
 # （Linux 格式 "src on /path type …"；mac 格式 "src on /path (…"——" on <path> " 两端空格精确匹配，
 #  嵌套路径 /path/sub 不会误命中 /path）
@@ -126,7 +138,13 @@ bde_probe_collect() {
     P_GEN_FRESH=0
     _gen_state="$DEV/docs/state/gen-fingerprint"
     if [ -f "$_gen_state" ] && [ -n "$(bde_templates_hash)" ]; then
-        [ "$(bde_templates_hash)" = "$(sed -n 's/^templates_hash=//p' "$_gen_state" | head -1)" ] && P_GEN_FRESH=1
+        _gen_ok=0
+        [ "$(bde_templates_hash)" = "$(sed -n 's/^templates_hash=//p' "$_gen_state" | head -1)" ] && _gen_ok=1
+        # 第二分量：CFGVAL 数值来源正本（改值未重跑 gen = 代际漂移，检出——旧指纹无此键则宽限期跳过）
+        if [ "$_gen_ok" = "1" ] && grep -q '^cfg_sources_hash=' "$_gen_state" 2>/dev/null; then
+            [ "$(bde_cfg_sources_hash)" = "$(sed -n 's/^cfg_sources_hash=//p' "$_gen_state" | head -1)" ] || _gen_ok=0
+        fi
+        [ "$_gen_ok" = "1" ] && P_GEN_FRESH=1
     fi
 
     # Runtime 统一接线（M4 扩展：记忆/MCP/Skill 三正本 + ~/.agents 枢纽兜底）

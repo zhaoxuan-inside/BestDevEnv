@@ -197,6 +197,13 @@ bde_cfg_diff_one() {
     return 0
 }
 
+# 正本键值读取（SKILL 数值渲染用——gen 从 ③ 正本取值渲染进文档，杜绝文档双源复述）
+# 用法：bde_cfgval <文件> <grep -E 模式> → 值；key=value 取 = 后内容，空格分隔（limits 类）取末字段；缺失/无匹配输出空
+bde_cfgval() {
+    [ -f "$1" ] || return 0
+    awk -v k="$2" '$0 ~ k { n=split($0,a,"="); v=(n>1)?a[2]:$NF; gsub(/^[ \t]+|[ \t]+$/,"",v); print v; exit }' "$1"
+}
+
 # hosts.toml → /etc/hosts 片段（唯一生成器：cfg hosts 机制与 probe 事实共用）
 # 产出两类行：① 登记了 ip 的机器段行（ip 空 = 暂不分配，跳过不误报）
 #            ② 自身主机 → 127.0.1.1（Debian 惯例：自身主机名必须可解析；未被站点 ip 覆盖时补）
