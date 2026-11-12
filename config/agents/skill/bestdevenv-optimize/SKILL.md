@@ -23,11 +23,11 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 
 | 项 | 落点 | 验收 |
 |---|---|---|
-| 内核参数 | 正本 ③ `config/services/sysctl/99-devspace.conf` → `/etc/sysctl.d/`（inotify + **swappiness=10 + vfs_cache_pressure=50 + file-max=2097152**；cfg-map `sysctl-devspace`，落位后自动 `sysctl --system`） | `sysctl vm.swappiness` ｜ doctor |
-| journald 上限 | 正本 ③ `config/services/systemd/journald-devspace.conf` → drop-in（512M/KeepFree 1G/14day；落位后自动重启 journald） | `ls /etc/systemd/journald.conf.d/` |
-| nofile 上限 | 正本 ③ `config/services/limits/99-devspace.conf` → `/etc/security/limits.d/`（65535，登录会话生效） | `ulimit -n`（新会话） |
+| 内核参数 | 正本 ③ `config/services/sysctl/99-devspace.conf` → `/etc/sysctl.d/`（inotify=524288 / swappiness=10 / vfs_cache_pressure / file-max；cfg-map `sysctl-devspace`，落位后自动 `sysctl --system`） | `sysctl vm.swappiness` ｜ doctor |
+| journald 上限 | 正本 ③ `config/services/systemd/journald-devspace.conf` → drop-in（SystemMaxUse=512M / KeepFree=1G / Retention=14day；落位后自动重启 journald） | `ls /etc/systemd/journald.conf.d/` |
+| nofile 上限 | 正本 ③ `config/services/limits/99-devspace.conf` → `/etc/security/limits.d/`（nofile=65535，登录会话生效） | `ulimit -n`（新会话） |
 | SSD TRIM | `fstrim.timer` enable --now（对机械盘无操作=无害） | `systemctl is-enabled fstrim.timer` |
-| zram 压缩内存交换 | 语义包 zram（debian=zram-tools+`/etc/default/zramswap`；fedora/arch/suse=zram-generator conf）；zstd/50% RAM | `swapon --show`（zram0 · PRIORITY 100） |
+| zram 压缩内存交换 | 语义包 zram（debian=zram-tools+`/etc/default/zramswap`；fedora/arch/suse=zram-generator conf）；zstd/50% RAM | `swapon --show`（zram0） |
 | 笔记本电源 | 语义包 power-suite（tlp[+tlp-rdw]）；**无电池自动跳过**（台式机/VM） | `systemctl is-active tlp`（仅电池机） |
 | 时区/locale | 站点画像驱动（③ network.toml `timezone`/`lang` → network.env → locale 能力 timedatectl/localectl） | `timedatectl show -p Timezone` ｜ doctor「时区与画像一致」 |
 | 时间同步 | 只体检不装（timesyncd/chronyd 运行态 → doctor 项） | doctor「时间同步服务运行中」 |
@@ -41,7 +41,7 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 | 输入法 | fcitx5 全家桶 + **macOS12 皮肤**（macos12-light/dark → ① `$DEV/xdg/local/fcitx5/themes/`，git→jsDelivr→API 三链路拉取）+ rime 简体默认；皮肤选择在 config 仓库 `classicui.conf`（macOS12 双主题：`Theme=macos12-light/dark` 手动切，`UseDarkTheme=True` 跟随系统亮暗；**fcitx5 GUI 改设置会重写该文件并剥注释——收编走 `devenv cfg adopt`（正本=应用层原样），绝不用 `cfg apply` 覆盖，切换语义存 cfg-map 备注列**）；**IM 环境变量由 config 仓库 `dot_config/environment.d/50-devspace.conf.tmpl` 下发**（GTK/QT/XMODIFIERS → fcitx：GNOME Wayland 的 Mutter 只支持 IBus，必须让客户端自己加载 fcitx 模块直连 D-Bus）；启用/雾凇为人工 | `im-config -n fcitx5` + 重登；`systemctl --user show-environment \| grep IM_MODULE` 应为 fcitx ｜ 皮肤重放：`bash modules/os/fcitx5-theme.sh` |
 | 提示符 | starship（`~/.local/bin` 用户级安装） | `starship --version` |
 
-> 参数数值（inotify=524288 / swappiness=10 / journald 512M / nofile 65535 / zram 50%）**唯一出处 = ③ 正本**（cfg-map 索引）；本表数值仅为撰写时快照，以正本为准——改值只改正本再 `devenv cfg apply`。
+> 本表数值（@CFG_*@ 占位符）由 `devenv gen` **从 ③ 正本实时渲染**——零复述双源；来源正本哈希入 gen 指纹，改值未再生 → doctor「正本与模板同代」项检出。改值流程：只改正本 → `devenv cfg apply` → `devenv gen`。
 
 ## 边界
 
