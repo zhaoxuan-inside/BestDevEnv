@@ -38,7 +38,7 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 | docker 安装体 | 语义包 `docker-engine`（适配器别名：apt=docker.io）+ svc ensure + group ensure | `systemctl is-active docker` |
 | apt 源 | 只检测报告，不自动切（人工切阿里/清华） | 执行输出 pending 项 |
 | 默认终端/shell | konsole + Ctrl+Alt+T；zsh；`.bashrc` 接 env.sh | `echo $SHELL` |
-| 输入法 | fcitx5 全家桶 + **macOS12 皮肤**（macos12-light/dark → ① `$DEV/xdg/local/fcitx5/themes/`，git→jsDelivr→API 三链路拉取）+ rime 简体默认；皮肤选择在 config 仓库 `classicui.conf`；**IM 环境变量由 config 仓库 `dot_config/environment.d/50-devspace.conf.tmpl` 下发**（GTK/QT/XMODIFIERS → fcitx：GNOME Wayland 的 Mutter 只支持 IBus，必须让客户端自己加载 fcitx 模块直连 D-Bus）；启用/雾凇为人工 | `im-config -n fcitx5` + 重登；`systemctl --user show-environment \| grep IM_MODULE` 应为 fcitx ｜ 皮肤重放：`bash modules/os/fcitx5-theme.sh` |
+| 输入法 | fcitx5 全家桶 + **macOS12 皮肤**（macos12-light/dark → ① `$DEV/xdg/local/fcitx5/themes/`，git→jsDelivr→API 三链路拉取）+ rime 简体默认；皮肤选择在 config 仓库 `classicui.conf`（macOS12 双主题：`Theme=macos12-light/dark` 手动切，`UseDarkTheme=True` 跟随系统亮暗；**fcitx5 GUI 改设置会重写该文件并剥注释——收编走 `devenv cfg adopt`（正本=应用层原样），绝不用 `cfg apply` 覆盖，切换语义存 cfg-map 备注列**）；**IM 环境变量由 config 仓库 `dot_config/environment.d/50-devspace.conf.tmpl` 下发**（GTK/QT/XMODIFIERS → fcitx：GNOME Wayland 的 Mutter 只支持 IBus，必须让客户端自己加载 fcitx 模块直连 D-Bus）；启用/雾凇为人工 | `im-config -n fcitx5` + 重登；`systemctl --user show-environment \| grep IM_MODULE` 应为 fcitx ｜ 皮肤重放：`bash modules/os/fcitx5-theme.sh` |
 | 提示符 | starship（`~/.local/bin` 用户级安装） | `starship --version` |
 
 ## 边界
