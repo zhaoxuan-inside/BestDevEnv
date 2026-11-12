@@ -172,11 +172,34 @@ bde_storage_ensure() {  # <shared|host>
             echo "fail $scope smb 挂载失败（credentials 文件/vers 检查；options 见 storage.toml 注释示例）"; return 1 ;;
         rclone)
             # 云盘（webdav/s3/onedrive…）：rclone remote 由运维预配置（密钥绝不入 ③ 正本）
+            # 持久化 = systemd 用户单元（devspace-rclone-<scope>）：enable --now 即挂载，重启自恢复
             command -v rclone >/dev/null 2>&1 || { echo "fail $scope rclone 未安装（ops 预装）"; return 1; }
             mkdir -p "$root" 2>/dev/null
+            local _ud="$HOME/.config/systemd/user" _unit="devspace-rclone-$scope.service"
+            mkdir -p "$_ud" 2>/dev/null
+            cat > "$_ud/$_unit" <<UNIT
+# 由 BestDevEnv lib/storage.sh 生成（$scope 作用域云盘挂载；勿手改——改档案后重跑 bde_storage_ensure）
+[Unit]
+Description=devspace rclone mount ($scope -> $source)
+After=network-online.target
+
+[Service]
+ExecStart=$(command -v rclone) mount '$source' '$root' --vfs-cache-mode writes --dir-cache-time 72h
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+UNIT
+            if systemctl --user daemon-reload 2>/dev/null \
+               && systemctl --user enable --now "$_unit" 2>/dev/null; then
+                echo "ok $scope rclone 挂载 $root（systemd 用户单元 $_unit，重启自恢复）"
+                echo "pending $scope 无登录会话常驻（服务器/VM）：loginctl enable-linger $USER（人工确认后执行）"
+                return 0
+            fi
+            # 单元路径不可用（无 user session/systemd）→ daemon 直挂兜底
             if rclone mount "$source" "$root" --daemon --vfs-cache-mode writes 2>/dev/null; then
-                echo "ok $scope rclone 挂载 $root（daemon；--vfs-cache-mode writes）"
-                echo "pending $scope 持久化：重启后需重新挂载——建议 systemd 用户单元（rclone mount …）或 fstab+mount.rclone 链接，见 bestdevenv-dirs skill"
+                echo "ok $scope rclone 挂载 $root（daemon 兜底；持久化单元写入失败，见 $_unit）"
                 return 0
             fi
             echo "fail $scope rclone 挂载失败（remote 已配置？rclone listremotes 检查）"; return 1 ;;
