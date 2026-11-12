@@ -1,0 +1,18 @@
+[Unit]
+Description=Docker data root (bind ${DEV}/services/docker)
+Documentation=https://docs.docker.com/engine/daemon/
+# 数据仍住 ① ${DEV}/services/docker（服务三分离），但挂载点必须落在 $HOME 之外：
+# gvfs 把 $HOME 下的挂载一律当作"可卸载卷"暴露给文件选择器/桌面，
+# dockerd 给每个容器挂的 rootfs/overlayfs/<id> 会变成 64 位名字的假卷（点卸载即 Permission denied）。
+Before=docker.service
+
+[Mount]
+What=${DEV}/services/docker
+Where=/var/lib/docker
+Type=none
+# private：不让 dockerd 在 bind 目标下新建的容器 rootfs 挂载传播回 ${DEV} 源目录
+#（否则同一挂载会同时出现在 $HOME 路径下，gvfs 照旧暴露成假卷）
+Options=bind,private
+
+[Install]
+WantedBy=multi-user.target

@@ -1,5 +1,5 @@
 {
-  "data-root": "${DEV}/services/docker",
+  "data-root": "/var/lib/docker",
   "registry-mirrors": [
     "https://docker.m.daocloud.io",
     "https://dockerproxy.cn",
