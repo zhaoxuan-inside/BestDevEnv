@@ -6,6 +6,10 @@
 
 [default]
 # 站点基线：家庭 LAN（2026-11-08 起始值，同网所有机器一致）
+# 站点环境基线（locale/timesync 能力的数据源；机器段可覆盖）
+timezone = "Asia/Shanghai"
+lang = "C.UTF-8"
+
 https_proxy = "http://192.168.1.100:7890"
 no_proxy = "localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,.aliyuncs.com,.aliyun.com,.cn"
 node_dist_mirror = "https://cdn.npmmirror.com/binaries/node/"

@@ -27,6 +27,9 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 | journald 上限 | 正本 ③ `config/services/systemd/journald-devspace.conf` → drop-in（512M/KeepFree 1G/14day；落位后自动重启 journald） | `ls /etc/systemd/journald.conf.d/` |
 | nofile 上限 | 正本 ③ `config/services/limits/99-devspace.conf` → `/etc/security/limits.d/`（65535，登录会话生效） | `ulimit -n`（新会话） |
 | SSD TRIM | `fstrim.timer` enable --now（对机械盘无操作=无害） | `systemctl is-enabled fstrim.timer` |
+| zram 压缩内存交换 | 语义包 zram（debian=zram-tools+`/etc/default/zramswap`；fedora/arch/suse=zram-generator conf）；zstd/50% RAM | `swapon --show`（zram0 · PRIORITY 100） |
+| 笔记本电源 | 语义包 power-suite（tlp[+tlp-rdw]）；**无电池自动跳过**（台式机/VM） | `systemctl is-active tlp`（仅电池机） |
+| 时区/locale | 站点画像驱动（③ network.toml `timezone`/`lang` → network.env → locale 能力 timedatectl/localectl） | `timedatectl show -p Timezone` ｜ doctor「时区与画像一致」 |
 | 时间同步 | 只体检不装（timesyncd/chronyd 运行态 → doctor 项） | doctor「时间同步服务运行中」 |
 | 开发者字体 | JetBrainsMono Nerd Font 用户级（③ install/fonts 本地投放优先 → ② 缓存网络兜底 → fonts 能力落位） | `fc-list \| grep -c JetBrains` |
 | inotify 上限 | 同内核参数行（watches=524288 / instances=1024） | `sysctl fs.inotify.max_user_watches` |
@@ -44,4 +47,5 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 - locale/时区不在脚本内盲改（人工确认后手改；doctor/report 提示建议值）
 - GNOME Wayland 下 Mutter 只认 IBus：不走 GTK/Qt IM 模块的客户端（`--ozone-platform=wayland` 的 Chromium/Electron、GNOME Shell 自身界面）用不了 fcitx5；需要中文输入时让该客户端走 XWayland（`--ozone-platform=x11`），或整体改用 IBus
 - 改内核参数只改 ③ 正本再 `devenv cfg apply`（落位即自动生效）——绝不手改应用层
-- **建议集（不自动，需人工确认）**：zram、TLP 电源（笔记本）、DNS（systemd-resolved）、静态 IP/netplan——硬件/网络行为相关，盲改是生产事故源；需要时经 cfg 治理通道收编后手动 apply
+- **建议集（不自动，需人工确认）**：仅剩 DNS（systemd-resolved 改写）与静态 IP/netplan——网络行为相关，盲改是生产事故源；需要时经 cfg 治理通道收编后手动 apply
+- **桩测试**：`verify/test-cap.sh`（84 断言，五家族语义验证，CI 可跑）；真机验收清单 `verify/ACCEPTANCE.md`——fedora/arch/suse/darwin 从"代码就绪"升级"生产实装"的唯一通道

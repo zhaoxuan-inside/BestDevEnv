@@ -1,0 +1,5 @@
+# zram 压缩内存交换参数（cfg-map: zramswap；落位 /etc/default/zramswap——Debian 系 zram-tools）
+# v0.19 系统优化默认集：编译/容器冷页压缩换出，减少磁盘 swap IO；zstd 压缩比与速度均衡
+ALGO=zstd
+PERCENT=50
+PRIORITY=100
