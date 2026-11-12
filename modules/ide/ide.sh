@@ -9,6 +9,15 @@ source "$BDE_ROOT/lib/ensure.sh"
 
 bde_info "M6 IDE 统一（默认 VS Code ｜ 语言档案: ${BDE_LANGS:-node,python}）"
 
+# ── 0) 参数解析（跳过类参数必须零门槛生效——重放脚本最怕"文档写 flag、实现读环境变量"：
+#    --no-jetbrains 曾只认 BDE_JB_SKIP 环境变量，CLI 传参被静默忽略 → 误装 PyCharm 3.9G，2026-11-12 实测）──
+for _arg in "$@"; do
+    case "$_arg" in
+        --no-jetbrains) BDE_JB_SKIP=1 ;;
+        *) bde_pending "未知参数: $_arg（支持: --no-jetbrains）" ;;
+    esac
+done
+
 # ── 1) VS Code：已装→登记；未装→Common/install/linux 最新 deb 离线安装 ──
 if command -v code >/dev/null 2>&1; then
     bde_ok "VS Code 已装：$(code --version 2>/dev/null | head -1)"

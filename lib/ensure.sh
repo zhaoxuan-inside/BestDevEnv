@@ -75,6 +75,37 @@ ensure_backup() {
     cp "$f" "$b" && bde_ok "备份 $(basename "$f") → ${b/#$HOME/~}"
 }
 
+# 结构化 JSON 深路径键现状比对（幂等预检：无日志——调用方记账）
+# 用法：ensure_json_key_equal <文件> <点分键> <payload 行文件> → 0=键现状与 payload 全等（无需写）｜1=有差异/文件缺失/解析失败
+# 配套 ensure_json_merge 使用：先判等跳过（投影行无变化报 [=]，满足"二次 wire 全 skip"验收），
+# 有差异先 ensure_backup 再 merge（投影改既有文件前留痕——正本为空时需可自证未清工具本地键）
+ensure_json_key_equal() {
+    local f="$1" key="$2" pay="$3"
+    python3 - "$f" "$key" "$pay" <<'PY'
+import json,sys,os
+f,key,pay=sys.argv[1],sys.argv[2],sys.argv[3]
+try:
+    payload={}
+    for line in open(pay):
+        line=line.rstrip("\n")
+        if not line: continue
+        n,j=line.split("\t",1); payload[n]=json.loads(j)
+except Exception:
+    sys.exit(1)
+if not (os.path.exists(f) and os.path.getsize(f)>0):
+    sys.exit(1)
+try: data=json.load(open(f))
+except Exception:
+    sys.exit(1)
+cur=data
+for p in key.split("."):
+    if not isinstance(cur,dict) or p not in cur:
+        sys.exit(1)
+    cur=cur[p]
+sys.exit(0 if cur==payload else 1)
+PY
+}
+
 # 结构化 JSON 深路径合并（保留既有键，仅更新 payload 命名项；无日志——调用方记账）
 # 用法：ensure_json_merge <文件> <点分键如 mcp.servers> <payload 行文件：name<TAB>json>
 ensure_json_merge() {

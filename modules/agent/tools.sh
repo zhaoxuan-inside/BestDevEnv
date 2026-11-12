@@ -27,9 +27,34 @@ _install_tool() {
             elif _have_npm && timeout 300 npm install -g @google/gemini-cli >/dev/null 2>&1; then bde_ok "gemini-cli 安装"
             else bde_pending "gemini-cli 安装失败（需 npm）"; fi ;;
         opencode)
-            if command -v opencode >/dev/null 2>&1; then bde_skip "opencode 已装：$(timeout 15 opencode --version 2>/dev/null | head -1)"
-            elif curl -fsSL --max-time 120 https://opencode.ai/install | bash >/dev/null 2>&1; then bde_ok "opencode 安装"
-            else bde_pending "opencode 安装失败"; fi ;;
+            # 契约位：实体 ① $DEV/apps/agent/.opencode/bin（env.sh PATH 预置 + OPENCODE_CONFIG_DIR 同指 ①）
+            # installer 默认落 ~/.opencode/bin——不在契约 PATH 时 command -v 永远失败（幂等判定失效）
+            local _oc="$DEV/apps/agent/.opencode/bin/opencode"
+            if command -v opencode >/dev/null 2>&1 || [ -x "$_oc" ]; then
+                bde_skip "opencode 已装：$(timeout 15 opencode --version 2>/dev/null | head -1 || timeout 15 "$_oc" --version 2>/dev/null | head -1)"
+            elif [ -x "$HOME/.opencode/bin/opencode" ]; then
+                # 已装但不在 PATH（旧默认位）：归位 ① 契约位即可，不重装
+                mkdir -p "$(dirname "$_oc")"
+                mv "$HOME/.opencode/bin/opencode" "$_oc" && rmdir "$HOME/.opencode/bin" 2>/dev/null
+                bde_ok "opencode 归位 ① 契约位（原 ~/.opencode/bin 不在 PATH）"
+            else
+                # curl|bash 管道退出码取 bash——截断脚本照样 exit 0（假成功，2026-11-12 实测）：
+                # 先落盘再执行，下载与执行 rc 全程真实；--no-modify-path 防 installer 写 chezmoi 托管的 shell rc
+                local _ins="$DEV/tmp/opencode-install.sh"
+                ensure_dir "$(dirname "$_ins")"
+                if curl -fsSL --max-time 120 https://opencode.ai/install -o "$_ins" \
+                   && bash "$_ins" --no-modify-path >/dev/null 2>&1; then
+                    if [ -x "$HOME/.opencode/bin/opencode" ]; then
+                        mkdir -p "$(dirname "$_oc")"
+                        mv "$HOME/.opencode/bin/opencode" "$_oc" && rmdir "$HOME/.opencode/bin" 2>/dev/null
+                    fi
+                    if [ -x "$_oc" ]; then bde_ok "opencode 安装（① 契约位）"
+                    else bde_pending "opencode 安装后未找到二进制（检查 installer 输出）"; fi
+                else
+                    bde_pending "opencode 安装失败（下载/执行失败，可重跑）"
+                fi
+                rm -f "$_ins"
+            fi ;;
         zcode)
             if command -v zcode >/dev/null 2>&1; then bde_skip "zcode 已装：$(timeout 15 zcode --version 2>/dev/null | head -1)"
             else bde_pending "zcode 走系统安装渠道（未装）"; fi ;;
@@ -39,7 +64,7 @@ _install_tool() {
         trae|trae-cn|antigravity|qoder|copilot)
             if command -v "$t" >/dev/null 2>&1; then bde_skip "$t 已装"
             else bde_pending "$t 安装方式待定（GUI 类工具人工安装）"; fi ;;
-        *) bde_pending "未知工具: $t" ;;
+        *) bde_pending "未知工具: $t（合法集见 modules/agent/runtimes.tsv；注意 BDE_TOOLS 为逗号分隔 CSV——空格分隔会被拼成一个名字）" ;;
     esac
 }
 

@@ -27,7 +27,16 @@ cap__pkg_alias() {
 cap__pkg_installed() { pacman -Qi "$1" >/dev/null 2>&1; }
 cap__pkg_install() {
     # Arch 滚动发行：安装前同步索引是常规（-y 轻量；失败不阻塞——包可能在缓存中）
-    sudo -n pacman -Sy --noconfirm --needed "$@" >/dev/null 2>&1
+    # 安装输出不再整体丢弃：失败时打印输出尾部——真实病因直接可见（同 debian.sh，2026-11-12 实测教训）
+    local _log; _log="$(mktemp "${TMPDIR:-/tmp}/bde-pac.XXXXXX")"
+    sudo -n pacman -Sy --noconfirm --needed "$@" >"$_log" 2>&1
+    local _rc=$?
+    if [ "$_rc" -ne 0 ]; then
+        bde_info "pacman 安装失败（rc=$_rc）——输出尾部："
+        tail -5 "$_log" 2>/dev/null | sed 's/^/    /'
+    fi
+    rm -f "$_log"
+    return "$_rc"
 }
 cap__pkg_check_source() {
     if grep -qsE 'tuna|ustc|aliyun' /etc/pacman.d/mirrorlist 2>/dev/null; then

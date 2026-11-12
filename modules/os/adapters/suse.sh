@@ -17,8 +17,8 @@ cap__pkg_alias() {
         docker-engine) echo "docker docker-compose" ;;
         terminal)      echo "konsole" ;;
         im-suite)      echo "fcitx5 fcitx5-rime fcitx5-configtool fcitx5-qt5" ;;
-        zram)          echo \"zram-generator\" ;;
-        power-suite)   echo \"tlp\" ;;
+        zram)          echo "zram-generator" ;;
+        power-suite)   echo "tlp" ;;
         *)             echo "$1" ;;
     esac
 }
@@ -31,7 +31,16 @@ cap__pkg_update_index() {
 }
 cap__pkg_install() {
     cap__pkg_update_index || true
-    sudo -n zypper -q --non-interactive install "$@" >/dev/null 2>&1
+    # 安装输出不再整体丢弃：失败时打印输出尾部——真实病因直接可见（同 debian.sh，2026-11-12 实测教训）
+    local _log; _log="$(mktemp "${TMPDIR:-/tmp}/bde-zypp.XXXXXX")"
+    sudo -n zypper -q --non-interactive install "$@" >"$_log" 2>&1
+    local _rc=$?
+    if [ "$_rc" -ne 0 ]; then
+        bde_info "zypper 安装失败（rc=$_rc）——输出尾部："
+        tail -5 "$_log" 2>/dev/null | sed 's/^/    /'
+    fi
+    rm -f "$_log"
+    return "$_rc"
 }
 cap__pkg_check_source() {
     if grep -qsE 'tuna|ustc|aliyun|mirrors' /etc/zypp/repos.d/*.repo 2>/dev/null; then

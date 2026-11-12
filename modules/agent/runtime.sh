@@ -187,9 +187,16 @@ with open(out,"w") as f:
 PY
 }
 
-# JSON 深路径合并（薄包装：公共原语 ensure_json_merge 在 lib/ensure.sh；此处仅记账）
+# JSON 深路径合并（薄包装：公共原语 ensure_json_* 在 lib/ensure.sh；此处记账）
+# 幂等语义（2026-11-12 实测修订）：键现状与正本投影全等 → [=] 跳过不写文件——
+# 曾无条件重写报 ✓，与 Skill 验收"二次 wire 全 skip"矛盾；有差异先备份再合并（写前留痕）
 _json_merge() {
     local f="$1" key="$2"
+    if ensure_json_key_equal "$@"; then
+        bde_skip "MCP 投影 ${f/#$HOME/~}（键 $key）已一致"
+        return 0
+    fi
+    ensure_backup "$f"
     if ensure_json_merge "$@"; then
         bde_ok "MCP 投影 ${f/#$HOME/~}（键 $key）"
     else
@@ -223,9 +230,20 @@ for n,v in servers.items():
         print(f"env = {{ {env} }}")
 PY
       echo "$end"
-    } > "$f.new" && mv "$f.new" "$f"
+    } > "$f.new"
+    # 幂等：整文件与现状一致则不写（托管块内容未变时避免触碰工具配置文件）
+    if cmp -s "$f" "$f.new" 2>/dev/null; then
+        rm -f "$f.new"
+        bde_skip "MCP 投影 ~/.codex/config.toml（TOML 托管块）已一致"
+    else
+        ensure_backup "$f"
+        if mv "$f.new" "$f"; then
+            bde_ok "MCP 投影 ~/.codex/config.toml（TOML 托管块）"
+        else
+            bde_fail "MCP 投影写入失败：$f"
+        fi
+    fi
     rm -f "$tmp"
-    bde_ok "MCP 投影 ~/.codex/config.toml（TOML 托管块）"
 }
 
 _rt_mcp_sync() {

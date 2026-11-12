@@ -91,12 +91,22 @@ if os.environ.get("BDE_DOCTOR_JSON") == "1":
     sys.exit(0 if failed == 0 else 1)
 
 tty = sys.stdout.isatty()
-G, R, Z = ("\033[32m", "\033[31m", "\033[0m") if tty else ("", "", "")
+G, R, Y, Z = ("\033[32m", "\033[31m", "\033[33m", "\033[0m") if tty else ("", "", "", "")
 print(f"devenv doctor — 机器 {doc['machine']} @ {doc['date']}")
 for name, ok, *_ in CHECKS:
     print(f"{G if ok else R}[{'✓' if ok else '✗'}]{Z} {name}")
 if st["profile_error"]:
     print(f"{R}[!]{Z} 存储档案：{st['profile_error_msg']}")
+# 警示项（[i] 只提示不计失败——登记表是全局的，机器各有取舍；但要让"应装未装"可见：
+# opencode 曾缺失 5 天无人发现，probe/doctor 盲区是根因之一，2026-11-12 实测）
+rm = (f.get("runtime_missing") or "").strip()
+if rm:
+    print(f"{Y}[i]{Z} runtime 注册表应装未装（人工渠道除外）:{rm} —— 补装后 devenv runtime wire 接线")
+if f.get("gen_fresh") == 0 and f.get("gen_stale"):
+    print(f"{Y}[i]{Z} gen 指纹过期分型：{f['gen_stale']}")
+if is_linux and free_mb <= 15 * 1024:
+    print(f"{Y}[i]{Z} 根盘超容分型：tidy SAFE 清单回收≈0（缓存已重定向 ②③）——大头经 devenv map --sizes "
+          f"定位，按构建十分离外置（code-out/介质入库）或扩容；属结构性问题而非缓存问题")
 print(f"\ndoctor：{passed} 项通过 ｜ {failed} 项失败")
 sys.exit(0 if failed == 0 else 1)
 PYEOF

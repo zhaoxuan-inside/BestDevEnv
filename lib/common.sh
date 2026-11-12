@@ -186,6 +186,11 @@ bde_cfg_diff_one() {
             done < "$src" ;;
         *)
             [ -f "$dst" ] || { echo "$name:应用层缺失"; return 0; }
+            # 权限不可读 ≠ 内容漂移：给得出处不同的诊断（root 落位 600 曾致 cmp 打不开 dst → 永久假漂移）
+            if [ ! -r "$dst" ]; then
+                echo "$name:应用层不可读（权限异常——root 落位建议 install -m 644 或 sudo chmod 644 后复检）"
+                return 0
+            fi
             local _es; _es="$(bde_cfg_effective_src "$src" "$mech")"
             if [ -z "$_es" ]; then
                 [[ "$mech" == "copy-expand" ]] || echo "$name:展开/渲染失败（工具缺失？）"

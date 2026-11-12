@@ -136,15 +136,17 @@ bde_probe_collect() {
         P_HOST_REG=1
     fi
     P_GEN_FRESH=0
+    P_GEN_STALE=""
     _gen_state="$DEV/docs/state/gen-fingerprint"
     if [ -f "$_gen_state" ] && [ -n "$(bde_templates_hash)" ]; then
         _gen_ok=0
-        [ "$(bde_templates_hash)" = "$(sed -n 's/^templates_hash=//p' "$_gen_state" | head -1)" ] && _gen_ok=1
+        _stale_t=0; _stale_c=0
+        [ "$(bde_templates_hash)" = "$(sed -n 's/^templates_hash=//p' "$_gen_state" | head -1)" ] && _gen_ok=1 || _stale_t=1
         # 第二分量：CFGVAL 数值来源正本（改值未重跑 gen = 代际漂移，检出——旧指纹无此键则宽限期跳过）
         if [ "$_gen_ok" = "1" ] && grep -q '^cfg_sources_hash=' "$_gen_state" 2>/dev/null; then
-            [ "$(bde_cfg_sources_hash)" = "$(sed -n 's/^cfg_sources_hash=//p' "$_gen_state" | head -1)" ] || _gen_ok=0
+            [ "$(bde_cfg_sources_hash)" = "$(sed -n 's/^cfg_sources_hash=//p' "$_gen_state" | head -1)" ] || { _gen_ok=0; _stale_c=1; }
         fi
-        [ "$_gen_ok" = "1" ] && P_GEN_FRESH=1
+        [ "$_gen_ok" = "1" ] && P_GEN_FRESH=1 || P_GEN_STALE="$([ "$_stale_t" = "1" ] && printf 'templates')$([ "$_stale_t" = "1" ] && [ "$_stale_c" = "1" ] && printf '+')$([ "$_stale_c" = "1" ] && printf 'cfg_sources')——跑 devenv gen 再生"
     fi
 
     # Runtime 统一接线（M4 扩展：记忆/MCP/Skill 三正本 + ~/.agents 枢纽兜底）
@@ -155,6 +157,19 @@ bde_probe_collect() {
        && [ -L "$HOME/.agents/skills/bestdevenv" ]; then
         P_RUNTIME_OK=1
     fi
+
+    # Runtime 注册表应装未装（非人工渠道；opencode 曾缺失 5 天无人发现——接线视图之外
+    # doctor 也要看得见。登记表是全局的、机器各有取舍 → 只警示不计 doctor 失败）
+    P_RUNTIME_MISSING=""
+    if [ -f "$BDE_ROOT/modules/agent/runtimes.tsv" ]; then
+        while IFS='|' read -r _rn _rb _rch _rrest; do
+            [ -n "$_rn" ] || continue
+            case "$_rch" in 人工*) continue ;; esac
+            [ -n "$_rb" ] || continue
+            command -v "$_rb" >/dev/null 2>&1 || P_RUNTIME_MISSING+="$_rn "
+        done < <(grep -v '^[[:space:]#]' "$BDE_ROOT/modules/agent/runtimes.tsv" | grep -v '^[[:space:]]*$')
+    fi
+    P_RUNTIME_MISSING="${P_RUNTIME_MISSING% }"
 
     # 配置治理漂移（M1.6：cfg-map 逐项；判定唯一实现在 bde_cfg_diff_one——与 cfg.sh diff/apply 同源 §19.5；
     # 正本缺失不计漂移——只提示未收编；条件不适用项本机缺席不计漂移）
@@ -227,6 +242,27 @@ bde_probe_collect() {
         rm -f "$f"
         [ -n "$out" ] && printf "%s|%s\n" "$c" "$out"
     }
+    # 版本行扫描版：Electron 系 CLI（zcode 等）--version 先吐运行日志再吐版本——
+    # head -1 抓到的是日志行而非版本（2026-11-12 实证）；全文扫首个版本号模式
+    _v_scan() {
+        local c=$1; shift; local out f
+        f="$(mktemp)"
+        if command -v timeout >/dev/null 2>&1; then
+            timeout -k 2 15 "$c" "$@" >"$f" 2>/dev/null
+        else
+            "$c" "$@" >"$f" 2>/dev/null
+        fi
+        out="$(grep -Eom1 '(^|[[:space:]])[vV]?[0-9]+(\.[0-9]+)+[^[:space:]]*' "$f" 2>/dev/null | head -1 | sed 's/^[[:space:]]*//')"
+        rm -f "$f"
+        [ -n "$out" ] && printf "%s|%s\n" "$c" "$out"
+    }
+    # GUI snap IDE（trae/antigravity/qoder）绝不执行二进制——--version 会真启动 IDE，
+    # 15s 超时后被 timeout 杀掉，用户侧表现为 IDE 反复重启（2026-11-12 实证）；改读 snap 元数据
+    _v_snap() {
+        local c=$1 out
+        out="$(snap list "$c" 2>/dev/null | awk 'NR==2{print $2" (snap)"}')"
+        [ -n "$out" ] && printf "%s|%s\n" "$c" "$out"
+    }
     P_TOOL_ROWS+="$( _v git    --version )"$'\n'
     P_TOOL_ROWS+="$( _v docker --version )"$'\n'
     P_TOOL_ROWS+="$( _v node   --version )"$'\n'
@@ -245,10 +281,10 @@ bde_probe_collect() {
     P_TOOL_ROWS+="$( _v gemini  --version 2>/dev/null | head -1 )"$'\n'
     P_TOOL_ROWS+="$( _v opencode --version 2>/dev/null | head -1 )"$'\n'
     P_TOOL_ROWS+="$( _v arkcli  --version 2>/dev/null | head -1 )"$'\n'
-    P_TOOL_ROWS+="$( _v zcode  --version 2>/dev/null | head -1 )"$'\n'
-    P_TOOL_ROWS+="$( _v trae  --version 2>/dev/null | head -1 )"$'\n'
-    P_TOOL_ROWS+="$( _v antigravity --version 2>/dev/null | head -1 )"$'\n'
-    P_TOOL_ROWS+="$( _v qoder --version 2>/dev/null | head -1 )"$'\n'
+    P_TOOL_ROWS+="$( _v_scan zcode  --version )"$'\n'
+    P_TOOL_ROWS+="$( _v_snap trae )"$'\n'
+    P_TOOL_ROWS+="$( _v_snap antigravity )"$'\n'
+    P_TOOL_ROWS+="$( _v_snap qoder )"$'\n'
     P_TOOL_ROWS+="$( _v copilot --version 2>/dev/null | head -1 )"$'\n'
     P_TOOL_ROWS="$(printf '%s' "$P_TOOL_ROWS" | grep -v '^$')"
 }
@@ -276,7 +312,9 @@ for line in (p.get("TOOL_ROWS") or "").splitlines():
         t, v = line.split("|", 1)
         tools[t.strip()] = v.strip()
 
-    doc = {
+# ⚠ doc 曾缩进在 for 循环体内：TOOL_ROWS 为空时 for 体不执行 → doc 未定义 NameError，
+#   probe --json 全挂（潜阀事故）；循环外构建，空表也要出完整快照
+doc = {
         "schema": "bde.probe/2",
         "machine": p.get("HOST", ""),
         "os": p.get("OS", ""),
@@ -304,6 +342,8 @@ for line in (p.get("TOOL_ROWS") or "").splitlines():
         "agents_md": i("P_AGENTS_MD"),
         "dispatcher_ok": i("P_DISPATCHER_OK"),
         "gen_fresh": i("P_GEN_FRESH"),
+        "gen_stale": p.get("GEN_STALE", ""),
+        "runtime_missing": (p.get("RUNTIME_MISSING", "") or "").strip(),
         "host_registered": i("P_HOST_REG"),
         "mcp_canon": i("P_MCP_CANON"),
         "runtime_wired": i("P_RUNTIME_OK"),

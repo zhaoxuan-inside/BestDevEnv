@@ -17,7 +17,7 @@ cap__pkg_alias() {
         java-21)       echo "openjdk-21-jdk" ;;
         docker-engine) echo "docker.io" ;;
         terminal)      echo "konsole" ;;
-        im-suite)      echo "fcitx5 fcitx5-rime fcitx5-configtool fcitx5-frontend-gtk3 fcitx5-frontend-gtk4 fcitx5-frontend-qt5" ;;
+        im-suite)      echo "fcitx5 fcitx5-rime fcitx5-config-qt fcitx5-frontend-gtk3 fcitx5-frontend-gtk4 fcitx5-frontend-qt5" ;;
         zram)          echo "zram-tools" ;;
         power-suite)   echo "tlp tlp-rdw" ;;
         *)             echo "$1" ;;
@@ -32,7 +32,24 @@ cap__pkg_update_index() {
 }
 cap__pkg_install() {
     cap__pkg_update_index || true
-    sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y "$@" >/dev/null 2>&1
+    # dpkg 健康前检：断裂态（half-configured）会让一切 apt-get install 在配置阶段撞死，
+    # 而报错被吞后只能瞎猜"网络/源/sudo"三条全错（2026-11-12 实测 postgresql-18 postinst 事件）——
+    # 先诊断给出真方向：audit 非空 = 有未完成配置的包，修复是唯一出路
+    local _audit; _audit="$(sudo -n dpkg --audit 2>/dev/null)"
+    if [ -n "$_audit" ]; then
+        bde_pending "dpkg 有未完成配置的包——先修复再装：sudo dpkg --configure -a（audit: $(printf '%s' "$_audit" | head -2 | tr '\n' '；'))"
+        return 1
+    fi
+    # apt 输出不再整体丢弃：失败时打印输出尾部——真实病因（依赖断裂/介质缺失/锁占用）直接可见
+    local _log; _log="$(mktemp "${TMPDIR:-/tmp}/bde-apt.XXXXXX")"
+    sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y "$@" >"$_log" 2>&1
+    local _rc=$?
+    if [ "$_rc" -ne 0 ]; then
+        bde_info "apt 安装失败（rc=$_rc）——输出尾部即真实病因，勿按'网络/源/sudo'猜测："
+        tail -5 "$_log" 2>/dev/null | sed 's/^/    /'
+    fi
+    rm -f "$_log"
+    return "$_rc"
 }
 cap__pkg_check_source() {  # 只报告不盲切（宪法：人工确认后才动源）
     if grep -rqsE 'aliyun|tuna|ustc|mirrors\.' /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
@@ -58,14 +75,25 @@ cap__zram_ensure() {
     local src="$COMMON/config/services/zram/zramswap" dst="${BDE_CAP_ZRAMSWAP_CONF:-/etc/default/zramswap}"
     [ -f "$src" ] || { bde_pending "zramswap 正本缺失：$src"; return 1; }
     sudo -n mkdir -p "$(dirname "$dst")" 2>/dev/null
+    local _zram_cfg_changed=0
     if ! cmp -s "$src" "$dst" 2>/dev/null; then
         ensure_backup "$dst"
-        sudo -n cp "$src" "$dst" && bde_ok "zramswap 参数落位（正本为准）" \
+        sudo -n cp "$src" "$dst" && { bde_ok "zramswap 参数落位（正本为准）"; _zram_cfg_changed=1; } \
             || { bde_pending "zramswap 写入失败（需 sudo）"; return 1; }
     else
         bde_skip "zramswap 参数已一致"
     fi
     if cap__svc_ensure zramswap; then
+        # 参数落位 ≠ 运行态生效：zram0 尺寸在服务启动时定格，配置有变必须 restart
+        #（2026-11-12 实测：落位后 ensure 只见服务 active，运行态仍是旧参数 256M）
+        if [ "$_zram_cfg_changed" = "1" ]; then
+            if sudo -n systemctl restart zramswap >/dev/null 2>&1; then
+                bde_ok "zramswap 重启生效（新参数加载，swapon 尺寸应为正本 PERCENT×RAM）"
+            else
+                bde_pending "zramswap 重启失败（人工执行 systemctl restart zramswap，否则运行态仍为旧参数）"
+                return 1
+            fi
+        fi
         bde_ok "zram 已启用（swapon --show 可见 zram0）"
     else
         bde_pending "zramswap 服务启用失败"

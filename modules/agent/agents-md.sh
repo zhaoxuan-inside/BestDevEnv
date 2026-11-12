@@ -14,43 +14,36 @@ bde_info "M4 AGENTS.md 统一构建（指令视图：消费 probe.json 快照—
 bde_probe_save >/dev/null     # 采集+落快照（唯一采集入口；渲染一律取自快照文件）
 F_PROBE_JSON="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}/probe.json"
 
-# 物理边界/OS/日期一律从快照渲染（曾从活采集的 P_* shell 变量渲染——同一进程两次采集，结构上是旁路）
+# 物理边界事实从快照渲染（曾从活采集的 P_* shell 变量渲染——同一进程两次采集，结构上是旁路）。
+# 快照只出"原料"（probed/backend/constraints），成句在 bash 侧做——日期要冻结（见下），句子模板只留一处。
+# ⚠ 历史缺陷（2026-11-12 实证）：旧实现把输出路径变量 full 在 python 里复用为文本内容，
+#   open(full,"w") 拿整段文本当文件名 → 崩溃 → date 文件缺失 → cat 报错、@DATE@ 渲染为空。
 _phys_dir="$(mktemp -d "${TMPDIR:-/tmp}/bde-phys.XXXXXX")"
 BDE_PROBE_JSON="$F_PROBE_JSON" BDE_PHYS_DIR="$_phys_dir" python3 - <<'PY'
 import json, os
 d = json.load(open(os.environ["BDE_PROBE_JSON"]))
-caps, date, be = d["share_caps"], d["date"], d["storage"]["backend_common"]
-out, full = os.path.join(os.environ["BDE_PHYS_DIR"], "brief"), os.path.join(os.environ["BDE_PHYS_DIR"], "full")
+caps, be = d["share_caps"], d["storage"]["backend_common"]
+pd = os.environ["BDE_PHYS_DIR"]
+def w(name, text):
+    open(os.path.join(pd, name), "w").write(text)
 cons = []
 if caps["probed"] == 1:
-    if not caps["symlink"]:   cons.append("无 symlink")
-    if not caps["hardlink"]:  cons.append("无 hardlink")
+    if not caps["symlink"]:        cons.append("无 symlink")
+    if not caps["hardlink"]:       cons.append("无 hardlink")
     if not caps["case_sensitive"]: cons.append("不区分大小写")
-    if not caps["perm"]:      cons.append("权限恒 777")
-    if not caps["name255"]:   cons.append("文件名上限 255B")
-    brief = (f"物理红线（能力探测 {date} · 后端 {be}）：" + " · ".join(cons) +
-             "——依赖实体与私钥绝不上去；命名一律小写 kebab-case") if cons else \
-            (f"共享盘能力（探测 {date} · 后端 {be}）：symlink/hardlink/大小写/权限/长文件名均可用——"
-             "依赖实体仍住 ①（跨机一致），命名仍小写 kebab-case")
-    full = "\n".join(f"- {c}（probe 实测）" for c in cons) + "\n" if cons else \
-           "- 共享盘能力探测全部可用（symlink/hardlink/大小写/权限/文件名 ≥255B）\n"
-else:
-    brief = ("物理红线（能力未探测——共享盘当前不可写，按最保守假设）：无 symlink/不分大小写/权限 777"
-             "——依赖实体与私钥绝不上去；命名一律小写 kebab-case")
-    full = "- 共享盘能力未探测（probe 时共享盘不可写）——按最保守假设对待：无 symlink、不区分大小写、权限 777\n"
-full += "- 依赖实体（node_modules/venv）与私钥绝不放共享盘——住 ①（跨机一致性；bind 接回）\n"
-if caps["probed"] == 1 and not caps["name255"]:
-    full += "- 单文件名/深层路径超 255B 上限——gradle/flutter 类缓存留本机盘\n"
-full += "- 命名一律小写 kebab-case"
-open(out, "w").write(brief)
-open(full, "w").write(full)
-open(os.path.join(os.environ["BDE_PHYS_DIR"], "os"), "w").write(d.get("os", ""))
-open(os.path.join(os.environ["BDE_PHYS_DIR"], "date"), "w").write(date)
+    if not caps["perm"]:           cons.append("权限恒 777")
+    if not caps["name255"]:        cons.append("文件名上限 255B")
+w("probed", str(caps["probed"]))
+w("backend", be)
+w("constraints", "\n".join(cons) + ("\n" if cons else ""))
+w("os", d.get("os", ""))
 PY
-_PHYS_BRIEF="$(cat "$_phys_dir/brief")"
-_PHYS_FULL="$(cat "$_phys_dir/full")"
-P_OS="$(cat "$_phys_dir/os")"
-P_DATE="$(cat "$_phys_dir/date")"
+_p_probed="$(cat "$_phys_dir/probed" 2>/dev/null || echo 0)"
+_be="$(cat "$_phys_dir/backend" 2>/dev/null || echo unknown)"
+P_OS="$(cat "$_phys_dir/os" 2>/dev/null)"
+P_DATE="$(date '+%F %T')"   # @DATE@ 仅 AGENTS.md（① 每机器生成物）使用——SKILL 模板已除名（日期进 ③ 正文=每次 gen 提交噪音）
+_constraints=()
+while IFS= read -r _c; do [ -n "$_c" ] && _constraints+=("$_c"); done < "$_phys_dir/constraints"
 rm -rf "$_phys_dir"
 
 TPL="$BDE_ROOT/templates/AGENTS.md.tmpl"
@@ -72,17 +65,22 @@ t = json.load(open(os.environ["BDE_TOOLS_JSON"]))["tools"]
 sys.stdout.write("\n".join(f"| {k} | {v} |" for k, v in sorted(t.items())))
 ')"
 
-# ── 物理边界渲染（P1-3：probe 能力探测 → 事实化文本；取代旧"HGFS 后端实测"静态段）──
-# 换后端不再需要人工重测改模板：M2/probe 实测 symlink/hardlink/大小写/权限/文件名长度，视图按事实渲染
+# ── 物理边界渲染（P1-3：probe 能力探测 → 事实化文本）──
+# 换后端不再需要人工重测改模板：probe 实测 symlink/hardlink/大小写/权限/文件名长度，视图按事实渲染。
+# 日期冻结（gen 幂等）：日期戳渲染进 ③ SKILL 正文（@PHYSICAL_BRIEF@），曾致跨日 gen 产生
+# "纯日期 diff"提交噪音（2026-11-12→13 实证）——日期只在能力集合/后端变化时更新，否则沿用 ① state 原值。
+_caps_key="probed=$_p_probed backend=$_be $(printf '%s ' "${_constraints[@]}")"
+_caps_state="$DEV/docs/state/share-caps-date"
+mkdir -p "$(dirname "$_caps_state")" 2>/dev/null
+_old_key=""; _old_date=""
+[ -f "$_caps_state" ] && { _old_key="$(sed -n 's/^caps_key=//p' "$_caps_state" | head -1)"; _old_date="$(sed -n 's/^date=//p' "$_caps_state" | head -1)"; }
 _phys_date="$(date '+%F')"
-_be="${BDE_SCOPE_SHARED_BACKEND:-unknown}"
-if [ "${P_CAP_PROBED:-0}" = "1" ]; then
-    _constraints=()
-    [ "${P_CAP_SYMLINK:-0}" = "0" ]  && _constraints+=("无 symlink")
-    [ "${P_CAP_HARDLINK:-0}" = "0" ] && _constraints+=("无 hardlink")
-    [ "${P_CAP_CASE:-0}" = "0" ]     && _constraints+=("不区分大小写")
-    [ "${P_CAP_PERM:-0}" = "0" ]     && _constraints+=("权限恒 777")
-    [ "${P_CAP_NAME255:-0}" = "0" ]  && _constraints+=("文件名上限 255B")
+if [ -n "$_old_date" ] && [ "$_old_key" = "$_caps_key" ]; then
+    _phys_date="$_old_date"
+else
+    printf 'caps_key=%s\ndate=%s\n' "$_caps_key" "$_phys_date" > "$_caps_state"
+fi
+if [ "$_p_probed" = "1" ]; then
     if [ "${#_constraints[@]}" -gt 0 ]; then
         _cl="$(printf '%s · ' "${_constraints[@]}")"; _cl="${_cl% · }"
         _PHYS_BRIEF="物理红线（能力探测 $_phys_date · 后端 $_be）：$_cl——依赖实体与私钥绝不上去；命名一律小写 kebab-case"
@@ -93,7 +91,7 @@ if [ "${P_CAP_PROBED:-0}" = "1" ]; then
         _PHYS_FULL="- 共享盘能力探测全部可用（symlink/hardlink/大小写/权限/文件名 ≥255B）"$'\n'
     fi
     _PHYS_FULL+="- 依赖实体（node_modules/venv）与私钥绝不放共享盘——住 ①（跨机一致性；bind 接回）"$'\n'
-    [ "${P_CAP_NAME255:-0}" = "0" ] && _PHYS_FULL+="- 单文件名/深层路径超 255B 上限——gradle/flutter 类缓存留本机盘"$'\n'
+    printf '%s\n' "${_constraints[@]}" | grep -q "文件名上限 255B" && _PHYS_FULL+="- 单文件名/深层路径超 255B 上限——gradle/flutter 类缓存留本机盘"$'\n'
     _PHYS_FULL+="- 命名一律小写 kebab-case"
 else
     _PHYS_BRIEF="物理红线（能力未探测——共享盘当前不可写，按最保守假设）：无 symlink/不分大小写/权限 777——依赖实体与私钥绝不上去；命名一律小写 kebab-case"

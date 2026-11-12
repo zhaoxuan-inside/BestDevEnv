@@ -120,7 +120,9 @@ _cfg_apply_one() {
             else
                 ensure_backup "$dst"
                 if [ "$root" = "y" ]; then
-                    sudo -n cp "$_es" "$dst" && { bde_ok "$name 落位 ${dst/#$HOME/~}（root${mech:+·$mech}）"; _chg=1; } \
+                    # install -m 644 而非 sudo cp：cp 创建新文件会继承 mktemp 临时文件的 600 权限，
+                    # 用户态 diff/cmp 打不开 dst → 永久假漂移（2026-11-12 实测 var-lib-docker.mount 事件）
+                    sudo -n install -m 644 "$_es" "$dst" && { bde_ok "$name 落位 ${dst/#$HOME/~}（root${mech:+·$mech}）"; _chg=1; } \
                         || bde_fail "$name 落位失败（需 sudo 免密）"
                 else
                     cp "$_es" "$dst" && { bde_ok "$name 落位 ${dst/#$HOME/~}"; _chg=1; }
@@ -198,6 +200,19 @@ _cfg_snapshot() {
             && bde_ok "seed 快照已 commit——记得 git push 完成异地备份"
     else
         bde_skip "seed 快照与 ③ 正本一致（无新变更）"
+    fi
+    # gen 指纹护栏（防互踩）：seed 镜像不触碰指纹源（templates/ 与 ③ 数值正本），但
+    # snapshot 后 doctor「正本与模板同代」曾翻红（2026-11-12 实测）——此处显式对账并给
+    # 组件级定位，把"神秘红"转成可执行指引（跑 devenv gen），不再盲猜
+    [ -f "$BDE_ROOT/lib/probe.sh" ] && source "$BDE_ROOT/lib/probe.sh"
+    local _gs="$DEV/docs/state/gen-fingerprint"
+    if [ -f "$_gs" ] && command -v bde_templates_hash >/dev/null 2>&1; then
+        local _ok_t=1 _ok_c=1
+        [ "$(sed -n 's/^templates_hash=//p' "$_gs" | head -1)" = "$(bde_templates_hash)" ] || _ok_t=0
+        local _hc; _hc="$(sed -n 's/^cfg_sources_hash=//p' "$_gs" | head -1)"
+        [ -n "$_hc" ] && [ "$_hc" = "$(bde_cfg_sources_hash)" ] || _ok_c=0
+        [ "$_ok_t" = "1" ] && [ "$_ok_c" = "1" ] || \
+            bde_pending "gen 指纹与现状不同代（templates=$_ok_t cfg_sources=$_ok_c）——先 devenv gen 再生，再 push"
     fi
 }
 
