@@ -34,7 +34,7 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 | 开发者字体 | JetBrainsMono Nerd Font 用户级（③ install/fonts 本地投放优先 → ② 缓存网络兜底 → fonts 能力落位） | `fc-list \| grep -c JetBrains` |
 | inotify 上限 | 同内核参数行（watches=524288 / instances=1024） | `sysctl fs.inotify.max_user_watches` |
 | docker 配置 | cfg-map 收编：正本 ③ `config/services/docker/daemon.json` → `/etc/docker/daemon.json`（`devenv cfg apply`） | `devenv cfg diff` ｜ `docker info` |
-| docker 数据根 | ① `DevEnv/services/docker`（2026-11-08 迁移，服务三分离首例） | `docker info` Docker Root Dir ｜ `docker system df` |
+| docker 数据根 | ① `DevEnv/services/docker`，经 `var-lib-docker.mount` bind 成 `/var/lib/docker` 给 dockerd（数据仍在 ①；挂载点必须在 `$HOME` 外，否则容器的 rootfs/overlayfs/\<id\> 会被 gvfs 当可卸载假卷） | `findmnt /var/lib/docker` ｜ `docker info` Docker Root Dir=`/var/lib/docker` ｜ `docker system df` |
 | docker 安装体 | 语义包 `docker-engine`（适配器别名：apt=docker.io）+ svc ensure + group ensure | `systemctl is-active docker` |
 | apt 源 | 只检测报告，不自动切（人工切阿里/清华） | 执行输出 pending 项 |
 | 默认终端/shell | konsole + Ctrl+Alt+T；zsh；`.bashrc` 接 env.sh | `echo $SHELL` |
