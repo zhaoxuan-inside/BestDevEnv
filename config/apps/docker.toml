@@ -16,7 +16,7 @@ via = "cfg-map"
 
 [data]
 scope = "host"                              # 逻辑作用域：主机级（daemon 全机共享）
-at = "user:services/docker"                 # 物理落点：① 用户空间（用户空间优先；host 数据可住用户盘）
+at = "user:services/docker"                 # 物理落点：① 用户空间；dockerd 视角是 /var/lib/docker（var-lib-docker.mount bind，避免 $HOME 挂载被 gvfs 暴露成假卷）
 dump = "host:data/dumps"                    # 例行 dump 留档基目录
 
 [service]
