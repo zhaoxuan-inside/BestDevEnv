@@ -41,6 +41,8 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 | 输入法 | fcitx5 全家桶 + **macOS12 皮肤**（macos12-light/dark → ① `$DEV/xdg/local/fcitx5/themes/`，git→jsDelivr→API 三链路拉取）+ rime 简体默认；皮肤选择在 config 仓库 `classicui.conf`（macOS12 双主题：`Theme=macos12-light/dark` 手动切，`UseDarkTheme=True` 跟随系统亮暗；**fcitx5 GUI 改设置会重写该文件并剥注释——收编走 `devenv cfg adopt`（正本=应用层原样），绝不用 `cfg apply` 覆盖，切换语义存 cfg-map 备注列**）；**IM 环境变量由 config 仓库 `dot_config/environment.d/50-devspace.conf.tmpl` 下发**（GTK/QT/XMODIFIERS → fcitx：GNOME Wayland 的 Mutter 只支持 IBus，必须让客户端自己加载 fcitx 模块直连 D-Bus）；启用/雾凇为人工 | `im-config -n fcitx5` + 重登；`systemctl --user show-environment \| grep IM_MODULE` 应为 fcitx ｜ 皮肤重放：`bash modules/os/fcitx5-theme.sh` |
 | 提示符 | starship（`~/.local/bin` 用户级安装） | `starship --version` |
 
+> 参数数值（inotify=524288 / swappiness=10 / journald 512M / nofile 65535 / zram 50%）**唯一出处 = ③ 正本**（cfg-map 索引）；本表数值仅为撰写时快照，以正本为准——改值只改正本再 `devenv cfg apply`。
+
 ## 边界
 
 - 写操作依赖 `sudo -n` 免密——批量 pending 先查 sudo
