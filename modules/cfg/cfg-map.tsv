@@ -15,7 +15,9 @@ limits-devspace|system|$COMMON/config/services/limits/99-devspace.conf|/etc/secu
 zramswap|system|$COMMON/config/services/zram/zramswap|/etc/default/zramswap|copy|y|os=ubuntu,debian,linuxmint|zram 参数 zstd/50%（zram-tools；svc 归 zram 能力，v0.19）
 zram-generator|system|$COMMON/config/services/systemd/zram-generator.conf|/etc/systemd/zram-generator.conf|copy|y|os=fedora,rhel,centos,rocky,alma,arch,manjaro,endeavouros,garuda,opensuse-leap,opensuse-tumbleweed,sles|zram-generator conf（fedora/arch/suse 系；svc 归 zram 能力，v0.19）
 hosts-fragment|system|$COMMON/config/hosts.toml|/etc/hosts|hosts|y|os_family=linux|hosts.toml→/etc/hosts 标记片段（ip 空机器段跳过 + 自身 127.0.1.1；apply 幂等再生）
-docker-daemon|service|$COMMON/config/services/docker/daemon.json|/etc/docker/daemon.json|copy-expand|y||registry-mirrors+日志轮转；data-root=${DEV} 锚点展开（宪法 §10.6；2026-11-08 收编，v0.18 锚点化）
+docker-daemon|service|$COMMON/config/services/docker/daemon.json|/etc/docker/daemon.json|copy-expand|y||registry-mirrors+日志轮转；data-root=/var/lib/docker（实际数据在 ①，见 docker-root-mount；宪法 §10.6）
+docker-root-mount|service|$COMMON/config/services/docker/var-lib-docker.mount|/etc/systemd/system/var-lib-docker.mount|copy-expand|y||${DEV}/services/docker → /var/lib/docker bind：gvfs 只暴露 $HOME 下挂载，容器 rootfs 假卷消失（落位后 daemon-reload + enable --now）
+docker-datadir-order|service|$COMMON/config/services/docker/10-datadir.conf|/etc/systemd/system/docker.service.d/10-datadir.conf|copy|y||docker.service RequiresMountsFor=/var/lib/docker（先挂载后起 dockerd；daemon-reload 生效）
 fstab-hgfs|system|$COMMON/config/services/mount/hgfs.fstab|/etc/fstab|append|y|backend_common=hgfs&backend_host=hgfs|hgfs 挂载两行片段（仅 hgfs 后端机器生效；M2 写入，2026-11-08 收编）
 apt-ubuntu|system|$COMMON/config/apt/ubuntu.sources|/etc/apt/sources.list.d/ubuntu.sources|copy|y|os=ubuntu,debian,linuxmint|tuna noble 四组件（2026-11-08 修复后收编）
 user-dirs|dotfile|$COMMON/config/dot_config/user-dirs.dirs.tmpl|$HOME/.config/user-dirs.dirs|chezmoi|n||XDG 用户目录 → ② Local 锚点（.tmpl 按本机数据渲染；chezmoi 再生；M2 不再直写）

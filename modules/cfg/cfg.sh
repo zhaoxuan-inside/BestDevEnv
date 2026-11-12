@@ -61,6 +61,12 @@ _cfg_post_apply() {  # <name>
             sudo -n systemctl restart systemd-journald >/dev/null 2>&1 \
                 && bde_ok "systemd-journald 重启生效" \
                 || bde_pending "journald 重启失败（人工执行或下次重启生效）" ;;
+        docker-root-mount|docker-datadir-order)
+            # 单元/drop-in 落位后必须 daemon-reload 才被 systemd 看见；mount 需 enable --now 才建立 bind
+            sudo -n systemctl daemon-reload >/dev/null 2>&1 || { bde_pending "daemon-reload 失败（人工执行）"; return 0; }
+            sudo -n systemctl enable --now var-lib-docker.mount >/dev/null 2>&1 \
+                && bde_ok "var-lib-docker.mount 已 enable --now（${DEV}/services/docker → /var/lib/docker bind 生效）" \
+                || bde_pending "var-lib-docker.mount 启用失败（检查 ${DEV}/services/docker 是否存在）" ;;
     esac
 }
 
