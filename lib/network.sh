@@ -49,6 +49,8 @@ NO_PROXY_DFT = "localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,
 print(f"# network.env — 网络画像（由 BestDevEnv/lib/network.sh 生成于 {os.environ['BDE_NETWORK_DATE']}；机器 {machine}）")
 print("# 正本 ③ config/data/network.toml ｜ 再生: devenv state-env ｜ 勿手改（手改会被再生覆盖）")
 
+emit("BDE_TIMEZONE",                get("timezone"))
+emit("BDE_LANG",                    get("lang"))
 emit("BDE_NODE_DIST_MIRROR",        get("node_dist_mirror"))
 emit("PIP_INDEX_URL",               get("pip_index_url"))
 emit("RUSTUP_DIST_SERVER",          get("rustup_dist_server"))

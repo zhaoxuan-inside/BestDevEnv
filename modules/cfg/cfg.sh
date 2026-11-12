@@ -121,7 +121,9 @@ _cfg_apply_one() {
                 fi
             fi
             [ "$_chg" = "1" ] && _cfg_post_apply "$name"
-            [[ "$_es" == "${TMPDIR:-/tmp}/bde-cfg-x."* ]] && rm -f "$_es" ;;
+            [[ "$_es" == "${TMPDIR:-/tmp}/bde-cfg-x."* ]] && rm -f "$_es"
+            # [[ ]] 短路曾致成功落位误报 rc=1 → 单名 apply 谎报"无此项"（2026-11-12 实证修复）
+            return 0 ;;
         append)
             local _miss=0 _l
             while IFS= read -r _l; do

@@ -189,17 +189,20 @@ bde_cfg_diff_one() {
 }
 
 # hosts.toml → /etc/hosts 片段（唯一生成器：cfg hosts 机制与 probe 事实共用）
-# 只产出登记了 ip 的机器段行（ip 空 = 暂不分配，跳过不误报）；空输出 = 无事可做
+# 产出两类行：① 登记了 ip 的机器段行（ip 空 = 暂不分配，跳过不误报）
+#            ② 自身主机 → 127.0.1.1（Debian 惯例：自身主机名必须可解析；未被站点 ip 覆盖时补）
+# 空输出 = 无事可做（理论上自身行保证非空）
 bde_hosts_fragment() {  # [toml 路径] → stdout（片段行，默认 $BDE_ROOT/hosts.toml）；失败响亮退非零
     command -v python3 >/dev/null 2>&1 || { echo "python3 缺失" >&2; return 1; }
     python3 -c 'import tomllib' 2>/dev/null || { echo "python3 缺少 tomllib（需 ≥3.11）" >&2; return 1; }
     python3 - "${1:-${BDE_ROOT:-/Share/Common/code/BestDevEnv}/hosts.toml}" <<'PY'
-import sys, tomllib
+import os, sys, tomllib
 try:
     with open(sys.argv[1], "rb") as fh:
         d = tomllib.load(fh)
 except Exception as e:
     sys.exit(f"hosts.toml 解析失败: {e}")
+covered = set()
 for host, sec in d.items():
     if not isinstance(sec, dict):
         continue
@@ -207,7 +210,11 @@ for host, sec in d.items():
     if not ip:
         continue
     names = [host] + [a.strip() for a in str(sec.get("alias") or "").split(",") if a.strip()]
+    covered.update(names)
     print(f"{ip} " + " ".join(names))
+me = os.uname().nodename.lower()
+if me and me not in covered:
+    print(f"127.0.1.1 {me}")
 PY
 }
 

@@ -12,7 +12,9 @@
 sysctl-devspace|system|$COMMON/config/services/sysctl/99-devspace.conf|/etc/sysctl.d/99-devspace.conf|copy|y|os_family=linux|inotify+swappiness+vfs_cache_pressure+file-max（v0.19 系统优化默认集）
 journald-devspace|system|$COMMON/config/services/systemd/journald-devspace.conf|/etc/systemd/journald.conf.d/99-devspace.conf|copy|y|os_family=linux|journald drop-in：宿主日志 512M/KeepFree 1G/14day（v0.19）
 limits-devspace|system|$COMMON/config/services/limits/99-devspace.conf|/etc/security/limits.d/99-devspace.conf|copy|y|os_family=linux|nofile 65535（v0.19）
-hosts-fragment|system|$COMMON/config/hosts.toml|/etc/hosts|hosts|y|os_family=linux|hosts.toml→/etc/hosts 标记片段（ip 空机器段跳过；apply 幂等再生）
+zramswap|system|$COMMON/config/services/zram/zramswap|/etc/default/zramswap|copy|y|os=ubuntu,debian,linuxmint|zram 参数 zstd/50%（zram-tools；svc 归 zram 能力，v0.19）
+zram-generator|system|$COMMON/config/services/systemd/zram-generator.conf|/etc/systemd/zram-generator.conf|copy|y|os=fedora,rhel,centos,rocky,alma,arch,manjaro,endeavouros,garuda,opensuse-leap,opensuse-tumbleweed,sles|zram-generator conf（fedora/arch/suse 系；svc 归 zram 能力，v0.19）
+hosts-fragment|system|$COMMON/config/hosts.toml|/etc/hosts|hosts|y|os_family=linux|hosts.toml→/etc/hosts 标记片段（ip 空机器段跳过 + 自身 127.0.1.1；apply 幂等再生）
 docker-daemon|service|$COMMON/config/services/docker/daemon.json|/etc/docker/daemon.json|copy-expand|y||registry-mirrors+日志轮转；data-root=${DEV} 锚点展开（宪法 §10.6；2026-11-08 收编，v0.18 锚点化）
 fstab-hgfs|system|$COMMON/config/services/mount/hgfs.fstab|/etc/fstab|append|y|backend_common=hgfs&backend_host=hgfs|hgfs 挂载两行片段（仅 hgfs 后端机器生效；M2 写入，2026-11-08 收编）
 apt-ubuntu|system|$COMMON/config/apt/ubuntu.sources|/etc/apt/sources.list.d/ubuntu.sources|copy|y|os=ubuntu,debian,linuxmint|tuna noble 四组件（2026-11-08 修复后收编）
@@ -20,6 +22,7 @@ user-dirs|dotfile|$COMMON/config/dot_config/user-dirs.dirs.tmpl|$HOME/.config/us
 fcitx5-rime|dotfile|$COMMON/config/dot_local/share/fcitx5/rime/default.custom.yaml|$HOME/DevEnv/xdg/local/fcitx5/rime/default.custom.yaml|copy|n||Fcitx5 actual XDG location
 fcitx5-autostart|dotfile|$COMMON/config/dot_config/autostart/org.fcitx.Fcitx5.desktop|$HOME/DevEnv/xdg/config/autostart/org.fcitx.Fcitx5.desktop|copy|n||Fcitx5 actual XDG location
 classicui-fcitx5|dotfile|$COMMON/config/dot_config/fcitx5/conf/classicui.conf|$HOME/DevEnv/xdg/config/fcitx5/conf/classicui.conf|copy|n||macOS12 皮肤选择（正本里改 light/dark）
+konsole-profile|dotfile|$COMMON/config/dot_config/konsole/devspace.profile|$HOME/DevEnv/xdg/local/share/konsole/devspace.profile|copy|n|os=ubuntu,debian,linuxmint|Konsole 统一 profile（JetBrainsMono NF 12；默认指针归 terminal 能力 kwriteconfig5）
 condarc|dotfile|$COMMON/config/dot_condarc|$HOME/.condarc|copy-expand|n||conda tuna 镜像 + envs/pkgs → ① deps/conda（ml-trainer；v0.19）
 gradle-properties|dotfile|$COMMON/config/dot_gradle/gradle.properties|$LOCAL/cache/gradle/gradle.properties|copy-expand|n||Gradle 全局性能/缓存（GRADLE_USER_HOME → ②；镜像属项目级，v0.19）
 profile|dotfile|$COMMON/config/dot_profile|$HOME/.profile|chezmoi|n||登录 shell 环境契约兜底（非交互 bash -lc/cron/ssh；.bashrc 对非交互早退）

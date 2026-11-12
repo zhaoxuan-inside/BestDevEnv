@@ -63,6 +63,8 @@ if is_linux:
         ("vm.swappiness ≤ 10（换页保守，现值见 probe）", f["sysctl_ok"] == 1),
         ("fstrim.timer 已启用（SSD 周期 TRIM）",  f["fstrim_ok"] == 1),
         ("时间同步服务运行中",                  f["timesync_ok"] == 1),
+        ("时区与站点画像一致",                  f["tz_ok"] == 1),
+        ("zram 压缩内存交换已启用",             f["zram_ok"] == 1),
     ]
 
 # 叠层检查仅挂载型后端有意义（local 目录无挂载点概念）
