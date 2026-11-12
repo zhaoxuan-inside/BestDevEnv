@@ -20,10 +20,11 @@
 BDE_CAP_LIB_LOADED=1
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$BDE_ROOT/lib/common.sh"   # bde_os_id / bde_os_family / 日志原语
+source "$BDE_ROOT/lib/paths.sh"    # 锚点上下文自洽（适配器正本路径依赖 $COMMON/$LOCAL——独立执行 cap 也正确）
 
 # 能力契约注册表（cap:op,op,…；新增能力 = 适配器实现函数 + 此处登记一行）
 # 注意：op 用下划线命名（bash 函数名无连字符——check_source 曾写作 check-source 致分派失配）
-CAP_KNOWN="pkg:installed,install,check_source svc:ensure,active kernel:ensure,get limits:ensure logs:ensure trim:ensure timesync:check hostname:get,set fonts:ensure shell:get,set im:ensure terminal:ensure group:ensure"
+CAP_KNOWN="pkg:installed,install,check_source svc:ensure,active kernel:ensure,get limits:ensure logs:ensure trim:ensure timesync:check,ensure locale:ensure,get zram:ensure power:ensure hostname:get,set fonts:ensure shell:get,set im:ensure terminal:ensure group:ensure"
 
 # —— 适配器加载（幂等；family 归并在 lib/common.sh bde_os_family）——
 cap_load() {

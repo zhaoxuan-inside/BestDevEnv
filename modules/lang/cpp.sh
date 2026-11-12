@@ -13,6 +13,15 @@ for _p in build-base cmake ninja-build gdb ccache clang clangd; do
     ensure_pkg "$_p"
 done
 
+# 1.5) clangd 无版本符号链接（Debian 系只出 clangd-XX 版本化二进制——统一 `clangd` 入口，用户级免 sudo）
+if ! command -v clangd >/dev/null 2>&1; then
+    _clangd_bin="$(ls /usr/bin/clangd-* 2>/dev/null | sort -V | tail -1)"
+    if [ -n "$_clangd_bin" ]; then
+        mkdir -p "$HOME/.local/bin" && ln -sf "$_clangd_bin" "$HOME/.local/bin/clangd" \
+            && bde_ok "clangd 入口 → $HOME/.local/bin/clangd（→ $(basename "$_clangd_bin")）"
+    fi
+fi
+
 # 2) ccache 缓存 → ②（按机隔离防锁；CCACHE_DIR 由 env.sh 契约下发）
 ensure_dir "$LOCAL/cache/ccache" 2>/dev/null || true
 bde_ok "ccache 缓存 → $LOCAL/cache/ccache（CCACHE_DIR → env.sh）"

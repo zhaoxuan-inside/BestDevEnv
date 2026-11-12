@@ -6,9 +6,9 @@
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$BDE_ROOT/lib/ensure.sh"   # ensure_dir/ensure_backup 幂等原语
 
-_CAP_SYSCTL_CONF="/etc/sysctl.d/99-devspace.conf"
-_CAP_JOURNAL_CONF="/etc/systemd/journald.conf.d/99-devspace.conf"
-_CAP_LIMITS_CONF="/etc/security/limits.d/99-devspace.conf"
+_CAP_SYSCTL_CONF="${BDE_CAP_SYSCTL_CONF:-/etc/sysctl.d/99-devspace.conf}"
+_CAP_JOURNAL_CONF="${BDE_CAP_JOURNAL_CONF:-/etc/systemd/journald.conf.d/99-devspace.conf}"
+_CAP_LIMITS_CONF="${BDE_CAP_LIMITS_CONF:-/etc/security/limits.d/99-devspace.conf}"
 
 # 正本落位通用件（备份 + cmp 幂等 + sudo；内容归 ③ 正本/cfg-map 治理，这里只搬）
 _cap_copy_conf() {  # <正本> <目标> <描述> → 0=一致或落位成功
@@ -66,14 +66,70 @@ cap__trim_ensure() {
     fi
 }
 
-# ── timesync（只查不装：不盲改时间同步）──
+# ── timesync（check 只读；ensure 幂等开 systemd 内建 NTP——标准动作非盲改）──
 cap__timesync_check() {
     if cap__svc_active systemd-timesyncd || cap__svc_active chronyd || cap__svc_active chrony || cap__svc_active ntpd; then
         bde_ok "时间同步服务运行中"
         return 0
     fi
-    bde_pending "时间同步未运行（timedatectl set-ntp true 或装 chrony——人工确认后执行）"
+    bde_pending "时间同步未运行（timedatectl set-ntp true 或装 chrony）"
     return 1
+}
+cap__timesync_ensure() {
+    if cap__timesync_check; then return 0; fi
+    if command -v timedatectl >/dev/null 2>&1 && sudo -n timedatectl set-ntp true 2>/dev/null; then
+        sleep 1
+        if cap__svc_active systemd-timesyncd || cap__svc_active chronyd || cap__svc_active chrony; then
+            bde_ok "时间同步已启用（timedatectl set-ntp true）"
+            return 0
+        fi
+        bde_pending "set-ntp 已下发但服务未 active（NTP 可达性，稍后自查）"
+        return 1
+    fi
+    bde_pending "时间同步启用失败（timedatectl 不可用/需 sudo 免密）"
+    return 1
+}
+
+# ── locale（时区/语言环境；值来自 ③ network.toml 站点画像 → network.env BDE_TIMEZONE/BDE_LANG）──
+cap__locale_get() { timedatectl show -p Timezone --value 2>/dev/null; }
+cap__locale_ensure() {
+    local tz="${BDE_TIMEZONE:-Asia/Shanghai}" lang="${BDE_LANG:-C.UTF-8}" _cur
+    _cur="$(cap__locale_get)"
+    if [ -n "$_cur" ] && [ "$_cur" != "$tz" ]; then
+        if sudo -n timedatectl set-timezone "$tz" 2>/dev/null; then
+            bde_ok "时区 → $tz（原 $_cur；画像：③ network.toml）"
+        else
+            bde_pending "时区设置失败（$tz；需 sudo 免密）"
+            return 1
+        fi
+    else
+        bde_skip "时区已一致（${_cur:-$tz}）"
+    fi
+    if command -v localectl >/dev/null 2>&1; then
+        if localectl 2>/dev/null | grep -q "LANG=$lang"; then
+            bde_skip "locale 已一致（$lang）"
+        elif sudo -n localectl set-locale "LANG=$lang" 2>/dev/null; then
+            bde_ok "locale → $lang"
+        else
+            bde_pending "locale 设置失败（$lang；C.UTF-8 需在系统 locale 列表内）"
+        fi
+    fi
+}
+
+# ── power（笔记本电源管理；台式机/VM 无电池自动跳过）──
+cap__power_ensure() {
+    if ! ls /sys/class/power_supply/BAT* >/dev/null 2>&1; then
+        bde_skip "电源管理跳过（无电池——台式机/VM）"
+        return 0
+    fi
+    cap_pkg_install power-suite || return 1
+    if cap__svc_ensure tlp; then
+        bde_ok "TLP 已启用（笔记本电源基线）"
+        bde_pending "TLP 默认含 USB 自动挂起——Android 调试（adb）若断连，设 USB_DENYLIST 或关该特性（/etc/tlp.conf 正本化后 cfg 收编）"
+    else
+        bde_pending "tlp 服务启用失败"
+        return 1
+    fi
 }
 
 # ── hostname ──

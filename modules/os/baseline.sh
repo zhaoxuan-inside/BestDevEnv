@@ -82,9 +82,12 @@ cap_run kernel ensure "$COMMON/config/services/sysctl/99-devspace.conf" || true
 cap_run logs   ensure "$COMMON/config/services/systemd/journald-devspace.conf" || true
 cap_run limits ensure "$COMMON/config/services/limits/99-devspace.conf" || true
 
-# 7) SSD 周期 TRIM / 时间同步体检（只查不装：不盲改时间同步）
+# 7) SSD 周期 TRIM / 时间同步 / 时区画像 / zram / 笔记本电源（各能力自带条件化与降级）
 cap_run trim ensure || true
-cap_run timesync check || true
+cap_run timesync ensure || true
+cap_run locale ensure || true
+cap_run zram ensure || true
+cap_run power ensure || true
 
 # 8) 开发者字体统一（JetBrainsMono Nerd Font；③ 本地投放优先，网络兜底）
 source "$BDE_ROOT/modules/os/fonts.sh"

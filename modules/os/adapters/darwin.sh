@@ -22,7 +22,11 @@ cap__pkg_alias() {
 }
 
 # ── pkg（brew）──
-_brew_bin() { [ -x /opt/homebrew/bin/brew ] && echo /opt/homebrew/bin/brew || echo /usr/local/bin/brew; }
+_brew_bin() {
+    command -v brew && return 0
+    [ -x /opt/homebrew/bin/brew ] && { echo /opt/homebrew/bin/brew; return 0; }
+    echo /usr/local/bin/brew
+}
 cap__pkg_installed() {
     local b; b="$(_brew_bin)"
     [ -x "$b" ] || return 1

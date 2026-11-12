@@ -18,6 +18,8 @@ cap__pkg_alias() {
         docker-engine) echo "docker.io" ;;
         terminal)      echo "konsole" ;;
         im-suite)      echo "fcitx5 fcitx5-rime fcitx5-configtool fcitx5-frontend-gtk3 fcitx5-frontend-gtk4 fcitx5-frontend-qt5" ;;
+        zram)          echo "zram-tools" ;;
+        power-suite)   echo "tlp tlp-rdw" ;;
         *)             echo "$1" ;;
     esac
 }
@@ -50,7 +52,28 @@ cap__im_ensure() {
     bde_pending "rime-ice 雾凇方案（可选大词库）：github.com/amzxyz/rime-ice → $HOME/DevEnv/xdg/local/fcitx5/rime/（人工）"
 }
 
-# ── terminal（konsole + update-alternatives + Ctrl+Alt+T）──
+# ── zram（压缩内存交换；zram-tools + /etc/default/zramswap 正本，cfg-map zramswap 同步治理）──
+cap__zram_ensure() {
+    cap_pkg_install zram || return 1
+    local src="$COMMON/config/services/zram/zramswap" dst="${BDE_CAP_ZRAMSWAP_CONF:-/etc/default/zramswap}"
+    [ -f "$src" ] || { bde_pending "zramswap 正本缺失：$src"; return 1; }
+    sudo -n mkdir -p "$(dirname "$dst")" 2>/dev/null
+    if ! cmp -s "$src" "$dst" 2>/dev/null; then
+        ensure_backup "$dst"
+        sudo -n cp "$src" "$dst" && bde_ok "zramswap 参数落位（正本为准）" \
+            || { bde_pending "zramswap 写入失败（需 sudo）"; return 1; }
+    else
+        bde_skip "zramswap 参数已一致"
+    fi
+    if cap__svc_ensure zramswap; then
+        bde_ok "zram 已启用（swapon --show 可见 zram0）"
+    else
+        bde_pending "zramswap 服务启用失败"
+        return 1
+    fi
+}
+
+# ── terminal（konsole + update-alternatives + Ctrl+Alt+T + 统一 profile 指针）──
 cap__terminal_ensure() {
     cap_pkg_install terminal
     if command -v konsole >/dev/null 2>&1; then
@@ -58,6 +81,14 @@ cap__terminal_ensure() {
             bde_ok "默认终端 → konsole"
         else
             bde_pending "x-terminal-emulator 设置失败"
+        fi
+        # 统一 profile 指针（profile 本体由 cfg-map konsole-profile 落 XDG_DATA_HOME；
+        # konsolerc 显式指 XDG_CONFIG_HOME 契约位——M1 上下文无 env.sh，不能依赖相对查找）
+        if command -v kwriteconfig5 >/dev/null 2>&1; then
+            kwriteconfig5 --file "${XDG_CONFIG_HOME:-$DEV/xdg/config}/konsolerc" --group General --key DefaultProfile devspace.profile \
+                && bde_ok "konsole 默认 profile → devspace（字体/外观统一）"
+        else
+            bde_pending "kwriteconfig5 缺失：人工执行 kwriteconfig5 --file konsolerc --group General --key DefaultProfile devspace.profile"
         fi
         if command -v gsettings >/dev/null 2>&1; then
             local _kb _p
