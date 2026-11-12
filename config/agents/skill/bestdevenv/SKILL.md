@@ -10,7 +10,7 @@ description: BestDevEnv 开发环境总调度——用户提出环境类需求�
 
 ## 环境地图
 
-本机：**hardstone**（，生成于 ）
+本机：**hardstone**（Ubuntu 24.04.4 LTS）
 
 | 档 | 作用域 | 路径 |
 |---|---|---|
@@ -20,7 +20,7 @@ description: BestDevEnv 开发环境总调度——用户提出环境类需求�
 
 > 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `/home/hardstone/DevEnv`；
 > 实体住 `/home/hardstone/DevEnv/apps/<分类>/`（vibecoding 工具 → `apps/agent/`；家目录=入口层：链接 + 原生重定向，收敛路线见宪法 §20.5），bind mount 接回去；配置永远改仓库（`$COMMON/config`）；备份永远靠 push。
-> 物理红线（能力探测 2026-11-12 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；命名一律小写 kebab-case
+> 物理红线（能力探测 2026-11-13 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；命名一律小写 kebab-case
 
 ### 分离法则（宪法 v10.3，调度时必须遵守）
 

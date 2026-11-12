@@ -21,8 +21,8 @@ devenv cfg         # 配置治理：清单/漂移/apply/adopt（详见 bestdeven
 
 ## 诊断顺序
 
-1. `devenv doctor` 拿失败项 → 按域路由修复 → 完成后 doctor 复查
-2. 磁盘紧张 → `devenv map --sizes` 看大头 → `devenv tidy` → doctor 复查根盘 >15G
+1. `devenv doctor` 拿失败项 → 按域路由修复 → 完成后 doctor 复查。**[i] 警示行不计失败但要处置**：`runtime 注册表应装未装`（补装对应渠道工具）｜`gen 指纹过期分型`（指明 templates 还是 cfg_sources 过期 → 直接 `devenv gen`）
+2. 磁盘紧张 → `devenv map --sizes` 看大头 → `devenv tidy` → doctor 复查根盘 >15G。**tidy 回收≈0 ≠ tidy 失效**——缓存已按架构重定向 ②③，回收≈0 恰证重定向成功；根盘红分型输出会提示走"结构性"处方（map 定位 → 构建十分离外置/扩容），别反复 tidy（2026-11-12 实测）
 3. 症状不明 → `devenv report` 留痕，再按失败项路由（或回主 Skill 编排）
 
 ## tidy 边界（SAFE 清单纪律）

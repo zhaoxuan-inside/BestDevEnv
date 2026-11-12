@@ -37,10 +37,10 @@ vibe <tool> [args]                               # 统一启动（source env.sh 
 
 1. **注册表是唯一事实源**：`$BDE/modules/agent/runtimes.tsv`——新 runtime 先登记一行，再 `wire`；域留空 = 约定不明，登记待定
 2. **模板类正本勿手改**：AGENTS.md/SKILL.md 改 `$BDE/templates/` 后由 `agents-md.sh` 再生；**MCP ③ 正本可直接编辑**（编辑后 commit——它随 config 仓库跨机器同步；鉴权/密钥不入此文件）
-3. **绝不覆盖工具真实配置**：已有真实文件 → `ensure_backup` + pending 人工合并；工具自有状态（如 `~/.zcode/cli/config.json`）只在已有非空 `mcp.servers` 时受控合并
+3. **绝不覆盖工具真实配置**：已有真实文件 → `ensure_backup` + pending 人工合并；工具自有状态（如 `~/.zcode/cli/config.json`）只在已有非空 `mcp.servers` 时受控合并。**投影写前必留痕**：`ensure_json_key_equal` 判等跳过（无变化报 [=]），有差异先 `ensure_backup` 再合并——正本为空时也要能自证"未清工具本地键"（2026-11-12 实测：投影曾无条件重写报 ✓，与幂等验收矛盾且无备份可查）
 4. **会话库永不迁移/清理**（home-map 政策为准）；跨工具任务续做 = `devenv orch`（journal 落 `$DEV/docs/progress/`）
 5. **收编**：工具内手动加的 MCP server 属工具本地——要全局生效就抄进 ③ `mcp.json` 正本再 `mcp sync`；枢纽出现的真实技能目录（如工具自更新重建）→ `skill adopt` 收编回 ③，防散落
-6. 验收：`devenv doctor`「Runtime 统一接线」项 ✓ + 「agents 正本已入 ③ config 仓库」项 ✓ + `devenv runtime wire` 二次执行全 skip（幂等）
+6. 验收：`devenv doctor`「Runtime 统一接线」项 ✓ + 「agents 正本已入 ③ config 仓库」项 ✓ + `devenv runtime wire` 二次执行全 skip（幂等；投影行无变化必须 [=] 而非 ✓——[✓] 仅代表真实写入）
 
 ## 长任务编排
 

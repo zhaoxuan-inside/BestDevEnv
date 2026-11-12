@@ -16,7 +16,7 @@ code-open <repo>            # 占用（.claimed-by，一仓同时只开一台）
 code-nm <repo>              # 仅 JS/TS：node_modules 实体落 DevEnv/deps（ext4），bind 回项目
 code-out <repo> target      # 产物外置（Maven=target Gradle=build 前端=dist）→ Local/build
 # …开发…
-code-close <repo>           # 释放；有未提交变更会提醒 push（工作副本不是备份）
+code-close <repo>           # 释放：拆除本仓库全部 bind（实体留 ① deps/build）+ 未提交变更提醒 push
 ```
 
 ## 构建十分离（宪法 v10.3：十类对象各归其位）
@@ -52,7 +52,7 @@ code-close <repo>           # 释放；有未提交变更会提醒 push（工作
 
 > 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `/home/hardstone/DevEnv`；代码单份 /Share/Common/code；
 > 实体住 /home/hardstone/DevEnv bind 接回；用户目录住 /Share/Local；配置改仓库（`$COMMON/config`）；备份靠 push。
-> 物理红线（能力探测 2026-11-12 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；命名一律小写 kebab-case；跨机成品走 `$COMMON/exchange/<repo>/`。
+> 物理红线（能力探测 2026-11-13 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；命名一律小写 kebab-case；跨机成品走 `$COMMON/exchange/<repo>/`。
 
 ## 故障速查
 
@@ -62,4 +62,4 @@ code-close <repo>           # 释放；有未提交变更会提醒 push（工作
 
 ## 验收
 
-`mountpoint -q "$COMMON/code/<repo>/node_modules"` 为真；`devenv doctor` 挂载项 ✓；结束必 `code-close`。
+`mountpoint -q "$COMMON/code/<repo>/node_modules"` 为真；`devenv doctor` 挂载项 ✓；结束必 `code-close`（close 后 node_modules 应**不再是** mountpoint——close 不拆 bind 曾是 dirs 域"死挂载"的稳定来源，2026-11-12 实测修复）。
