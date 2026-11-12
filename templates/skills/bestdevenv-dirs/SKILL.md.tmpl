@@ -33,6 +33,8 @@ devenv state-env          # 再生 ① anchors.env / network.env；重开 shell 
 devenv migrate-finish     # 旧 ~/Share 挂载下线后：守卫检查 → 清理旧目录 → ~/Share → /Share symlink
 ```
 
+> linux.sh 输出"旧挂载本次不卸载（会话安全）"时：**重启** → 旧路径由 fstab 不再接管 → 跑上面的 `devenv migrate-finish` 收尾（具体命令要说出口，别只描述状态——2026-11-12 实测曾只留一句描述，Agent 无从接手）。
+
 ## 验收
 
 `devenv doctor` 中 Common/Local 可写、存储持久化（按后端）、后端符合档案预期、共享盘能力已探测、骨架就绪、XDG 重定向各项 ✓。

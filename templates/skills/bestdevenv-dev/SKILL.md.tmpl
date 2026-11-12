@@ -41,12 +41,14 @@ bash "$BDE/modules/lang/node.sh"      # 或 python/rust/go/java/flutter/ai.sh
 ## vibecoding 工具与 IDE
 
 ```bash
-BDE_TOOLS="<用户确认的清单>" bash "$BDE/modules/agent/tools.sh"   # 幂等，已装只登记；合法集见 runtimes.tsv
+BDE_TOOLS="claude-code,codex,zcode" bash "$BDE/modules/agent/tools.sh"   # 幂等，已装只登记；合法集见 runtimes.tsv
 devenv gen                                 # 再生 AGENTS.md + SKILL 正本（= bash "$BDE/modules/agent/agents-md.sh"）
 bash "$BDE/modules/agent/runtime.sh"      # Runtime 统一接线（记忆/Skill/MCP/会话，按 runtimes.tsv）
-bash "$BDE/modules/ide/ide.sh"            # VS Code 离线 deb + 扩展档案（BDE_LANGS）+ JetBrains 推导（--no-jetbrains 可跳过）
+bash "$BDE/modules/ide/ide.sh" --no-jetbrains   # VS Code 离线 deb + 扩展档案（BDE_LANGS）；--no-jetbrains 跳过 JetBrains 推导
 ```
 
+- **BDE_TOOLS/BDE_LANGS 均为逗号分隔 CSV**——空格分隔会被拼成一个非法名字（2026-11-12 实测）
+- opencode 实体契约位 = ① `$DEV/apps/agent/.opencode/bin`（env.sh PATH 预置）：installer 默认落 `~/.opencode/bin`，tools.sh 安装/发现时自动归位 ①；已装判 `command -v` 与契约位双查
 - 扩展档案在 `$COMMON/config/ide/vscode/{base,<语言>}.txt`——新装扩展未入档案时 ide.sh 会提示补录
 - GUI 类工具（trae/antigravity/qoder）走人工安装，脚本只登记
 - **装服务/软件/工具后**：配置文件用 `devenv cfg adopt <name> <路径>` 收编进 `$COMMON/config/services/`（版本化 + `devenv cfg apply` 落位 + doctor 巡检漂移）；Runtime 类工具另走 runtimes.tsv 登记 + `devenv runtime wire`
