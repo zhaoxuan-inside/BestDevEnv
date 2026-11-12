@@ -72,6 +72,8 @@ bde_caps_probe() {  # 设置 P_CAP_* 变量
 bde_probe_collect() {
     P_OS="$(grep -m1 PRETTY_NAME /etc/os-release 2>/dev/null | cut -d'"' -f2)"
     P_OS_ID="$(. /etc/os-release 2>/dev/null; echo "${ID:-unknown}")"
+    P_OS_FAMILY="$(bde_os_family)"                # 适配器家族（debian/fedora/arch/suse/darwin/unknown）
+    P_OS_FAMILY_GROUP="$(bde_os_family_group)"    # 平台组归并（linux/darwin/unknown——视图消费的唯一语义）
     P_KERNEL="$(uname -r)"
     P_HOST="$(hostname)"
     P_USER="$(id -un)"
@@ -256,12 +258,14 @@ for line in (p.get("TOOL_ROWS") or "").splitlines():
         t, v = line.split("|", 1)
         tools[t.strip()] = v.strip()
 
-doc = {
-    "schema": "bde.probe/2",
-    "machine": p.get("HOST", ""),
-    "os": p.get("OS", ""),
-    "os_id": p.get("OS_ID", ""),
-    "kernel": p.get("KERNEL", ""),
+    doc = {
+        "schema": "bde.probe/2",
+        "machine": p.get("HOST", ""),
+        "os": p.get("OS", ""),
+        "os_id": p.get("OS_ID", ""),
+        "os_family": p.get("OS_FAMILY", "unknown"),
+        "os_family_group": p.get("OS_FAMILY_GROUP", "unknown"),
+        "kernel": p.get("KERNEL", ""),
     "user": p.get("USER", ""),
     "date": p.get("DATE", ""),
     "anchors": {

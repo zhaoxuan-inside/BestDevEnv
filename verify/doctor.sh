@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
-# verify/doctor.sh — L3 校验视图：消费 probe 事实逐项判定（宪法 §19.5 数据/视图分层）
-# 本文件不含任何采集逻辑；新增检查 = 在 CHECKS 表加一行（事实键 + 判定式）。
+# verify/doctor.sh — L3 校验视图：消费 probe 快照逐项判定（宪法 §19.5 数据/视图分层）
+# 数据流：bde_probe_save（采集+落快照）→ 本视图读 probe.json——与 report/agents-md/code-nm
+# 消费同一份序列化事实（快照即数据源；视图不旁路采集）。本文件不含任何采集逻辑；
+# 新增检查 = 在 CHECKS 表加一行（事实键 + 判定式）。
 # 后端无关：存储项按 probe 的 backend/persisted/expected 事实判定，不硬编码介质名词；
 # 挂载对账便携化：mountpoint（util-linux）缺失时回退 mount 输出解析（mac/BSD 可用）；
-# OS 条件化：Linux 专属项（持久化 fstab/IDE/XDG/inotify）仅在 Linux 系执行，非 Linux 不误报。
+# OS 条件化：is_linux 来自 probe 的 os_family_group 事实（归并规则唯一出处 lib/common.sh
+# bde_os_family_group——曾与 cfg cond 双定义，未知发行版两处判定相反，2026-11-12 收敛）。
 # 用法：devenv doctor ｜ doctor.sh [--json]
 BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/probe.sh"
 
-bde_probe_collect
 BDE_DOCTOR_JSON="${BDE_DOCTOR_JSON:-0}"
 [ "${1:-}" = "--json" ] && BDE_DOCTOR_JSON=1
-JSON="$(bde_probe_json)"
-[ -n "$JSON" ] || { echo "✗ probe 采集失败"; exit 2; }
+_PJSON="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}/probe.json"
+bde_probe_save >/dev/null || { echo "✗ probe 采集/落快照失败"; exit 2; }
+JSON="$(cat "$_PJSON" 2>/dev/null)"
+[ -n "$JSON" ] || { echo "✗ probe 快照读取失败：$_PJSON"; exit 2; }
 
 JSON="$JSON" BDE_DOCTOR_JSON="$BDE_DOCTOR_JSON" python3 - <<'PYEOF'
 import os, json, sys
@@ -22,8 +26,8 @@ doc = json.loads(os.environ["JSON"])
 f, v = doc["facts"], doc["values"]
 st, caps = doc["storage"], doc["share_caps"]
 free_mb = v["disk_root_free_mb"]
-# OS 条件化：/etc/os-release 缺失（mac/windows）或明确非 Linux 系时，跳过 Linux 专属项
-is_linux = doc["os_id"] not in ("", "unknown", "darwin", "macos", "windows", "win32")
+# OS 条件化：消费 probe 的 os_family_group 事实（归并唯一出处 lib/common.sh——非 linux 组跳过专属项）
+is_linux = doc.get("os_family_group") == "linux"
 
 CHECKS = [
     ("Common 可写",                        f["common_writable"] == 1),

@@ -108,10 +108,20 @@ bde_os_family() {
     esac
 }
 
+# OS 家族 → 平台组归并（唯一出处：cfg cond os_family 键、probe 事实、doctor 视图共用——
+# 曾双定义：cond 白名单 vs doctor os_id 黑名单，未知发行版两处判定相反）
+bde_os_family_group() {  # → linux | darwin | unknown
+    case "$(bde_os_family)" in
+        debian|fedora|arch|suse) printf 'linux\n' ;;
+        darwin)                  printf 'darwin\n' ;;
+        *)                       printf 'unknown\n' ;;
+    esac
+}
+
 # cfg-map 条件列判定（G3/G5：登记表支持按 OS/存储后端条件生效，非适用机器自动缺席不误报）
 # 语法：空 = 无条件；`&` 连接多个子句；子句 `key=v1,v2`。key ∈ os | os_family | backend_common | backend_host
 #   os=ubuntu,debian,linuxmint        ← bde_os_id（OS 变体）
-#   os_family=linux,darwin            ← bde_os_family（能力家族：debian/fedora/arch/suse/darwin/unknown 归并为 linux 系）
+#   os_family=linux,darwin            ← bde_os_family_group（平台组归并，唯一出处）
 #   backend_common=hgfs               ← BDE_SCOPE_SHARED_BACKEND（存储档案解析值）
 # 依赖调用方先 source paths.sh（后端变量由 L0 解析层导出）
 bde_cfg_cond_ok() {  # <cond> → 0=适用
@@ -123,8 +133,7 @@ bde_cfg_cond_ok() {  # <cond> → 0=适用
         _k="${_tok%%=*}"; _v="${_tok#*=}"
         case "$_k" in
             os)             _val="$(bde_os_id)" ;;
-            os_family)      _val="$(bde_os_family)"
-                            case "$_val" in debian|fedora|arch|suse) _val="linux" ;; esac ;;
+            os_family)      _val="$(bde_os_family_group)" ;;
             backend_common) _val="${BDE_SCOPE_SHARED_BACKEND:-unknown}" ;;
             backend_host)   _val="${BDE_SCOPE_HOST_BACKEND:-unknown}" ;;
             *) bde_pending "cfg-map 条件键未知: $_k（支持 os/os_family/backend_common/backend_host）"; return 1 ;;
