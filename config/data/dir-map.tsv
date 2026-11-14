@@ -1,0 +1,69 @@
+# dir-map.tsv — ①②③ 目录登记制（宪法：新目录必须先登记；devenv namecheck/dirindex 数据源）
+# 格式: 作用域(user|host|shared)|路径(锚点下相对，当前实态)|目标名(锚点下相对；空=已合规或待处置)|职责|分类|备注
+# - 登记即存量已知：已登记目录的样式违规降为"存量违规"提示级；未登记目录 = 硬违规（看门人）
+# - 目标名 = 授权整改树（本文件即迁移目标正本）：devenv namecheck --migrate 逐项授权后改名并回写本行
+# - 深层目录（第 3 层及以下）执行迁移时同规则递归登记；分类供 devenv index 聚合
+# —— shared ③（跨主机共享；锚点由用户指定，见 storage.toml）——
+shared|code|00_Code|代码仓库（单份平铺；仓库目录名随上游，豁免）|代码|主干
+shared|config|10_Config|配置正本仓库（git 版本化）|配置|主干
+shared|config/services|config/Serv|服务配置正本|配置|深层登记
+shared|config/apt|config/Pkgs|软件源/包配置|配置|深层登记
+shared|config/apps|config/Apps|应用档案与 IDE 配置|配置|深层登记
+shared|config/agents|config/Agent|vibecoding 工具配置（skill/MCP 正本）|配置|深层登记
+shared|config/data|config/Data|治理数据表（dir-map/naming/home-map）|配置|深层登记
+shared|config/ide||IDE 配置（待并入 config/Apps）|配置|存量待并入：迁移时处置
+shared|docs|20_Docs|文档|文档|主干
+shared|docs/dev-env|docs/Spec|规范手册/宪法|文档|深层登记
+shared|docs/hosts|docs/Host|机器数据表|文档|深层登记
+shared|docs/env|docs/Envs|环境实况报告|文档|深层登记
+shared|Data|30_Data|共享数据|数据|主干（大小写已合规，补 NN_ 前缀）
+shared|data/models|data/Model|模型文件（gguf/huggingface/modelscope）|数据|深层登记
+shared|data/datasets|data/Sets|数据集|数据|深层登记
+shared|data/fixtures|data/Fixt|测试夹具|数据|深层登记
+shared|cache|40_Cache|共享包缓存（npm/pnpm/pip/uv/windows）|缓存|主干
+shared|exchange|50_Relay|跨机交换交付（打包结果）|交付|主干
+shared|install|60_Media|安装介质（iso/win/linux/fonts）|介质|主干
+shared|templates|70_Tmpl|模板（skill 模板等）|模板|主干
+shared|archive|90_Vault|冷归档|归档|主干
+# —— host ②（主机内共享；锚点由用户指定）——
+host|build|20_Build|编译产物（code-out 挂点）|产物|主干
+host|cache|10_Cache|锁敏感缓存（gradle/m2）|缓存|主干
+host|data|00_Data|主机冷份|数据|主干
+host|data/dumps|data/Dump|例行 dump 留档|数据|深层登记
+host|data/exports|data/Export|导出外发|数据|深层登记
+host|docs|50_Docs|主机文档|文档|主干
+host|ide-data|40_IdeRun|IDE 运行数据（索引/会话态）|IDE|主干
+host|logs|30_Logs|构建/运行日志|日志|主干
+host|AiSpace||个人空间|个人|存量违规：migrate 处置（改名或豁免）
+host|SFT-WORKSPACE||工作区|工作|存量违规：migrate 处置（改名或豁免）
+host|Desktop||XDG 桌面|XDG|豁免：协议固定名
+host|Documents||XDG 文档|XDG|豁免：协议固定名
+host|Downloads||XDG 下载|XDG|豁免：协议固定名
+host|Music||XDG 音乐|XDG|豁免：协议固定名
+host|Pictures||XDG 图片|XDG|豁免：协议固定名
+host|Public||XDG 公共|XDG|豁免：协议固定名
+host|Templates||XDG 模板|XDG|豁免：协议固定名
+host|Videos||XDG 视频|XDG|豁免：协议固定名
+# —— user ①（用户独占；锚点由用户指定）——
+user|bin|00_Exec|命令入口（devenv/code-* 等）|入口|主干
+user|apps|10_Apps|应用实体（agent/ide）|应用|主干
+user|ide||IDE 工具（待并入 Apps/Ide）|应用|存量待并入：迁移时处置
+user|deps|20_Deps|依赖实体（node_modules 等，bind 接回）|依赖|主干
+user|virtualenvs|30_Venv|Python 虚拟环境|依赖|主干
+user|cargo|40_Tool/Cargo|Cargo 工具链（CARGO_HOME）|工具链|聚合入 40_Tool
+user|rustup|40_Tool/Rust|Rust 工具链（RUSTUP_HOME）|工具链|聚合入 40_Tool
+user|go|40_Tool/Golang|Go 工具链（GOPATH）|工具链|聚合入 40_Tool
+user|nvm|40_Tool/Node|Node 版本管理（NVM_DIR）|工具链|聚合入 40_Tool
+user|npm-global|40_Tool/Npm|npm 全局安装（npm prefix）|工具链|聚合入 40_Tool
+user|flutter|40_Tool/Flut|Flutter SDK|工具链|聚合入 40_Tool
+user|pub-cache|40_Tool/Dart|Dart/Flutter 包缓存（PUB_CACHE）|工具链|聚合入 40_Tool
+user|android-sdk|40_Tool/Droid|Android SDK|工具链|聚合入 40_Tool
+user|android-user|40_Tool/Droid|Android 用户数据|工具链|聚合入 40_Tool
+user|codex||codex 工具数据|工具|存量待归类：migrate 处置
+user|history||历史记录|文档|存量待归类：migrate 处置
+user|services|50_Serv|服务安装体与数据（docker 等）|服务|主干
+user|data|60_Data|机器数据|数据|主干
+user|cache|70_Cache|用户级缓存|缓存|主干
+user|docs|80_Docs|账本与留痕|文档|主干
+user|xdg|85_Home|私有家目录扩展（XDG 重定向根）|框架|主干
+user|tmp|90_Temp|会话级临时|临时|主干

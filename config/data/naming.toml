@@ -1,0 +1,24 @@
+# naming.toml — 目录命名规范档案（devenv namecheck 数据源；宪法级命名约束的数据化）
+# 七条规范：NN_ 前缀 + 首字母大写 + 4-6 字符 + 禁中文 + 名实登记 + 同级等长优先 + 全词语义优先
+# 取舍约定：全词语义优先（4-6 内用完整词，超 6 才换/缩词）；同级等长为"优先"非硬约束——冲突时让位名实匹配
+# 解析：lib 沿用 storage.sh 模式（python3 tomllib → eval）；正本在 ③，工程仓库 seed 镜像
+#
+# [default] 全局默认（=当前生效规范）
+[default]
+case = "capital"        # capital=去 NN_ 前缀后主体首字母大写 | lower | any
+min_len = 4             # 主体长度下限（去 NN_ 前缀计）
+max_len = 6             # 主体长度上限
+prefix = "NN_"          # 要求 ^[0-9]{2}_ 序号前缀；"" = 不要求
+charset = "word"        # word=[A-Za-z0-9_-]（禁中文、禁空白）；any=不限
+equal_len = "prefer"    # prefer=同级等长优先（违规仅提示，永不硬失败）| off
+
+# —— 逐作用域覆写（可选；未列出的作用域沿用 default）——
+# ⚠ ③ 住 hgfs（实测大小写不敏感，CaseTest≡casetest 碰撞）：若大写目录在 ③ 出现实际冲突，
+#   取消下行注释一行降险（新建 ③ 目录改为小写；存量迁移时同步生效）。
+# [scope.shared]
+# case = "lower"
+
+# —— 豁免名单（整行相等才豁免；不区分作用域）——
+# 覆盖：XDG 协议固定名（xdg-user-dirs 协议不可改名）；其余豁免靠登记制（dir-map 登记即存量，样式违规降级提示级）
+[exempt]
+names = ["Desktop", "Documents", "Downloads", "Music", "Pictures", "Public", "Templates", "Videos"]

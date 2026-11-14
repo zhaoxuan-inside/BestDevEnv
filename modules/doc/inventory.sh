@@ -46,8 +46,8 @@ _inv_channel() {  # <realpath> → 渠道标签（包管理器归属 → 路径�
     esac
 }
 
-_inv_collect() {  # 采集到 TSV 暂存（tools/paths/services），供 JSON 组装与人类视图共用
-    _INV_T="$(mktemp)"; _INV_P="$(mktemp)"; _INV_S="$(mktemp)"
+_inv_collect() {  # 采集到 TSV 暂存（tools/paths/services/discovered），供 JSON 组装与人类视图共用
+    _INV_T="$(mktemp)"; _INV_P="$(mktemp)"; _INV_S="$(mktemp)"; _INV_A="$(mktemp)"
     local _n _vc _p _r _ch _ver
     while IFS='|' read -r _n _vc; do
         [ -n "$_n" ] || continue
@@ -79,6 +79,26 @@ conda|conda --version
 starship|starship --version
 chezmoi|chezmoi --version
 EOF
+    # 全量层：多渠道枚举（每源容错——命令缺失/超时静默跳过；重点层之上补盲区）
+    # 源：apt-manual/snap/flatpak/npm-global/pip-user/mise/cargo-install/manual:/usr/local/opt:/opt
+    {
+        apt-mark showmanual 2>/dev/null | while IFS= read -r _n; do
+            [ -n "$_n" ] && printf '%s\tapt-manual\t-\n' "$_n"
+        done
+        command -v snap >/dev/null 2>&1 && snap list 2>/dev/null | tail -n +2 | awk 'NF{print $1 "\tsnap\t" $2}'
+        command -v flatpak >/dev/null 2>&1 && flatpak list --app --columns=application 2>/dev/null | awk 'NF{print $1 "\tflatpak\t-"}'
+        command -v npm >/dev/null 2>&1 && npm ls -g --depth=0 2>/dev/null | tail -n +2 \
+            | sed 's/^[├└│─| ]*//; s/@[^@]*$//' | awk 'NF{print $1 "\tnpm-global\t-"}'
+        command -v pip3 >/dev/null 2>&1 && pip3 list --user --format=freeze 2>/dev/null | awk -F'==' 'NF && $1!=""{print $1 "\tpip-user\t-"}'
+        command -v mise >/dev/null 2>&1 && mise ls 2>/dev/null | awk 'NF && $1!="Tool" {print $1 "\tmise\t-"}'
+        command -v cargo >/dev/null 2>&1 && cargo install --list 2>/dev/null | awk '/^[A-Za-z0-9_.-]+ v/{print $1 "\tcargo-install\t-"}'
+        find /usr/local/bin -maxdepth 1 -type f 2>/dev/null | sed 's|.*/||' | while IFS= read -r _n; do
+            [ -n "$_n" ] && printf '%s\tmanual:/usr/local\t-\n' "$_n"
+        done
+        find /opt -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sed 's|.*/||' | while IFS= read -r _n; do
+            [ -n "$_n" ] && printf '%s\topt:/opt\t-\n' "$_n"
+        done
+    } | awk -F'\t' '$1 != "" && !seen[$1]++' | sort > "$_INV_A"
     # 家目录契约路径：path|kind → state(absent/symlink/real) + verdict（登记制：real+未登记=warn）
     local _hm="$COMMON/config/data/home-map.tsv"
     [ -f "$_hm" ] || _hm="$BDE_ROOT/config/data/home-map.tsv"
@@ -137,11 +157,11 @@ EOF
     printf '%s\t%s\t%s\n' "$_s" "$_st" "$_d" >> "$_INV_S"
 }
 
-# ── L2 索引落盘（bde.inventory/1，原子写）────────────────────────────────
+# ── L2 索引落盘（bde.inventory/2：重点层 tools + 全量层 discovered，原子写）──
 _inv_save() {
     _inv_collect
     mkdir -p "$(dirname "$INV_PATH")" 2>/dev/null
-    BDE_INV_T="$_INV_T" BDE_INV_P="$_INV_P" BDE_INV_S="$_INV_S" \
+    BDE_INV_T="$_INV_T" BDE_INV_P="$_INV_P" BDE_INV_S="$_INV_S" BDE_INV_A="$_INV_A" \
     BDE_INV_OUT="$INV_PATH" BDE_INV_MACHINE="${BDE_MACHINE:-$(hostname)}" python3 - <<'PY'
 import json, os, datetime
 def rows(p):
@@ -153,13 +173,18 @@ def rows(p):
                 out.append(line.split("\t"))
     return out
 doc = {
-    "schema": "bde.inventory/1",
+    "schema": "bde.inventory/2",
     "machine": os.environ["BDE_INV_MACHINE"],
     "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
     "tools": [
         {"name": r[0], "version": r[1] if len(r) > 1 else "", "path": r[2] if len(r) > 2 else "",
-         "real": r[3] if len(r) > 3 else "", "channel": r[4] if len(r) > 4 else ""}
+         "real": r[3] if len(r) > 3 else "", "channel": r[4] if len(r) > 4 else "", "origin": "重点层"}
         for r in rows(os.environ["BDE_INV_T"])
+    ],
+    "discovered": [
+        {"name": r[0], "source": r[1] if len(r) > 1 else "", "detail": r[2] if len(r) > 2 else "",
+         "origin": r[1] if len(r) > 1 else ""}
+        for r in rows(os.environ["BDE_INV_A"])
     ],
     "paths": [
         {"path": r[0], "kind": r[1] if len(r) > 1 else "", "state": r[2] if len(r) > 2 else "",
@@ -173,6 +198,7 @@ doc = {
 }
 doc["summary"] = {
     "tools_n": len(doc["tools"]),
+    "tools_all_n": len({t["name"] for t in doc["tools"]} | {x["name"] for x in doc["discovered"]}),
     "paths_warn": sum(1 for p in doc["paths"] if p["verdict"] == "warn"),
     "paths_registered": sum(1 for p in doc["paths"] if p["verdict"] == "info"),
     "tools_off_share": sum(1 for t in doc["tools"] if "违规" not in t["channel"]),
@@ -181,7 +207,7 @@ t = os.environ["BDE_INV_OUT"] + ".tmp"
 json.dump(doc, open(t, "w"), ensure_ascii=False, indent=2)
 os.replace(t, os.environ["BDE_INV_OUT"])
 PY
-    rm -f "$_INV_T" "$_INV_P" "$_INV_S"
+    rm -f "$_INV_T" "$_INV_P" "$_INV_S" "$_INV_A"
     printf '%s\n' "$INV_PATH"
 }
 
@@ -198,6 +224,14 @@ for t in d["tools"]:
     ch = t["channel"]
     mark = f"{R}✗{Z}" if "违规" in ch else (f"{Y}ℹ{Z}" if ch in ("外部路径",) else f"{G}✓{Z}")
     print(f"  {t['name']:<12} {mark} {ch:<24} {t['path']}")
+disc = d.get("discovered", [])
+if disc:
+    from collections import Counter
+    hist = Counter(x["source"] for x in disc)
+    hist_s = " ｜ ".join(f"{k}:{v}" for k, v in sorted(hist.items()))
+    uniq = len({x["name"] for x in disc})
+    print(f"\n── 全量软件（{uniq} 名去重；多渠道枚举——建档覆盖跑 devenv app --audit）──")
+    print(f"  {hist_s}")
 print(f"\n── 家目录契约路径（登记制：real+未登记=⚠；数据源 home-map.tsv）──")
 for p in d["paths"]:
     if p["state"] == "absent":
@@ -213,7 +247,8 @@ print(f"\n── 受管服务 ──")
 for s in d["services"]:
     print(f"  {s['name']:<14} {s['state']:<10} {s['detail']}")
 w = d["summary"]["paths_warn"]
-print(f"\n索引：软件 {d['summary']['tools_n']} ｜ 契约路径 ⚠{w}/ℹ{d['summary']['paths_registered']} ｜ 落盘 $DEV/docs/state/inventory.json")
+all_n = d["summary"].get("tools_all_n", d["summary"]["tools_n"])
+print(f"\n索引：软件 {all_n}（重点 {d['summary']['tools_n']}）｜ 契约路径 ⚠{w}/ℹ{d['summary']['paths_registered']} ｜ 落盘 $DEV/docs/state/inventory.json")
 if w:
     print(f"{Y}  ⚠ {w} 项待处置 → devenv inventory --migrate（逐项询问：转移并接回/登记保留/跳过）{Z}")
 sys.exit(0)

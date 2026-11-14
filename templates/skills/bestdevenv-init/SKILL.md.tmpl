@@ -18,6 +18,7 @@ cd "$BDE" && ./init.sh          # 交互询问：开发者角色（回车=跳过
 ```
 
 - 交互契约：构建计划（OS/语言栈/工具/阶段）确认后才动手；`--yes`/非交互终端自动取默认（bootstrap 免疫）；EOF（Ctrl+D）一律不开工
+- **锚点首问（用户指定制）**：三作用域目录——③ 跨主机共享 / ② 主机内共享 / ① 用户独占——**由用户指定**，不得静默采用默认路径。构建前先向用户展示 `storage.toml` 机器节现状并征询确认/修改（默认段给推荐值）；确认结果写入 `③ config/data/storage.toml` 的 `<机器名>.<作用域>` 节并 commit。doctor 硬项「作用域锚点已按机器指定」巡检此项
 
 - 共享盘未挂载先按 ③ `storage.toml` 档案手动挂一次（hgfs 后端示例：`sudo mkdir -p /Share/Common /Share/Local && sudo vmhgfs-fuse .host:/Common /Share/Common -o allow_other`；local/passthrough 后端无需挂载，直接构建即可）
 - 仓库缺失时先 clone：`git clone git@github.com:zhaoxuan-inside/BestDevEnv.git "$COMMON/code/BestDevEnv"`

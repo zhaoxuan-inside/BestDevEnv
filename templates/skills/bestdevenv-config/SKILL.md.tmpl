@@ -33,6 +33,8 @@ devenv cfg apply [name]        # 正本 → 应用层（copy/copy-expand: 备份
                                # 落位成功自动触发生效动作（sysctl --system / journald 重启）
 devenv cfg adopt <name> <应用层路径> [类] [root]   # 新装软件的配置收编：拷为正本 + 登记一行
 devenv cfg snapshot            # 备份：③ 正本 → 工程仓库 config/ seed 快照 + commit（工程仓库 git push 即异地备份）
+devenv cfg restore [name] [dry]   # 回退/重建：seed → ③ 正本（snapshot 的逆通道；落盘前自动备份 ③ 现状 → ① backup；
+                               # 不带 --delete，③ 独有文件如密钥 .env 不清除；dry=只预览；③ 缺失=灾后重建）
 ```
 
 改系统/服务配置的标准动作 = **改正本 → commit/push → `devenv cfg apply`**；
@@ -43,6 +45,11 @@ devenv cfg snapshot            # 备份：③ 正本 → 工程仓库 config/ se
 config 正本（③）跨机同步靠共享盘；**异地备份 = `devenv cfg snapshot`**：③ → 工程仓库 `config/` seed
 快照（rsync 镜像 + commit）→ 工程仓库 `git push` 到 GitHub。改动 ③ 后跑一次 snapshot，doctor
 「config 备份通道」项巡检 seed 在册且工程仓库有 remote。
+
+**回退/重建 = `devenv cfg restore`**（snapshot 的逆通道）：seed → ③ 正本回灌。回任意历史时点：
+`git -C "$COMMON/code/BestDevEnv" checkout <commit> -- config` 后再 restore。回灌不动应用层——
+生效走 `devenv cfg apply`、核对走 `devenv cfg diff`。单项回退 `restore <name>`，整树回退/灾后重建
+`restore`（③ 正本整体缺失时即重建通道，新机器可凭工程仓库 seed 直接拉起 ③ config）。
 
 ## 漂移治理（应用层 ≠ config 时）
 

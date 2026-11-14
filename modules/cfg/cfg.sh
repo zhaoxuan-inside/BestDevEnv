@@ -23,13 +23,16 @@ CFG_SRC_APT="$COMMON/config/apt"
 
 _cfg_usage() {
     cat <<'EOF'
-用法: cfg.sh list|apply [name]|diff|adopt <name> <target> [类=system] [root=y|n]|snapshot   （--svc 前缀=只看 service 类）
+用法: cfg.sh list|apply [name]|diff|adopt <name> <target> [类=system] [root=y|n]|snapshot|restore [name] [dry]   （--svc 前缀=只看 service 类）
   list              配置清单视图（项|类|正本|应用层|机制|漂移）
   apply [name]      正本 → 应用层（幂等；root 项走 sudo -n；copy-expand 按本机锚点展开；
                     落位后自动触发该文件类型的生效动作——sysctl --system / journald 重启）
   diff              全量漂移检测（非零退出 = 有漂移；条件不适用项自动缺席）
   adopt             收编：应用层现有文件 → $COMMON/config/services/<name>/ 正本并登记
   snapshot          备份：③ 正本 → 工程仓库 config/ seed 快照（rsync 镜像 + commit；工程 git push 即异地备份）
+  restore [name] [dry]  回退/重建：工程仓库 seed → ③ 正本（snapshot 的逆通道；落盘前先备份 ③ 现状 → ① backup；
+                    dry=只预览不落盘。③ 正本缺失时=灾后重建通道。回任意历史时点：
+                    git -C 工程仓库 checkout <commit> -- config 后再 restore；回灌后 devenv cfg apply 生效）
 机制列: copy（整文件落位）/ copy-expand（锚点展开落位）/ append（逐行追加）/ chezmoi（chezmoi 事实源）/
         hosts（动态：hosts.toml 数据源 → /etc/hosts 标记块幂等替换，块外内容永不触碰）
 EOF
@@ -245,6 +248,71 @@ _cfg_snapshot() {
     fi
 }
 
+# ── restore：工程仓库 seed → ③ 正本（snapshot 的逆通道；回退与灾后重建共用）──
+# 链路：git checkout <commit> -- config（可选，回任意历史时点）→ seed 回灌 ③ → cfg apply 生效 → cfg diff 核对
+# 安全：全量回灌前先镜像备份 ③ 现状 → ① backup（回退的回退）；rsync 不带 --delete——③ 独有文件
+#       （如密钥 .env）永不被清除；-c 校验和比对（正本为准的内容通道，mtime 漂移不误判）。
+_cfg_restore() {
+    local name="${1:-}" mode="${2:-}"
+    [ "$name" = "dry" ] && { mode="dry"; name=""; }   # restore dry（不带 name 的整树预览）
+    local _dry=0; [ "$mode" = "dry" ] && _dry=1
+    [ -d "$BDE_ROOT/config" ] && [ -n "$(ls -A "$BDE_ROOT/config" 2>/dev/null)" ] \
+        || { bde_fail "工程仓库无 seed 快照（先 devenv cfg snapshot 生成）"; return 1; }
+    command -v rsync >/dev/null 2>&1 || { bde_fail "rsync 不可用（apt install rsync）"; return 1; }
+    local _bdir="$DEV/docs/backup/cfg-restore-$(date +%Y%m%d-%H%M%S)"
+    if [ -n "$name" ]; then
+        # 单项回退：登记行正本路径（$COMMON/config/ 下）与 seed 树一一对应
+        local _row _src _rel _item
+        _row="$(grep "^$name|" "$CFG_MAP" 2>/dev/null | head -1)"
+        [ -n "$_row" ] || { bde_fail "cfg-map 无此项：$name"; return 1; }
+        IFS='|' read -r _ _ _src _ _ _ _ _ <<<"$_row"
+        _src="${_src/#\$COMMON/$COMMON}"
+        _rel="${_src#"$COMMON/config/"}"
+        [ "$_rel" != "$_src" ] || { bde_fail "$name 正本不在 ③ config 下，无法从 seed 回灌：$_src"; return 1; }
+        _item="$BDE_ROOT/config/$_rel"
+        [ -e "$_item" ] || { bde_fail "seed 中无该正本（从未 snapshot 或已被删除）：$_item"; return 1; }
+        if [ "$_dry" = "1" ]; then
+            bde_info "[dry] 将回灌: $_item → $_src"
+            [ -f "$_src" ] && { cmp -s "$_item" "$_src" \
+                && bde_info "[dry] 现状与 seed 一致（回灌为无操作）" \
+                || bde_info "[dry] 现状与 seed 有差异（回灌即回退；现值自动留痕 ① backup）"; }
+            return 0
+        fi
+        [ -f "$_src" ] && ! cmp -s "$_item" "$_src" && ensure_backup "$_src"
+        ensure_dir "$(dirname "$_src")" || { bde_fail "正本目录不可建：$(dirname "$_src")"; return 1; }
+        if cp -r "$_item" "$_src"; then
+            bde_ok "已回灌 $name：$_item → $_src"
+            bde_info "生效与核对：devenv cfg apply $name → devenv cfg diff"
+        else
+            bde_fail "回灌失败：$name"; return 1
+        fi
+        return 0
+    fi
+    # 全量回退/重建：③ 缺失视为灾后重建（不备份）；否则先镜像备份 ③ 现状
+    if [ "$_dry" = "1" ]; then
+        local _plan; _plan="$(rsync -rltcn --out-format='%n' "$BDE_ROOT/config/" "$COMMON/config/" 2>/dev/null | grep -c . || true)"
+        bde_info "[dry] 将整树回灌: $BDE_ROOT/config/ → $COMMON/config/（有差异项 $_plan 个）"
+        [ -d "$COMMON/config" ] && bde_info "[dry] 落盘前先备份 ③ 现状 → $_bdir"
+        bde_info "[dry] 不带 --delete：③ 独有文件（密钥 .env 等）永不清除"
+        return 0
+    fi
+    if [ -d "$COMMON/config" ]; then
+        ensure_dir "$_bdir" || { bde_fail "备份目录不可建：$_bdir"; return 1; }
+        rsync -rlt "$COMMON/config/" "$_bdir/" >/dev/null 2>&1 \
+            && bde_ok "③ 现状已备份 → $_bdir（回退的回退）" \
+            || { bde_fail "③ 现状备份失败——中止回灌"; return 1; }
+    else
+        bde_info "③ 正本缺失——视为灾后重建（无现状可备份）：$COMMON/config"
+    fi
+    if rsync -rltc "$BDE_ROOT/config/" "$COMMON/config/" 2>/dev/null; then
+        bde_ok "seed 整树回灌完成：$BDE_ROOT/config/ → $COMMON/config/（--delete 未启用，③ 独有文件未动）"
+        bde_info "生效与核对：devenv cfg apply → devenv cfg diff"
+        bde_info "回退的回退：$_bdir（本次回灌前的 ③ 现状）"
+    else
+        bde_fail "seed 回灌失败（rsync）——③ 现状备份在 $_bdir"; return 1
+    fi
+}
+
 # ── 视图 ─────────────────────────────────────────────────────────────────
 _cfg_list() {
     bde_info "配置治理清单（正本根：$CFG_SRC_SERVICES ｜ $CFG_SRC_APT）"
@@ -297,6 +365,7 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
         diff)  shift 2>/dev/null; _cfg_diff_all ;;
         adopt) shift; _cfg_adopt "$@" ;;
         snapshot) shift 2>/dev/null; _cfg_snapshot ;;
+        restore) shift 2>/dev/null; _cfg_restore "$@" ;;
         *)     _cfg_usage; exit 2 ;;
     esac
 else

@@ -83,7 +83,7 @@ fi
 if [ "$_p_probed" = "1" ]; then
     if [ "${#_constraints[@]}" -gt 0 ]; then
         _cl="$(printf '%s · ' "${_constraints[@]}")"; _cl="${_cl% · }"
-        _PHYS_BRIEF="物理红线（能力探测 $_phys_date · 后端 $_be）：$_cl——依赖实体与私钥绝不上去；命名一律小写 kebab-case"
+        _PHYS_BRIEF="物理红线（能力探测 $_phys_date · 后端 $_be）：$_cl——依赖实体与私钥绝不上去；文件/代码命名小写 kebab-case；①②③ 自建目录走 naming.toml 规范（NN_ 前缀/首字母大写/4-6 字符/禁中文/同级等长优先——devenv namecheck 校验）"
         _PHYS_FULL=""
         for _c in "${_constraints[@]}"; do _PHYS_FULL+="\- $_c（probe 实测）"$'\n'; done
     else
@@ -92,12 +92,12 @@ if [ "$_p_probed" = "1" ]; then
     fi
     _PHYS_FULL+="- 依赖实体（node_modules/venv）与私钥绝不放共享盘——住 ①（跨机一致性；bind 接回）"$'\n'
     printf '%s\n' "${_constraints[@]}" | grep -q "文件名上限 255B" && _PHYS_FULL+="- 单文件名/深层路径超 255B 上限——gradle/flutter 类缓存留本机盘"$'\n'
-    _PHYS_FULL+="- 命名一律小写 kebab-case"
+    _PHYS_FULL+="- 文件/代码命名小写 kebab-case；①②③ 自建目录走 naming.toml 规范（NN_ 前缀/首字母大写/4-6 字符/禁中文/同级等长优先——devenv namecheck 校验）"
 else
-    _PHYS_BRIEF="物理红线（能力未探测——共享盘当前不可写，按最保守假设）：无 symlink/不分大小写/权限 777——依赖实体与私钥绝不上去；命名一律小写 kebab-case"
+    _PHYS_BRIEF="物理红线（能力未探测——共享盘当前不可写，按最保守假设）：无 symlink/不分大小写/权限 777——依赖实体与私钥绝不上去；文件/代码命名小写 kebab-case；①②③ 自建目录走 naming.toml 规范（NN_ 前缀/首字母大写/4-6 字符/禁中文/同级等长优先——devenv namecheck 校验）"
     _PHYS_FULL="- 共享盘能力未探测（probe 时共享盘不可写）——按最保守假设对待：无 symlink、不区分大小写、权限 777"$'\n'
     _PHYS_FULL+="- 依赖实体（node_modules/venv）与私钥绝不放共享盘——住 ①（bind 接回）"$'\n'
-    _PHYS_FULL+="- 命名一律小写 kebab-case"
+    _PHYS_FULL+="- 文件/代码命名小写 kebab-case；①②③ 自建目录走 naming.toml 规范（NN_ 前缀/首字母大写/4-6 字符/禁中文/同级等长优先——devenv namecheck 校验）"
 fi
 
 # ── SKILL 数值来源（@CFGVAL@ 渲染：③ 正本优先，seed 兜底——文档零复述，改值必经正本+再生）──

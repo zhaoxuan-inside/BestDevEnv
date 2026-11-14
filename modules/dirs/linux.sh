@@ -128,11 +128,13 @@ case "\${1:-}" in
     cap) shift; exec bash "\$BDE_ROOT/lib/cap.sh" "\$@" ;;
     inventory) shift; exec bash "\$BDE_ROOT/modules/doc/inventory.sh" "\$@" ;;
     app) shift; exec bash "\$BDE_ROOT/modules/app/app.sh" "\$@" ;;
+    index) shift; exec bash "\$BDE_ROOT/modules/doc/dirindex.sh" "\$@" ;;
+    namecheck) shift; exec bash "\$BDE_ROOT/modules/doc/namecheck.sh" "\$@" ;;
     svc) shift; exec bash "\$BDE_ROOT/modules/cfg/cfg.sh" --svc "\$@" ;;
     gen) shift; exec bash "\$BDE_ROOT/modules/agent/agents-md.sh" "\$@" ;;
     state-env) shift; exec bash "\$BDE_ROOT/modules/dirs/state-env.sh" "\$@" ;;
     migrate-finish) shift; exec bash "\$BDE_ROOT/modules/dirs/migrate-finish.sh" "\$@" ;;
-    *) echo "用法: devenv doctor|report|tidy|map|inventory|orch|runtime|cfg|cap|svc|gen|state-env|migrate-finish"; exit 1 ;;
+    *) echo "用法: devenv doctor|report|tidy|map|inventory|index|namecheck|orch|runtime|cfg|cap|app|svc|gen|state-env|migrate-finish"; exit 1 ;;
 esac
 EOF
 chmod +x "$DEV/bin/devenv"

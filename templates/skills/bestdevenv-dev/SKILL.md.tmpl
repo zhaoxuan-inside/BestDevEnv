@@ -19,6 +19,20 @@ description: BestDevEnv 部署开发环境——按开发者角色（profiles.ts
 用户确认后才执行；确认结果经 `BDE_LANGS`/`BDE_TOOLS` 显式传参落位。两个例外场景不必二次确认：
 init.sh 全量管道（自带交互询问与校验）、用户在本次会话已明确给出清单。
 
+## 装前四问（硬协议：任何安装动作前必须逐项回答，未答不装）
+
+1. **安装位置→受管根**：实体只落 系统包管理器 / ① DevEnv（Apps/Deps/Tool）/ ② Local——**禁止家目录散装与 ③ 共享盘实体**（inventory 渠道审计判违规）；版本管理器工具链（mise/nvm/cargo…）优先
+2. **配置位置→③**：配置正本收编 `$COMMON/config`（`devenv cfg adopt`），严禁默认配置散落家目录
+3. **日志位置→②**：运行/构建日志约定落 `② $LOCAL/Logs/<名称>/`
+4. **数据缓存/产出**：数据与缓存按作用域落 ②③（锁敏感→②，可共享→③）；打包产出交付 `③ Relay/<名称>/`
+
+## 装后四步（验收前逐项过）
+
+1. **建档**：`$COMMON/config/apps/<名称>.toml`（安装位置 at / 配置 / 数据 / 日志五要素，字段见 docker.toml）
+2. **配置收编**：`devenv cfg adopt` + `cfg apply`——一切优化（镜像源/缓存重定向/服务参数/日志轮转）以受管配置正本落地，**不另立优化文档**；未落正本的优化=漂移
+3. **登记**：新目录先登记 dir-map（`③ config/data/dir-map.tsv`，命名按 NN_ 大写 4-6 规范）；Runtime 类工具 runtimes.tsv + `devenv runtime wire`
+4. **复核**：`devenv app --audit` 覆盖缺口与 `devenv doctor` 巡检
+
 ## 语言栈（按需选装，幂等）
 
 ```bash
@@ -51,7 +65,8 @@ bash "$BDE/modules/ide/ide.sh" --no-jetbrains   # VS Code 离线 deb + 扩展档
 - opencode 实体契约位 = ① `$DEV/apps/agent/.opencode/bin`（env.sh PATH 预置）：installer 默认落 `~/.opencode/bin`，tools.sh 安装/发现时自动归位 ①；已装判 `command -v` 与契约位双查
 - 扩展档案在 `$COMMON/config/ide/vscode/{base,<语言>}.txt`——新装扩展未入档案时 ide.sh 会提示补录
 - GUI 类工具（trae/antigravity/qoder）走人工安装，脚本只登记
-- **装服务/软件/工具后**：配置文件用 `devenv cfg adopt <name> <路径>` 收编进 `$COMMON/config/services/`（版本化 + `devenv cfg apply` 落位 + doctor 巡检漂移）；Runtime 类工具另走 runtimes.tsv 登记 + `devenv runtime wire`
+- **装服务/软件/工具后**：按「装后四步」走——建档（apps/<name>.toml）+ `devenv cfg adopt <name> <路径>` 收编进 `$COMMON/config/services/`（版本化 + `devenv cfg apply` 落位 + doctor 巡检漂移）；Runtime 类工具另走 runtimes.tsv 登记 + `devenv runtime wire`
+- **存量软件受管化**：位置违规的已装软件用 `devenv app --migrate` 处置——先展示影响（体积/引用/服务），**逐项经用户授权后**实体搬入受管根 + 原位 symlink 接回，迁移后验证可用
 
 ## 验收
 

@@ -40,12 +40,15 @@
 | `devenv report` | 生成环境描述文档 → Common/docs/env/ |
 | `devenv tidy` | 清理可再生缓存（gradle/npm/pnpm/go-build/Trash/日志）|
 | `devenv map` | 隐藏目录注册表视图（未登记项检测）|
-| `devenv cfg` / `devenv svc` | 配置治理：清单/漂移/apply/adopt/snapshot（cfg-map 登记制；snapshot=③→seed 备份快照）|
+| `devenv index` | 系统内容索引：①②③ 每目录"是什么、放什么"一览（dir-map/home-map/apps/inventory 四层聚合；--json 机器输出）|
+| `devenv namecheck` | 目录命名规范校验（NN_ 前缀/首字母大写/4-6 字符/禁中文/名实登记/同级等长优先，档案 naming.toml 驱动；--migrate 存量改名逐项授权）|
+| `devenv cfg` / `devenv svc` | 配置治理：清单/漂移/apply/adopt/snapshot/restore（cfg-map 登记制；snapshot=③→seed 备份快照，restore=seed→③ 回退/重建）|
 | `devenv state-env` | 再生每机器状态正本（① anchors.env 锚点 + network.env 网络画像；改 storage/network.toml 后重跑 + 重开 shell）|
 | `devenv runtime` / `vibe` | vibecoding Runtime 统一入口 |
-| `devenv app [name]` | 应用视图：安装/配置/数据按应用聚合（config/apps 档案制，§20.3） |
+| `devenv app [name]` | 应用视图：安装/配置/数据按应用聚合（config/apps 档案制，§20.3）|
+| `devenv app --audit\|--migrate` | 档案覆盖审计（已管未建档×安装位置违规）/ 处置流：建档四问+配置收编，逐项授权 |
 | `devenv runtime list\|wire\|mcp` | Runtime 接线现状 / 幂等接线 / MCP 正本投影 |
-| `devenv cfg list\|diff\|apply\|snapshot` | 配置治理清单 / 漂移检测 / 正本落位（落位自动触发生效动作）/ ③→seed 备份快照（`devenv svc` 只看服务类）|
+| `devenv cfg list\|diff\|apply\|snapshot\|restore` | 配置治理清单 / 漂移检测 / 正本落位（落位自动触发生效动作）/ ③→seed 备份快照 / seed→③ 回退重建（`devenv svc` 只看服务类）|
 | `devenv inventory` | 系统环境索引（已装软件路径/渠道合规审计 + 家目录契约路径登记制判定 + 受管服务实态；索引落 ① docs/state/inventory.json，--json 机器输出）|
 | `devenv cap` | 能力矩阵视图（L2 能力总线：本机适配器实现了哪些平台能力——pkg/svc/kernel/fonts/…；新增平台 = 写 adapters/<family>.sh）|
 | `vibe <tool> [args]` | Runtime 统一启动入口（自动接入 env.sh 契约）|

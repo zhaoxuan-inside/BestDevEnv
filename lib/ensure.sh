@@ -64,14 +64,21 @@ ensure_fstab() {
     bde_pending "fstab 写入失败（需 sudo 免密）"; return 1
 }
 
-# 修改前备份（去重：同日同名只备一次）
+# 修改前备份（时间戳版本化：内容与最近一份一致则不重复留痕，内容变化即新版本——
+# 同日多次修改的中间态全保留（旧版"同日同名只备一次"会丢中间态）；幂等重跑零垃圾）
 ensure_backup() {
     local f=$1
     local bdir="${BDE_BACKUP_DIR:-$DEV/docs/backup}"
     [ -f "$f" ] || { return 0; }
     ensure_dir "$bdir" || { bde_pending "备份目录不可用：$bdir"; return 1; }
-    local b="$bdir/$(date +%Y%m%d)-$(basename "$f")"
-    if [ -e "$b" ]; then return 0; fi
+    local _name; _name="$(basename "$f")"
+    # 与本 basename 最近一份备份逐字节比对（两代命名兼容：<日期>-名 与 <日期-时分秒>-名）
+    local _last
+    _last="$(ls -1t "$bdir"/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]-"$_name" \
+                   "$bdir"/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-"$_name" 2>/dev/null | head -1)"
+    if [ -n "$_last" ] && [ -f "$_last" ] && cmp -s "$f" "$_last"; then return 0; fi
+    local b="$bdir/$(date +%Y%m%d-%H%M%S)-$_name"
+    [ -e "$b" ] && { sleep 1; b="$bdir/$(date +%Y%m%d-%H%M%S)-$_name"; }  # 同秒撞名：等 1s 重取时间戳
     cp "$f" "$b" && bde_ok "备份 $(basename "$f") → ${b/#$HOME/~}"
 }
 

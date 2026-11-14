@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
-# orch — 编排进度日志（主 Skill 专用：多子 Skill 长任务的进度落盘与跨会话续做）
+# orch — 编排进度日志（主 Skill 专用：多子 Skill 长任务的进度落盘、跨会话续做与步骤改判回退）
 # 日志位置：$DEV/docs/progress/orch-<时间戳>.md（本机活状态住 DevEnv；markdown 便于人读+LLM 读写）
+# 账本结构（三分区各归其位）：
+#   ## 计划    —— 步骤复选框行（- [ ] N. 子skill —— 职责；add 落此区）
+#   ## 记录    —— 时间线备注行（↳ [步骤N] 完成/失败/改判；done/fail/revert 落此区）
+#   ## 续做指针 —— 续做指针行（> 续做: ...；next 落此区，全文件最后一节）
 # 用法: devenv orch <cmd> [args]
 #   new <目标>                创建编排日志（自动记录机器/OS/doctor 快照），输出日志路径
 #   add <子skill> <职责>      追加计划步骤（自动编号，按依赖顺序逐条登记）
 #   done <序号> <结果说明>    标记第 n 步完成（附说明与 doctor 复查结论）
 #   fail <序号> <结果说明>    标记第 n 步失败（附原因与已尝试动作）
+#   revert <序号> <原因>      步骤改判回待做（撤销标记 + 记录原因 + 打印该步可用的回退素材指引）
 #   next [说明]               无参=查看续做指针；有参=设置续做指针（调度每步前写）
-#   status [日志文件]         查看进度（默认最新一份；未完成时给出续做指引）
+#   status [日志文件]         查看进度（默认最新一份；未完成时给出续做/改判指引）
 #   list                      列出全部编排日志（最新优先）
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
@@ -18,6 +23,25 @@ mkdir -p "$ORCH_DIR" 2>/dev/null
 _latest()  { ls -1t "$ORCH_DIR"/orch-*.md 2>/dev/null | head -1; }
 _doctor()  { bash "$BDE_ROOT/verify/doctor.sh" 2>/dev/null | tail -1 | sed 's/doctor：/doctor /'; }
 _num_ok()  { [ -n "$1" ] && [ "${1//[!0-9]/}" = "$1" ]; }
+
+# 分区插入：把一行插到首个与标题整行相等的行之前；无匹配则落文件尾（兼容旧版无分区账本）。
+# 用 ENVIRON 传值而非 awk -v：ENVIRON 原样透传，说明文字里的反斜杠/换行不会被 awk 转义吃掉。
+_ins_before() {  # <文件> <行内容(无换行)> <标题> [备用标题]
+    local _f="$1" _line="$2"; shift 2
+    local _t; _t="$(mktemp "$ORCH_DIR/.tmp.XXXXXX")"
+    if _line="$_line" _h1="${1:-}" _h2="${2:-}" awk '
+        { if (!_ins && ($0 == ENVIRON["_h1"] || (ENVIRON["_h2"] != "" && $0 == ENVIRON["_h2"]))) { print ENVIRON["_line"]; _ins=1 } }
+        { print }
+        END { if (!_ins) print ENVIRON["_line"] }
+    ' "$_f" > "$_t"; then
+        mv "$_t" "$_f"
+    else
+        rm -f "$_t"; return 1
+    fi
+}
+
+# 记录区追加一行（↳ 时间线备注：插在续做指针节之前；旧账本无该节则落文件尾）
+_ins_record() { _ins_before "$1" "$2" "## 续做指针"; }
 
 case "${1:-}" in
     new)
@@ -39,7 +63,7 @@ case "${1:-}" in
         _f="$(_latest)"; [ -n "$_f" ] || { echo "无编排日志——先 devenv orch new"; exit 1; }
         [ -n "${2:-}" ] && [ -n "${3:-}" ] || { echo "用法: orch add <子skill> <一句话职责>"; exit 2; }
         _n="$(grep -cE '^- \[.\] [0-9]+\.' "$_f" 2>/dev/null)"; _n=$((_n+1))
-        printf -- "- [ ] %d. %s —— %s\n" "$_n" "$2" "$3" >> "$_f"
+        _ins_before "$_f" "$(printf -- '- [ ] %d. %s —— %s' "$_n" "$2" "$3")" "## 记录" "## 续做指针"
         echo "已登记步骤 $_n: $2（$3）"
         ;;
     done|fail)
@@ -48,8 +72,19 @@ case "${1:-}" in
         _mark="x"; _tag="完成"; [ "$1" = "fail" ] && { _mark="!"; _tag="失败"; }
         # GNU sed -i 专属（mac 需 'sed -i ''' 语法）——编排日志仅 Linux 机器维护
         sed -i "s|^- \[.\] ${2}\. |- [$_mark] ${2}. |" "$_f" \
-            && printf -- "  ↳ %s（%s）: %s ｜ %s\n" "$_tag" "$(date '+%F %T')" "${3:-}" "$(_doctor)" >> "$_f"
+            && _ins_record "$_f" "$(printf -- '  ↳ [步骤%s] %s（%s）: %s ｜ %s' "$2" "$_tag" "$(date '+%F %T')" "${3:-}" "$(_doctor)")"
         echo "步骤 ${2} 已记 $_tag"
+        ;;
+    revert)
+        _f="$(_latest)"; [ -n "$_f" ] || { echo "无编排日志"; exit 1; }
+        _num_ok "${2:-}" || { echo "用法: orch revert <序号> <原因>"; exit 2; }
+        grep -qE "^- \[.\] ${2}\. " "$_f" || { echo "步骤 ${2} 不存在于账本：$_f"; exit 1; }
+        sed -i "s|^- \[.\] ${2}\. |- [ ] ${2}. |" "$_f" \
+            && _ins_record "$_f" "$(printf -- '  ↳ [步骤%s] 改判待做（%s）: %s ｜ %s' "$2" "$(date '+%F %T')" "${3:-}" "$(_doctor)")"
+        echo "步骤 ${2} 已改判回待做。该步已产生写入时的回退素材（按需取用）:"
+        echo "  - 修改前文件备份: $DEV/docs/backup/（ensure_backup 时间戳版本，取该步改动前的最近一份）"
+        echo "  - 配置正本历史: git -C $COMMON/config log/diff；更早时点: git -C $BDE_ROOT checkout <commit> -- config && devenv cfg restore"
+        echo "  - 改后核对: devenv doctor ｜ devenv cfg diff（确认回到预期实态再重新调度本步）"
         ;;
     next)
         _f="$(_latest)"; [ -n "$_f" ] || { echo "无编排日志"; exit 1; }
@@ -68,7 +103,10 @@ case "${1:-}" in
         echo "== $(head -1 "$_f") =="
         echo "日志: $_f"
         echo "进度: $_d/$_t 完成 ｜ 失败 $_e ｜ 待做 $_p"
-        [ "$_e" -gt 0 ] && { echo "失败步骤（需先修复或改判）:"; grep -E '^- \[!\] [0-9]+\.' "$_f" | sed 's/^- \[!\] /  /'; }
+        if [ "$_e" -gt 0 ]; then
+            echo "失败步骤（修复后 orch done 改判完成；方向错了 orch revert 改判回待做）:"
+            grep -E '^- \[!\] [0-9]+\.' "$_f" | sed 's/^- \[!\] /  /'
+        fi
         grep '^> 续做:' "$_f" 2>/dev/null
         if [ "$_p" -gt 0 ]; then
             echo "下一未完成步骤: $(grep -E '^- \[ \] [0-9]+\.' "$_f" | head -1 | sed 's/^- \[ \] //')"
@@ -87,5 +125,5 @@ case "${1:-}" in
         [ "$_found" = "0" ] && echo "（无编排日志）"
         ;;
     *)
-        echo "用法: devenv orch new|add|done|fail|next|status|list"; exit 2 ;;
+        echo "用法: devenv orch new|add|done|fail|revert|next|status|list"; exit 2 ;;
 esac

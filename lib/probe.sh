@@ -227,6 +227,85 @@ bde_probe_collect() {
         grep -qs "^${_sp}|" "$_hm" || P_HOME_STRAY=$((P_HOME_STRAY+1))
     done
 
+    # 作用域锚点已按机器登记（用户指定制：storage.toml 机器节；未登记=初始化首问未完成）
+    P_ANCHOR_REG=0
+    _stf="$COMMON/config/data/storage.toml"; [ -f "$_stf" ] || _stf="$BDE_ROOT/config/data/storage.toml"
+    [ -f "$_stf" ] && grep -qs "^\[${BDE_MACHINE,,}\." "$_stf" && P_ANCHOR_REG=1
+
+    # 目录登记制 + 命名规范（单实现委托 namecheck：静默扫描三锚点一级 + dir-map，harvest 计数）
+    # 校验器异常时不堵塞 doctor（计数归 0 通过——③ 档案缺失会先红在更基础的巡检项上）
+    P_DIR_UNREG=0; P_NAME_LEGACY=0
+    if BDE_NAMECHECK_QUIET=1 bash "$BDE_ROOT/modules/doc/namecheck.sh" >/dev/null 2>&1 \
+       && [ -f "$DEV/docs/state/namecheck.json" ]; then
+        eval "$(python3 - "$DEV/docs/state/namecheck.json" <<'PY'
+import json, sys, os, shlex
+try:
+    s = json.load(open(sys.argv[1]))["summary"]
+    print(f"P_DIR_UNREG={shlex.quote(str(s.get('hard', 0)))}")
+    print(f"P_NAME_LEGACY={shlex.quote(str(s.get('legacy', 0)))}")
+except Exception:
+    pass
+PY
+)" || true
+    fi
+
+    # 应用档案覆盖缺口（已管集合 apps-classify ∪ home-map 所属应用 ∪ inventory 软件名 vs 档案数）
+    P_APP_NOARCH=0
+    eval "$(APPS_DIR_T="$COMMON/config/apps" CLASSIFY_T="$COMMON/config/data/apps-classify.tsv" \
+            HOME_MAP_T="$COMMON/config/data/home-map.tsv" INV_JSON_T="$DEV/docs/state/inventory.json" \
+            python3 <<'PY'
+import os, json, glob, tomllib, shlex
+
+def norm(n):
+    n = (n or "").strip().lower()
+    return n
+
+def cands(n):
+    n = norm(n)
+    return [n] + ([n.split(".")[0]] if "." in n else [])
+
+man = set()
+for f in glob.glob(os.path.join(os.environ["APPS_DIR_T"], "*.toml")):
+    try:
+        man.add(norm(tomllib.load(open(f, "rb"))["meta"]["name"]))
+    except Exception:
+        pass
+
+managed = []
+try:
+    for line in open(os.environ["CLASSIFY_T"]):
+        p = line.rstrip("\n").split("|")
+        if len(p) >= 2 and p[1].strip() and not p[1].startswith("#"):
+            managed.append(p[1])
+except Exception:
+    pass
+try:
+    for line in open(os.environ["HOME_MAP_T"]):
+        p = line.rstrip("\n").split("|")
+        if len(p) >= 2 and p[1].strip() and p[1] != "XDG" and not p[0].startswith("#"):
+            managed.append(p[1])
+except Exception:
+    pass
+try:
+    inv = json.load(open(os.environ["INV_JSON_T"]))
+    managed += [t.get("name", "") for t in inv.get("tools", [])]
+    managed += [x.get("name", "") for x in inv.get("discovered", [])]
+except Exception:
+    pass
+
+miss = 0
+seen_m = set()
+for n in managed:
+    n2 = norm(n)
+    if not n2 or n2 in seen_m:
+        continue
+    seen_m.add(n2)
+    if not any(c in man for c in cands(n2)):
+        miss += 1
+print(f"P_APP_NOARCH={shlex.quote(str(miss))}")
+PY
+)" || true
+
     # docker 数据根 bind 实态（① services/docker → /var/lib/docker；已装 docker 的机器才判，否则视图缺席）
     P_DOCKER_PRESENT=0; command -v docker >/dev/null 2>&1 && P_DOCKER_PRESENT=1
     P_DOCKER_ROOT_BIND=0; bde_is_mounted /var/lib/docker && P_DOCKER_ROOT_BIND=1
@@ -374,6 +453,10 @@ doc = {
         "zram_ok": i("P_ZRAM_OK"),
         "docker_present": i("P_DOCKER_PRESENT"),
         "home_stray": i("P_HOME_STRAY"),
+        "anchor_reg": i("P_ANCHOR_REG"),
+        "dir_unreg": i("P_DIR_UNREG"),
+        "name_legacy": i("P_NAME_LEGACY"),
+        "app_noarch": i("P_APP_NOARCH"),
         "docker_root_bind": i("P_DOCKER_ROOT_BIND"),
     },
     "storage": {

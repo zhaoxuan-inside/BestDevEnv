@@ -71,6 +71,8 @@ if is_linux:
         ("zram 压缩内存交换已启用",             f["zram_ok"] == 1),
         ("docker 数据根 bind 生效（① services/docker）", f["docker_present"] == 0 or f["docker_root_bind"] == 1),
         ("家目录契约路径无未登记实体（home-map 登记制）", f["home_stray"] == 0),
+        ("作用域锚点已按机器指定（storage.toml 机器节）", f.get("anchor_reg", 1) == 1),
+        ("①②③ 目录登记制无缺口（dir-map）", f.get("dir_unreg", 0) == 0),
     ]
 
 # 叠层检查仅挂载型后端有意义（local 目录无挂载点概念）
@@ -106,6 +108,10 @@ if rm:
     print(f"{Y}[i]{Z} runtime 注册表应装未装（人工渠道除外）:{rm} —— 补装后 devenv runtime wire 接线")
 if f.get("gen_fresh") == 0 and f.get("gen_stale"):
     print(f"{Y}[i]{Z} gen 指纹过期分型：{f['gen_stale']}")
+if f.get("name_legacy", 0):
+    print(f"{Y}[i]{Z} 目录存量命名违规 {f['name_legacy']} 项（只报不改——devenv namecheck --migrate 逐项授权处置）")
+if f.get("app_noarch", 0):
+    print(f"{Y}[i]{Z} 已管未建档软件 {f['app_noarch']} 个（devenv app --migrate 逐项授权建档收编）")
 if is_linux and free_mb <= 15 * 1024:
     print(f"{Y}[i]{Z} 根盘超容分型：tidy SAFE 清单回收≈0（缓存已重定向 ②③）——大头经 devenv map --sizes "
           f"定位，按构建十分离外置（code-out/介质入库）或扩容；属结构性问题而非缓存问题")
