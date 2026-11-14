@@ -1,6 +1,6 @@
 ---
 name: bestdevenv-init
-version: 0.0.2
+version: 0.1.0
 description: BestDevEnv 新机初始化——装完 OS 后从空白到 devenv doctor 全绿的一条命令构建；交互确认、进度落盘可续建、全量幂等。当任务涉及：新机器、装完系统初始化、init.sh、构建进度与续建时使用。
 ---
 
@@ -18,6 +18,7 @@ cd "$BDE" && ./init.sh          # 交互询问：开发者角色（回车=跳过
 ```
 
 - 交互契约：构建计划（OS/语言栈/工具/阶段）确认后才动手；`--yes`/非交互终端自动取默认（bootstrap 免疫）；EOF（Ctrl+D）一律不开工
+- **确认卡先行（硬协议）**：`--dry-run` 取构建计划 → 按「执行前确认卡」格式渲染（计划/完成后效果/风险/待确认）经用户同意才执行；**待确认必问**——开发语言与框架（实际在写什么，决定 --langs/--tools）、**特殊非通用安装内容**（公司内部工具/私有源/定制版本——用户不提就不装）、三作用域锚点
 - **锚点首问（用户指定制）**：三作用域目录——③ 跨主机共享 / ② 主机内共享 / ① 用户独占——**由用户指定**，不得静默采用默认路径。构建前先向用户展示 `storage.toml` 机器节现状并征询确认/修改（默认段给推荐值）；确认结果写入 `③ config/data/storage.toml` 的 `<机器名>.<作用域>` 节并 commit。doctor 硬项「作用域锚点已按机器指定」巡检此项
 
 - 共享盘未挂载先按 ③ `storage.toml` 档案手动挂一次（hgfs 后端示例：`sudo mkdir -p /Share/Common /Share/Local && sudo vmhgfs-fuse .host:/Common /Share/Common -o allow_other`；local/passthrough 后端无需挂载，直接构建即可）

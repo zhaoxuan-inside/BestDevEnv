@@ -59,10 +59,14 @@ elif not at:
     print("  安装位  ⚠ 未声明（受管根必填：user:/host:/shared: 相对路径）")
 else:
     p = spath(at)
-    if os.path.isdir(p):
-        print(f"  安装位  {p} ｜ 就绪")
-    else:
+    managed = any(p.startswith(r.rstrip("/") + "/") or p == r.rstrip("/") for r in roots.values() if r != "/") \
+        or p.startswith("/usr/") or p.startswith("/opt/") or p.startswith("/snap/")
+    if not os.path.isdir(p):
         print(f"  安装位  {p} ｜ ⚠ 声明位置缺失（安装体未按档案落位——漂移）")
+    elif managed:
+        print(f"  安装位  {p} ｜ 就绪（受管根）")
+    else:
+        print(f"  安装位  {p} ｜ ⚠ 就绪但未受管（家目录散装——devenv app --migrate 授权迁移）")
 # 配置（正本 vs 应用层一致性）
 cfg = m.get("config", {})
 if cfg.get("manifest"):

@@ -1,6 +1,6 @@
 ---
 name: bestdevenv-dev
-version: 0.0.2
+version: 0.1.0
 description: BestDevEnv 部署开发环境——按开发者角色（profiles.tsv：java-web/python/go/cpp/ml-trainer/fullstack）或语言栈（node/python/rust/go/java/flutter/ai/cpp：安装+国内镜像+缓存重定向）、vibecoding 工具（claude-code/codex/gemini/opencode/zcode/arkcli）、VS Code 离线安装与语言扩展档案、JetBrains 需求推导时使用。触发：装语言、装 agent 工具、装 IDE、按角色配环境、扩展档案。
 ---
 
@@ -20,6 +20,8 @@ description: BestDevEnv 部署开发环境——按开发者角色（profiles.ts
 init.sh 全量管道（自带交互询问与校验）、用户在本次会话已明确给出清单。
 
 ## 装前四问（硬协议：任何安装动作前必须逐项回答，未答不装）
+
+**前置·确认卡**：清单确定前按主 Skill「执行前确认卡」展示计划/效果/风险，并**确认语境**——开发语言与框架（实际在写什么）、特殊非通用安装内容（内部工具/私有源/定制版本，用户不提就不装）。未确认不动手。
 
 1. **安装位置→受管根**：实体只落 系统包管理器 / ① DevEnv（Apps/Deps/Tool）/ ② Local——**禁止家目录散装与 ③ 共享盘实体**（inventory 渠道审计判违规）；版本管理器工具链（mise/nvm/cargo…）优先
 2. **配置位置→③**：配置正本收编 `$COMMON/config`（`devenv cfg adopt`），严禁默认配置散落家目录
