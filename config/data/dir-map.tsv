@@ -26,14 +26,14 @@ shared|install|60_Media|安装介质（iso/win/linux/fonts）|介质|主干
 shared|templates|70_Tmpl|模板（skill 模板等）|模板|主干
 shared|archive|90_Vault|冷归档|归档|主干
 # —— host ②（主机内共享；锚点由用户指定）——
-host|build|20_Build|编译产物（code-out 挂点）|产物|主干
-host|cache|10_Cache|锁敏感缓存（gradle/m2）|缓存|主干
-host|data|00_Data|主机冷份|数据|主干
-host|data/dumps|data/Dump|例行 dump 留档|数据|深层登记
-host|data/exports|data/Export|导出外发|数据|深层登记
-host|docs|50_Docs|主机文档|文档|主干
-host|ide-data|40_IdeRun|IDE 运行数据（索引/会话态）|IDE|主干
-host|logs|30_Logs|构建/运行日志|日志|主干
+host|20_Build||编译产物（code-out 挂点）|产物|主干
+host|10_Cache||锁敏感缓存（gradle/m2）|缓存|主干
+host|00_Data||主机冷份|数据|主干
+host|00_Data/Dump||例行 dump 留档|数据|深层登记
+host|00_Data/Export||导出外发|数据|深层登记
+host|50_Docs||主机文档|文档|主干
+host|40_IdeRun||IDE 运行数据（索引/会话态）|IDE|主干
+host|30_Logs||构建/运行日志|日志|主干
 host|AiSpace||个人空间|个人|存量违规：migrate 处置（改名或豁免）
 host|SFT-WORKSPACE||工作区|工作|存量违规：migrate 处置（改名或豁免）
 host|Desktop||XDG 桌面|XDG|豁免：协议固定名

@@ -32,12 +32,12 @@ export CARGO_HOME="$DEV/cargo"
 export GOPATH="$DEV/go"
 export PUB_CACHE="$DEV/pub-cache"
 # 构建缓存落点契约（宪法 §19.4 十分离：缓存包 → ②③，绝不落家目录）
-export GRADLE_USER_HOME="$LOCAL/cache/gradle"                            # Gradle 缓存 → ②（全局化，替代未落地的 direnv 注入）
-export CCACHE_DIR="$LOCAL/cache/ccache"                                  # C/C++ 编译缓存 → ②（cpp 栈；按机隔离防锁）
-export MAVEN_OPTS="${MAVEN_OPTS:+$MAVEN_OPTS }-Dmaven.repo.local=$LOCAL/cache/m2"  # Maven 仓库双保险（settings.xml 已指 Local/cache/m2）
+export GRADLE_USER_HOME="$LOCAL/10_Cache/gradle"                            # Gradle 缓存 → ②（全局化，替代未落地的 direnv 注入）
+export CCACHE_DIR="$LOCAL/10_Cache/ccache"                                  # C/C++ 编译缓存 → ②（cpp 栈；按机隔离防锁）
+export MAVEN_OPTS="${MAVEN_OPTS:+$MAVEN_OPTS }-Dmaven.repo.local=$LOCAL/10_Cache/m2"  # Maven 仓库双保险（settings.xml 已指 Local/cache/m2）
 # 以下两个仍为"按项目"变量（路径含仓库名），由 direnv/.envrc 注入（templates/project.envrc 待落地）：
 #   UV_PROJECT_ENVIRONMENT=$DEV/virtualenvs/<repo>
-#   CARGO_TARGET_DIR=$LOCAL/build/<repo>
+#   CARGO_TARGET_DIR=$LOCAL/20_Build/<repo>
 
 # ── 下载缓存与模型（③，linux 域三机共享）─────────────────
 export PIP_CACHE_DIR="$COMMON/cache/linux/pip"
