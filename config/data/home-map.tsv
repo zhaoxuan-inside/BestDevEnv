@@ -55,4 +55,5 @@
 .xsession-errors|X11|框架|tidy|会话错误日志（可再生，env tidy 清）
 .cache|XDG|框架|tidy|GUI 会话回建（Codex 桌面/声音缓存）；重登后 environment.d 契约合流 ①，残留为死缓存可清
 .condarc|conda|开发工具|keep|cfg-map condarc 管理（tuna 镜像，envs/pkgs → ①）
+.conda|conda|开发工具|keep|conda 用户元数据（envs/pkgs 实体已契约 → ① deps/conda；本目录为 conda 自动建）
 .zshenv|zsh|框架|keep|cfg-map/chezmoi 管理（全 zsh 上下文环境契约入口）
