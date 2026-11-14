@@ -218,6 +218,10 @@ bde_probe_collect() {
        || systemctl is-active --quiet chrony 2>/dev/null; then
         P_TIMESYNC_OK=1
     fi
+    # docker 数据根 bind 实态（① services/docker → /var/lib/docker；已装 docker 的机器才判，否则视图缺席）
+    P_DOCKER_PRESENT=0; command -v docker >/dev/null 2>&1 && P_DOCKER_PRESENT=1
+    P_DOCKER_ROOT_BIND=0; bde_is_mounted /var/lib/docker && P_DOCKER_ROOT_BIND=1
+
     # 时区与站点画像一致（画像值：① network.env BDE_TIMEZONE——state-env 再生；缺失回退 Asia/Shanghai 与生成器默认同源）
     [ -f "$DEV/docs/state/network.env" ] && . "$DEV/docs/state/network.env"
     P_TZ_CUR="$(timedatectl show -p Timezone --value 2>/dev/null)"
@@ -359,6 +363,8 @@ doc = {
         "timesync_ok": i("P_TIMESYNC_OK"),
         "tz_ok": i("P_TZ_OK"),
         "zram_ok": i("P_ZRAM_OK"),
+        "docker_present": i("P_DOCKER_PRESENT"),
+        "docker_root_bind": i("P_DOCKER_ROOT_BIND"),
     },
     "storage": {
         "backend_common": p.get("BACKEND_COMMON", "unknown"),

@@ -63,10 +63,39 @@ _cfg_post_apply() {  # <name>
                 || bde_pending "journald 重启失败（人工执行或下次重启生效）" ;;
         docker-root-mount|docker-datadir-order)
             # 单元/drop-in 落位后必须 daemon-reload 才被 systemd 看见；mount 需 enable --now 才建立 bind
+            # ⚠ 已装 docker 且有存量数据的机器：bind 生效前必须先迁移 /var/lib/docker → ①，
+            #   否则空 ① 目录遮蔽旧数据（镜像/容器"消失"）——下方自动安全迁移（停服→rsync→挂载→起服→验证）
             sudo -n systemctl daemon-reload >/dev/null 2>&1 || { bde_pending "daemon-reload 失败（人工执行）"; return 0; }
-            sudo -n systemctl enable --now var-lib-docker.mount >/dev/null 2>&1 \
-                && bde_ok "var-lib-docker.mount 已 enable --now（${DEV}/services/docker → /var/lib/docker bind 生效）" \
-                || bde_pending "var-lib-docker.mount 启用失败（检查 ${DEV}/services/docker 是否存在）" ;;
+            local _dst="$DEV/services/docker" _legacy=0 _migrated=0
+            mkdir -p "$_dst" 2>/dev/null
+            if [ -d /var/lib/docker/overlay2 ] && [ ! -d "$_dst/overlay2" ]; then
+                _legacy=1
+                if command -v rsync >/dev/null 2>&1 && sudo -n systemctl stop docker.socket docker.service >/dev/null 2>&1; then
+                    bde_info "docker 存量数据迁移：/var/lib/docker → $_dst（停服保一致）"
+                    if sudo -n rsync -aHAX /var/lib/docker/ "$_dst/" >/dev/null 2>&1 \
+                       && [ -d "$_dst/overlay2" ]; then
+                        _migrated=1
+                        bde_ok "存量数据已迁入 ①（rsync -aHAX 保权限/硬链；迁移源保留作回滚）"
+                    else
+                        sudo -n systemctl start docker.socket docker.service >/dev/null 2>&1
+                        bde_pending "存量迁移失败（rsync/空间？docker 已恢复启动）——人工迁移后再 cfg apply：stop docker → rsync -aHAX /var/lib/docker/ $_dst/ → apply"
+                        return 0
+                    fi
+                else
+                    bde_pending "检测到 docker 存量数据但无法自动迁移（rsync 缺失/sudo 非免密）——人工执行：systemctl stop docker → rsync -aHAX /var/lib/docker/ $_dst/ → 再 cfg apply"
+                    return 0
+                fi
+            fi
+            if sudo -n systemctl enable --now var-lib-docker.mount >/dev/null 2>&1; then
+                bde_ok "var-lib-docker.mount 已 enable --now（$_dst → /var/lib/docker bind 生效${_migrated:+，存量数据已接管}）"
+                if [ "$_legacy" = "1" ] && [ "$_migrated" = "1" ]; then
+                    sudo -n systemctl start docker.socket docker.service >/dev/null 2>&1 \
+                        && bde_ok "docker 已恢复运行（镜像/容器经 bind 原样可见）" \
+                        || bde_pending "docker 启动失败（人工 systemctl start docker 后 docker images 核对）"
+                fi
+            else
+                bde_pending "var-lib-docker.mount 启用失败（检查 $_dst 是否存在）"
+            fi ;;
     esac
 }
 

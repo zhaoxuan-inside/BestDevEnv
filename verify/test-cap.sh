@@ -290,6 +290,10 @@ _h1="$(bash -c "source $BDE_ROOT/lib/probe.sh 2>/dev/null; bde_cfg_sources_hash"
 _h2="$(bash -c "source $BDE_ROOT/lib/probe.sh 2>/dev/null; bde_cfg_sources_hash" 2>/dev/null)"
 [ -n "$_h1" ] && [ "$_h1" = "$_h2" ] && ok "cfg_sources_hash 确定性（两次一致且非空）" || bad "cfg_sources_hash 不确定或为空"
 
+# 5) 已装 docker 存量数据迁移护栏（bind 方案的遮蔽风险——迁移逻辑必须在位）
+grep -q "存量数据迁移" "$BDE_ROOT/modules/cfg/cfg.sh" \
+    && ok "docker 存量迁移护栏：cfg 钩子含停服→rsync→挂载→起服流程" || bad "docker 存量迁移逻辑缺失（bind 遮蔽风险）"
+
 # cfg hosts 机制漂移判定（同源实现）
 printf '# other content\n# >>> generated-by-BestDevEnv >>>\n%s\n# <<< generated-by-BestDevEnv <<<\n' "$_hf" > "$SBX/hosts-fake"
 cat > "$SBX/t3.sh" <<'EOS'
