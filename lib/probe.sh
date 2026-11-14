@@ -164,7 +164,7 @@ bde_probe_collect() {
     if [ -f "$BDE_ROOT/modules/agent/runtimes.tsv" ]; then
         while IFS='|' read -r _rn _rb _rch _rrest; do
             [ -n "$_rn" ] || continue
-            case "$_rch" in 人工*) continue ;; esac
+            case "$_rch" in 人工*|按需*) continue ;; esac   # 非通用/人工渠道：用户点名才装，不入警示
             [ -n "$_rb" ] || continue
             command -v "$_rb" >/dev/null 2>&1 || P_RUNTIME_MISSING+="$_rn "
         done < <(grep -v '^[[:space:]#]' "$BDE_ROOT/modules/agent/runtimes.tsv" | grep -v '^[[:space:]]*$')

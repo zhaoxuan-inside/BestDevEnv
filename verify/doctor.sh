@@ -105,7 +105,7 @@ if st["profile_error"]:
 # opencode 曾缺失 5 天无人发现，probe/doctor 盲区是根因之一，2026-11-12 实测）
 rm = (f.get("runtime_missing") or "").strip()
 if rm:
-    print(f"{Y}[i]{Z} runtime 注册表应装未装（人工渠道除外）:{rm} —— 补装后 devenv runtime wire 接线")
+    print(f"{Y}[i]{Z} runtime 注册表应装未装（人工/按需渠道除外——非通用工具由用户点名才装）:{rm} —— 补装后 devenv runtime wire 接线")
 if f.get("gen_fresh") == 0 and f.get("gen_stale"):
     print(f"{Y}[i]{Z} gen 指纹过期分型：{f['gen_stale']}")
 if f.get("name_legacy", 0):
