@@ -11,6 +11,8 @@
 #   done <序号> <结果说明>    标记第 n 步完成（附说明与 doctor 复查结论）
 #   fail <序号> <结果说明>    标记第 n 步失败（附原因与已尝试动作）
 #   revert <序号> <原因>      步骤改判回待做（撤销标记 + 记录原因 + 打印该步可用的回退素材指引）
+#   edit <序号> <新职责>      计划修订（改步骤描述并重置待做；留痕记录旧值→新值）
+#   drop <序号> [原因]        计划裁剪（[-] 标记保留历史；status 单列计数）
 #   next [说明]               无参=查看续做指针；有参=设置续做指针（调度每步前写）
 #   status [日志文件]         查看进度（默认最新一份；未完成时给出续做/改判指引）
 #   list                      列出全部编排日志（最新优先）
@@ -75,6 +77,27 @@ case "${1:-}" in
             && _ins_record "$_f" "$(printf -- '  ↳ [步骤%s] %s（%s）: %s ｜ %s' "$2" "$_tag" "$(date '+%F %T')" "${3:-}" "$(_doctor)")"
         echo "步骤 ${2} 已记 $_tag"
         ;;
+    edit)
+        _f="$(_latest)"; [ -n "$_f" ] || { echo "无编排日志"; exit 1; }
+        _num_ok "${2:-}" && [ -n "${3:-}" ] || { echo "用法: orch edit <序号> <新职责>"; exit 2; }
+        grep -qE "^- \[.\] ${2}\. " "$_f" || { echo "步骤 ${2} 不存在于账本：$_f"; exit 1; }
+        _old="$(grep -E "^- \[.\] ${2}\. " "$_f" | head -1 | sed 's/^- \[.\] [0-9]*\. //')"
+        _t="$ORCH_DIR/.tmp.XXXXXX"; _t="$(mktemp "$_t")"
+        _n="$2" _new="$3" awk '
+            $0 ~ "^- \\[.\\] " ENVIRON["_n"] "\\. " { print "- [ ] " ENVIRON["_n"] ". " ENVIRON["_new"]; next }
+            { print }
+        ' "$_f" > "$_t" && mv "$_t" "$_f" \
+            && _ins_record "$_f" "$(printf -- '  ↳ [步骤%s] 计划修订（%s）: %s → %s' "$2" "$(date '+%F %T')" "$_old" "$3")" \
+            && echo "步骤 ${2} 已修订: $3"
+        ;;
+    drop)
+        _f="$(_latest)"; [ -n "$_f" ] || { echo "无编排日志"; exit 1; }
+        _num_ok "${2:-}" || { echo "用法: orch drop <序号> [原因]"; exit 2; }
+        grep -qE "^- \[.\] ${2}\. " "$_f" || { echo "步骤 ${2} 不存在于账本：$_f"; exit 1; }
+        sed -i "s|^- \[.\] ${2}\. |- [-] ${2}. |" "$_f" \
+            && _ins_record "$_f" "$(printf -- '  ↳ [步骤%s] 计划裁剪（%s）: %s' "$2" "$(date '+%F %T')" "${3:-未说明原因}")" \
+            && echo "步骤 ${2} 已裁剪（[-] 标记，保留历史）"
+        ;;
     revert)
         _f="$(_latest)"; [ -n "$_f" ] || { echo "无编排日志"; exit 1; }
         _num_ok "${2:-}" || { echo "用法: orch revert <序号> <原因>"; exit 2; }
@@ -100,9 +123,10 @@ case "${1:-}" in
         _f="${2:-$(_latest)}"; [ -n "$_f" ] && [ -f "$_f" ] || { echo "无编排日志——先 devenv orch new"; exit 1; }
         _t="$(grep -cE '^- \[.\] [0-9]+\.' "$_f")"; _d="$(grep -cE '^- \[x\] [0-9]+\.' "$_f")"
         _e="$(grep -cE '^- \[!\] [0-9]+\.' "$_f")"; _p="$(grep -cE '^- \[ \] [0-9]+\.' "$_f")"
+        _c="$(grep -cE '^- \[-\] [0-9]+\.' "$_f")"
         echo "== $(head -1 "$_f") =="
         echo "日志: $_f"
-        echo "进度: $_d/$_t 完成 ｜ 失败 $_e ｜ 待做 $_p"
+        echo "进度: $_d/$_t 完成 ｜ 失败 $_e ｜ 待做 $_p ｜ 裁剪 $_c"
         if [ "$_e" -gt 0 ]; then
             echo "失败步骤（修复后 orch done 改判完成；方向错了 orch revert 改判回待做）:"
             grep -E '^- \[!\] [0-9]+\.' "$_f" | sed 's/^- \[!\] /  /'
@@ -125,5 +149,5 @@ case "${1:-}" in
         [ "$_found" = "0" ] && echo "（无编排日志）"
         ;;
     *)
-        echo "用法: devenv orch new|add|done|fail|revert|next|status|list"; exit 2 ;;
+        echo "用法: devenv orch new|add|done|fail|revert|edit|drop|next|status|list"; exit 2 ;;
 esac
