@@ -28,7 +28,7 @@ MCONDA="$DEV/services/miniconda3"
 if command -v conda >/dev/null 2>&1 || [ -x "$MCONDA/bin/conda" ]; then
     bde_skip "conda 已就绪（$MCONDA）"
 elif command -v python3 >/dev/null 2>&1 && uname -m | grep -q x86_64; then
-    _mi="$LOCAL/cache/miniconda.sh"
+    _mi="$LOCAL/10_Cache/miniconda.sh"
     if curl -fsSL --max-time 300 -o "$_mi" \
         "https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh" 2>/dev/null \
        && bash "$_mi" -b -p "$MCONDA" >/dev/null 2>&1; then

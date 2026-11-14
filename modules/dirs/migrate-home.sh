@@ -67,7 +67,7 @@ if [ -d "$HOME/.gradle" ]; then
             && bde_ok "删除 ~/.gradle/caches（${_sz:-?}，可再生；长文件名无法上共享盘，下次构建自动重建）" \
             || bde_pending "caches 删除失败"
     fi
-    merge_from_home "$HOME/.gradle" "$LOCAL/cache/gradle"
+    merge_from_home "$HOME/.gradle" "$LOCAL/10_Cache/gradle"
 fi
 
 # 5) 终审：home 可见目录应只剩 DevEnv / Code / Share(symlink) / XDG 链接

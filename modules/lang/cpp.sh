@@ -23,8 +23,8 @@ if ! command -v clangd >/dev/null 2>&1; then
 fi
 
 # 2) ccache 缓存 → ②（按机隔离防锁；CCACHE_DIR 由 env.sh 契约下发）
-ensure_dir "$LOCAL/cache/ccache" 2>/dev/null || true
-bde_ok "ccache 缓存 → $LOCAL/cache/ccache（CCACHE_DIR → env.sh）"
+ensure_dir "$LOCAL/10_Cache/ccache" 2>/dev/null || true
+bde_ok "ccache 缓存 → $LOCAL/10_Cache/ccache（CCACHE_DIR → env.sh）"
 
 # 3) 使用提示（不盲改任何项目工程文件）
 bde_pending "clangd 需 compile_commands.json：CMake 项目加 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON，软链到仓库根"

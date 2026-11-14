@@ -13,7 +13,7 @@ SUB="${2:-target}"
 DIR="$COMMON/code/$REPO"
 [ -d "$DIR" ] || { bde_fail "仓库不存在: $DIR"; exit 1; }
 
-REAL="$LOCAL/build/$REPO/$SUB"
+REAL="$LOCAL/20_Build/$REPO/$SUB"
 MP="$DIR/$SUB"
 LIST="${BDE_BINDMOUNTS:-$DEV/docs/bindmounts.list}"
 ROOT="$(bde_root)"

@@ -26,7 +26,7 @@ fcitx5-autostart|dotfile|$COMMON/config/dot_config/autostart/org.fcitx.Fcitx5.de
 classicui-fcitx5|dotfile|$COMMON/config/dot_config/fcitx5/conf/classicui.conf|$HOME/DevEnv/xdg/config/fcitx5/conf/classicui.conf|copy|n||macOS12 皮肤：Theme=macos12-light/dark 手动切，UseDarkTheme=True 跟随系统亮暗（正本=fcitx5 原样——GUI 改设置后 adopt 收编）
 konsole-profile|dotfile|$COMMON/config/dot_config/konsole/devspace.profile|$HOME/DevEnv/xdg/local/share/konsole/devspace.profile|copy|n|os=ubuntu,debian,linuxmint|Konsole 统一 profile（JetBrainsMono NF 12；默认指针归 terminal 能力 kwriteconfig5）
 condarc|dotfile|$COMMON/config/dot_condarc|$HOME/.condarc|copy-expand|n||conda tuna 镜像 + envs/pkgs → ① deps/conda（ml-trainer；v0.19）
-gradle-properties|dotfile|$COMMON/config/dot_gradle/gradle.properties|$LOCAL/cache/gradle/gradle.properties|copy-expand|n||Gradle 全局性能/缓存（GRADLE_USER_HOME → ②；镜像属项目级，v0.19）
+gradle-properties|dotfile|$COMMON/config/dot_gradle/gradle.properties|$LOCAL/10_Cache/gradle/gradle.properties|copy-expand|n||Gradle 全局性能/缓存（GRADLE_USER_HOME → ②；镜像属项目级，v0.19）
 profile|dotfile|$COMMON/config/dot_profile|$HOME/.profile|chezmoi|n||登录 shell 环境契约兜底（非交互 bash -lc/cron/ssh；.bashrc 对非交互早退）
 zshenv|dotfile|$COMMON/config/dot_zshenv|$HOME/.zshenv|chezmoi|n||全 zsh 上下文环境契约入口（含非交互 zsh -c/脚本）
 env-sh|dotfile|$COMMON/config/dot_config/devspace/env.sh|$HOME/.config/devspace/env.sh|copy|n||shell 环境契约；bootstrap 一次性写入无同步，登记后 cfg diff 可捕捉漂移

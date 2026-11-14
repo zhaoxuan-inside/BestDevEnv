@@ -124,7 +124,7 @@ bde_probe_collect() {
     P_ENV_SH=0; [ -f "$HOME/.config/devspace/env.sh" ] && P_ENV_SH=1
     P_XDG_DOC=""; grep -m1 'XDG_DOCUMENTS_DIR' "$HOME/.config/user-dirs.dirs" 2>/dev/null | grep -q 'Share/Local' && P_XDG_DOC="重定向"
     P_AGENTS_MD=0; [ -f "$HOME/.config/devspace/agents/AGENTS.md" ] && P_AGENTS_MD=1
-    P_SKELETON=0; [ -d "$COMMON/data/models" ] && [ -d "$LOCAL/build" ] && P_SKELETON=1
+    P_SKELETON=0; [ -d "$COMMON/data/models" ] && [ -d "$LOCAL/20_Build" ] && P_SKELETON=1
     P_IDE_OK=0; { [ -f "$HOME/.config/Code/User/settings.json" ] && [ -f "$COMMON/config/ide/vscode/base.txt" ] \
         && command -v code >/dev/null 2>&1; } && P_IDE_OK=1
 

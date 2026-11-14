@@ -16,5 +16,5 @@ else
 fi
 
 ensure_dir "$DEV/pub-cache" 2>/dev/null || true
-ensure_dir "$LOCAL/cache/gradle" 2>/dev/null || true
-bde_ok "PUB_CACHE → $DEV/pub-cache ｜ gradle → $LOCAL/cache/gradle"
+ensure_dir "$LOCAL/10_Cache/gradle" 2>/dev/null || true
+bde_ok "PUB_CACHE → $DEV/pub-cache ｜ gradle → $LOCAL/10_Cache/gradle"

@@ -284,7 +284,7 @@ _inv_migrate_targets() {  # <name> <kind> → echo 推荐目标（契约落点�
         app)          echo "$DEV/apps/agent/$1" ;;
         entity)       case "$1" in .cargo) echo "$DEV/cargo" ;; .rustup) echo "$DEV/rustup" ;; *) echo "$DEV/$1" ;; esac ;;
         entity-legacy) echo "$DEV/$1" ;;
-        cache)        case "$1" in .gradle) echo "$LOCAL/cache/gradle" ;; .m2) echo "$LOCAL/cache/m2" ;; *) echo "$DEV/xdg/cache/$1" ;; esac ;;
+        cache)        case "$1" in .gradle) echo "$LOCAL/10_Cache/gradle" ;; .m2) echo "$LOCAL/10_Cache/m2" ;; *) echo "$DEV/xdg/cache/$1" ;; esac ;;
         xdg)          echo "$LOCAL/$1" ;;
         *)            echo "$DEV/apps/agent/$1" ;;
     esac

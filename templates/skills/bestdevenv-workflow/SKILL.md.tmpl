@@ -25,13 +25,13 @@ code-close <repo>           # 释放：拆除本仓库全部 bind（实体留 �
 |---|---|
 | IDE 工具 | ① DevEnv/ide |
 | IDE 配置 | ③ Common/config/ide（应用层再生） |
-| IDE 运行数据（索引/会话状态） | ② Local/ide-data/<ide>（正式约定，骨架已建） |
+| IDE 运行数据（索引/会话状态） | ② Local/40_IdeRun/<ide>（正式约定，骨架已建） |
 | 代码 | ③ Common/code/<repo> |
-| 代码输出（构建中间产物） | ② Local/build/<repo>（code-out bind） |
-| 代码日志（构建/运行日志） | ② Local/logs/<repo>/（正式约定，骨架已建） |
+| 代码输出（构建中间产物） | ② Local/20_Build/<repo>（code-out bind） |
+| 代码日志（构建/运行日志） | ② Local/30_Logs/<repo>/（正式约定，骨架已建） |
 | 打包工具（构建工具链） | ① DevEnv（mise/uv/GOPATH/CARGO_HOME…） |
 | 打包工具配置 | ③ Common/config（settings.xml/.npmrc/…） |
-| 缓存包（依赖缓存） | ③ Common/cache/linux/*（锁敏感 → ② Local/cache） |
+| 缓存包（依赖缓存） | ③ Common/cache/linux/*（锁敏感 → ② Local/10_Cache） |
 | 打包结果（最终交付物） | ③ Common/exchange/<repo>/ |
 
 清理只落 ②Local 与缓存/结果目录；**代码与配置永不清理**。

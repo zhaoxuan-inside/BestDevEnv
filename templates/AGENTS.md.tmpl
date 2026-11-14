@@ -24,7 +24,7 @@
 
 - **用户空间优先**：可再生内容一律落 ①②③；系统目录只留 OS 必需——重装系统后凭 ①②③ + config 仓库完整重建
 - **锚点是逻辑目录**：Common/Local 可以是本机盘、宿主机盘或云盘（NFS/SMB/Syncthing）；路径恒定，后端差异收敛在挂载适配器
-- **服务三分离**：安装体 → ① DevEnv/services（可再生）；配置 → ③ Common/config/services（版本化）；数据 → ② Local/data/services（共享数据 → ③ Common/data）；恢复 = 重装 + 应用配置 + 回灌数据
+- **服务三分离**：安装体 → ① DevEnv/services（可再生）；配置 → ③ Common/config/services（版本化）；数据 → ② Local/00_Data/services（共享数据 → ③ Common/data）；恢复 = 重装 + 应用配置 + 回灌数据
 - **构建十分离**：IDE 工具① / IDE 配置③ / IDE 运行数据② / 代码③ / 代码输出② / 代码日志② / 打包工具① / 打包配置③ / 缓存包③ / 打包结果③ exchange——清理只落 ② 与缓存/结果目录，代码与配置永不清理
 
 ## 物理边界（probe 能力探测自动生成——换后端自动重测，勿手改）

@@ -14,6 +14,6 @@ else
     command -v java >/dev/null 2>&1 && bde_ok "java 安装：$(java -version 2>&1 | head -1)"
 fi
 
-ensure_dir "$LOCAL/cache/gradle" 2>/dev/null || true
-ensure_dir "$LOCAL/cache/m2" 2>/dev/null || true
+ensure_dir "$LOCAL/10_Cache/gradle" 2>/dev/null || true
+ensure_dir "$LOCAL/10_Cache/m2" 2>/dev/null || true
 bde_ok "gradle/maven 缓存 → $LOCAL/cache（按机隔离，防锁冲突）"
