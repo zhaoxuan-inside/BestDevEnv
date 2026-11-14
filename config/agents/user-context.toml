@@ -9,7 +9,7 @@ note = ""
 # 示例: arkcli = "未装·按需（2026-11-14 明确：用户不提不装）"
 
 [decisions]             # 已确认的决定（写回制入账）
-naming = "目录命名批准树已定（NN_ 前缀/首字母大写/4-6 字符/禁中文/同级等长优先）；② Local 已落地"
+naming = "目录命名批准树已定（NN_ 前缀/首字母大写/6-10 字符/禁中文/同级等长优先）；② Local 已落地"
 anchors = "③/Share/Common ②/Share/Local ①~/DevEnv（storage.toml 机器节，用户指定制）"
 non_default = "非通用安装一律点名才装（arkcli 教训 2026-11-14）；库/依赖不入治理警示"
 
