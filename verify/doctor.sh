@@ -70,6 +70,7 @@ if is_linux:
         ("时区与站点画像一致",                  f["tz_ok"] == 1),
         ("zram 压缩内存交换已启用",             f["zram_ok"] == 1),
         ("docker 数据根 bind 生效（① services/docker）", f["docker_present"] == 0 or f["docker_root_bind"] == 1),
+        ("家目录契约路径无未登记实体（home-map 登记制）", f["home_stray"] == 0),
     ]
 
 # 叠层检查仅挂载型后端有意义（local 目录无挂载点概念）

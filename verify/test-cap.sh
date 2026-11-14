@@ -294,6 +294,12 @@ _h2="$(bash -c "source $BDE_ROOT/lib/probe.sh 2>/dev/null; bde_cfg_sources_hash"
 grep -q "存量数据迁移" "$BDE_ROOT/modules/cfg/cfg.sh" \
     && ok "docker 存量迁移护栏：cfg 钩子含停服→rsync→挂载→起服流程" || bad "docker 存量迁移逻辑缺失（bind 遮蔽风险）"
 
+# 6) 环境索引护栏（schema/能力接线/probe 合规事实）
+grep -q "bde.inventory/1" "$BDE_ROOT/modules/doc/inventory.sh" \
+    && ok "inventory 索引 schema 在位（bde.inventory/1）" || bad "inventory schema 缺失"
+grep -q "P_HOME_STRAY" "$BDE_ROOT/lib/probe.sh" \
+    && ok "probe 合规事实 home_stray 在位" || bad "probe 缺 home_stray 事实"
+
 # cfg hosts 机制漂移判定（同源实现）
 printf '# other content\n# >>> generated-by-BestDevEnv >>>\n%s\n# <<< generated-by-BestDevEnv <<<\n' "$_hf" > "$SBX/hosts-fake"
 cat > "$SBX/t3.sh" <<'EOS'

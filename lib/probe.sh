@@ -218,6 +218,15 @@ bde_probe_collect() {
        || systemctl is-active --quiet chrony 2>/dev/null; then
         P_TIMESYNC_OK=1
     fi
+    # 家目录契约路径合规（登记制：real+未登记=流浪实体；数据源 home-map.tsv——登记是合规的唯一豁免）
+    P_HOME_STRAY=0
+    _hm="$COMMON/config/data/home-map.tsv"; [ -f "$_hm" ] || _hm="$BDE_ROOT/config/data/home-map.tsv"
+    for _sp in .cache .cargo .rustup .claude .codex .zcode .opencode .gradle .m2 .conda Desktop Documents Downloads Music Pictures Public Templates Videos; do
+        _pp="$HOME/$_sp"
+        { [ -d "$_pp" ] || [ -f "$_pp" ]; } && [ ! -L "$_pp" ] || continue
+        grep -qs "^${_sp}|" "$_hm" || P_HOME_STRAY=$((P_HOME_STRAY+1))
+    done
+
     # docker 数据根 bind 实态（① services/docker → /var/lib/docker；已装 docker 的机器才判，否则视图缺席）
     P_DOCKER_PRESENT=0; command -v docker >/dev/null 2>&1 && P_DOCKER_PRESENT=1
     P_DOCKER_ROOT_BIND=0; bde_is_mounted /var/lib/docker && P_DOCKER_ROOT_BIND=1
@@ -364,6 +373,7 @@ doc = {
         "tz_ok": i("P_TZ_OK"),
         "zram_ok": i("P_ZRAM_OK"),
         "docker_present": i("P_DOCKER_PRESENT"),
+        "home_stray": i("P_HOME_STRAY"),
         "docker_root_bind": i("P_DOCKER_ROOT_BIND"),
     },
     "storage": {
