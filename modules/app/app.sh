@@ -161,6 +161,8 @@ for f in glob.glob(os.path.join(os.environ["APPS_DIR"], "*.toml")):
 
 # 渠道分级：应用渠道计入"未建档"警示；库/系统包渠道单列"按需"——清单枚举 ≠ 用户需求
 LIB_SRC = ("pip-user", "apt-manual")
+def _is_lib(src):
+    return any(src.startswith(s) or src == s for s in ("pip-user", "apt-manual", "inventory/pip-user", "inventory/apt-manual"))
 seen, missing, lib_n = {}, {}, 0
 with open(os.environ["OUT"], "w") as out, open(os.environ["OUT"] + ".lib", "w") as lout:
     for line in open(os.environ["MANAGED"]):
@@ -168,7 +170,7 @@ with open(os.environ["OUT"], "w") as out, open(os.environ["OUT"] + ".lib", "w") 
         if len(parts) < 2 or not parts[0]:
             continue
         name, src = parts[0], parts[1]
-        is_lib = src.startswith(LIB_SRC) or src in LIB_SRC
+        is_lib = _is_lib(src)
         hit = next((n for n in candidates(name) if n in man_names), None)
         if hit:
             seen.setdefault(hit, set()).add(src)
