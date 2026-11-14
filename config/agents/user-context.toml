@@ -1,0 +1,19 @@
+# user-context.toml —— 用户语境正本（跨 Agent/会话/机器单一事实源；宪法：配置永远改仓库）
+# 渲染：devenv gen → AGENTS.md「用户语境」章节 → 六 Agent symlink 共享
+# 写回制：确认卡上用户确认的语境/决定/偏好，默认当场写回本文件（cfg snapshot 同步 + push 即跨机）
+[identity]
+languages = ""          # 待填：实际开发的语言/框架（确认卡告知后写入）
+note = ""
+
+[tools]                 # 非通用工具：只记用户点名的（点名格式：名 = "状态｜说明"）
+# 示例: arkcli = "未装·按需（2026-11-14 明确：用户不提不装）"
+
+[decisions]             # 已确认的决定（写回制入账）
+naming = "目录命名批准树已定（NN_ 前缀/首字母大写/4-6 字符/禁中文/同级等长优先）；② Local 已落地"
+anchors = "③/Share/Common ②/Share/Local ①~/DevEnv（storage.toml 机器节，用户指定制）"
+non_default = "非通用安装一律点名才装（arkcli 教训 2026-11-14）；库/依赖不入治理警示"
+
+[preferences]
+style = "展示简洁优雅，拒绝日志式倾倒/长表格轰炸"
+consent = "迁移/改名/清理逐项授权；计划可干预（orch edit/drop）；执行中可叫停"
+optimization = "优化即配置——落受管正本，不另立优化文档"

@@ -119,6 +119,39 @@ for _v in "$_V_INOTIFY" "$_V_SWAP" "$_V_JMAX" "$_V_JKEEP" "$_V_JRET" "$_V_NOFILE
     [ -n "$_v" ] || { _missing=$((_missing+1)); bde_pending "SKILL 数值来源缺失（cfgval 取空——③ 正本未就绪？gen 后需复查）"; break; }
 done
 
+# ── 用户语境正本渲染（③ config/agents/user-context.toml → AGENTS.md「用户语境」章节）──
+# 写回制：确认卡确认的语境/决定/偏好由 Skill 当场写回正本；gen 只渲染不采集
+_USERCTX_SRC="$COMMON/config/agents/user-context.toml"
+[ -f "$_USERCTX_SRC" ] || _USERCTX_SRC="$BDE_ROOT/config/agents/user-context.toml"
+_USERCTX="(（正本缺失：config/agents/user-context.toml）)"
+[ -f "$_USERCTX_SRC" ] && _USERCTX="$(USERCTX_FILE="$_USERCTX_SRC" python3 <<'PY'
+import os, tomllib
+
+d = tomllib.load(open(os.environ["USERCTX_FILE"], "rb"))
+L = []
+idn = d.get("identity", {})
+lang = idn.get("languages", "").strip()
+L.append(f"- **开发语言**：{lang if lang else '（待填——确认卡告知后写入正本）'}")
+tools = d.get("tools", {})
+if tools:
+    ts = "；".join(f"{k}={v}" for k, v in tools.items())
+    L.append(f"- **非通用工具（点名制）**：{ts}")
+else:
+    L.append("- **非通用工具**：无点名项（点名才装/才建档）")
+dec = [f"{k}={v}" for k, v in d.get("decisions", {}).items() if v]
+if dec:
+    L.append("- **已确认决定**：" + " ｜ ".join(dec))
+pref = [f"{k}={v}" for k, v in d.get("preferences", {}).items() if v]
+if pref:
+    L.append("- **偏好**：" + " ｜ ".join(pref))
+extra = d.get("extra", {})
+for k, v in extra.items():
+    if v:
+        L.append(f"- **{k}**：{v}")
+print("\n".join(L))
+PY
+)"
+
 # ── 统一占位符渲染（AGENTS.md 与 SKILL.md 同一套；锚点/物理边界/CFGVAL 数值）──
 bde_tpl_render() {  # <模板内容> → stdout
     local _c="$1"
@@ -141,6 +174,7 @@ bde_tpl_render() {  # <模板内容> → stdout
     _c="${_c//@CFG_NOFILE@/$_V_NOFILE}"
     _c="${_c//@CFG_ZRAM_PCT@/$_V_ZRAM_PCT}"
     _c="${_c//@CFG_ZRAM_ALGO@/$_V_ZRAM_ALGO}"
+    _c="${_c//@USERCTX@/$_USERCTX}"
     printf '%s' "$_c"
 }
 

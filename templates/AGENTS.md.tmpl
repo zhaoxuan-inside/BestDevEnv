@@ -11,6 +11,10 @@
 > 代码单份 @COMMON@/code，包仓库共享 @COMMON@/cache；实体住 @DEV@，bind mount 接回去；
 > 用户目录住 @LOCAL@；配置永远改仓库（`$COMMON/config`）；备份永远靠 push。
 
+## 用户语境（正本 `@COMMON@/config/agents/user-context.toml`——确认卡确认即写回；勿手改渲染产物）
+
+@USERCTX@
+
 ## 放置规则（写文件前先判断）
 
 1. 代码/文档/大文件要跨机 → `@COMMON@/`（code=仓库平铺、docs=文档、exchange=临时交换）
