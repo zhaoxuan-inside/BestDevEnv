@@ -1,0 +1,21 @@
+# 应用档案：uv（S2 重点层批量建档 2026-11-14；四问预填自现有契约，缺口留空待补）
+[meta]
+name = "uv"
+kind = "toolchain"
+summary = "Python 包管理（缓存 ③）"
+
+[install]
+scope = "user"
+via = "installer"
+verify = "uv --version"
+
+[config]
+via = "待收编"
+
+[data]
+scope = "shared"
+at = "shared:Cache/linux/uv"
+dump = ""
+
+[logs]
+at = "host:Logs/uv"

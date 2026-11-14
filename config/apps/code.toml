@@ -1,0 +1,23 @@
+# 应用档案：code（S2 重点层批量建档 2026-11-14；四问预填自现有契约，缺口留空待补）
+[meta]
+name = "code"
+kind = "ide"
+summary = "VS Code（扩展档案 ③ config/ide；运行数据 ②）"
+
+[install]
+scope = "system"
+via = "deb/snap"
+verify = "code --version"
+
+[config]
+manifest = "ide/vscode"
+applied = "（ide.sh 再生）"
+via = "cfg/ide 档案制"
+
+[data]
+scope = "host"
+at = "host:IdeRun/code"
+dump = ""
+
+[logs]
+at = "host:Logs/code"

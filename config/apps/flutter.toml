@@ -1,0 +1,22 @@
+# 应用档案：flutter（S2 重点层批量建档 2026-11-14；四问预填自现有契约，缺口留空待补）
+[meta]
+name = "flutter"
+kind = "toolchain"
+summary = "Flutter SDK（pub-cache ①）"
+
+[install]
+scope = "user"
+at = "user:flutter"
+via = "tarball"
+verify = "flutter --version"
+
+[config]
+via = "待收编"
+
+[data]
+scope = "user"
+at = "user:pub-cache"
+dump = ""
+
+[logs]
+at = "host:Logs/flutter"

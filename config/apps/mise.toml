@@ -1,0 +1,22 @@
+# 应用档案：mise（S2 重点层批量建档 2026-11-14；四问预填自现有契约，缺口留空待补）
+[meta]
+name = "mise"
+kind = "toolchain"
+summary = "版本管理器（数据 ① XDG local，实测渠道）"
+
+[install]
+scope = "user"
+at = "user:xdg/local/mise"
+via = "installer"
+verify = "mise --version"
+
+[config]
+via = "待收编"
+
+[data]
+scope = "user"
+at = "user:xdg/local/mise"
+dump = ""
+
+[logs]
+at = "host:Logs/mise"

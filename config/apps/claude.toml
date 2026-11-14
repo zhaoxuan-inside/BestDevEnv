@@ -1,0 +1,22 @@
+# 应用档案：claude（S2 重点层批量建档 2026-11-14；四问预填自现有契约，缺口留空待补）
+[meta]
+name = "claude"
+kind = "agent"
+summary = "AI CLI（skills 枢纽 .agents/.claude 归 home-map）"
+
+[install]
+scope = "user"
+at = "~/.claude"          # 实体家目录散装——迁移候选（app --migrate 逐项授权）
+via = "installer"
+verify = "claude --version"
+
+[config]
+via = "agents ③ 正本（runtime wire）"
+
+[data]
+scope = "user"
+at = "user:Apps/Agent/.claude"
+dump = ""
+
+[logs]
+at = "host:Logs/claude"

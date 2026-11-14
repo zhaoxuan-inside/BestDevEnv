@@ -1,0 +1,22 @@
+# 应用档案：cargo（S2 重点层批量建档 2026-11-14；四问预填自现有契约，缺口留空待补）
+[meta]
+name = "cargo"
+kind = "toolchain"
+summary = "Rust 工具链（registry ①；target → ② Build）"
+
+[install]
+scope = "user"
+at = "user:cargo"
+via = "rustup（CARGO_HOME）"
+verify = "cargo --version"
+
+[config]
+via = "待收编"
+
+[data]
+scope = "user"
+at = "user:cargo"
+dump = ""
+
+[logs]
+at = "host:Logs/cargo"

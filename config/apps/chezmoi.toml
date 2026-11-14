@@ -1,0 +1,16 @@
+# 应用档案：chezmoi（S2 重点层批量建档 2026-11-14；四问预填自现有契约，缺口留空待补）
+[meta]
+name = "chezmoi"
+kind = "system"
+summary = "dotfiles 管理器"
+
+[install]
+scope = "system"
+via = "apt/binary"
+verify = "chezmoi --version"
+
+[config]
+via = "自管（事实源 ③ config）"
+
+[logs]
+at = "host:Logs/chezmoi"

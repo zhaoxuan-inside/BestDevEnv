@@ -1,0 +1,16 @@
+# 应用档案：git（S2 重点层批量建档 2026-11-14；四问预填自现有契约，缺口留空待补）
+[meta]
+name = "git"
+kind = "system"
+summary = "版本控制"
+
+[install]
+scope = "system"
+via = "apt git"
+verify = "git --version"
+
+[config]
+via = "chezmoi（dot_gitconfig）"
+
+[logs]
+at = "host:Logs/git"

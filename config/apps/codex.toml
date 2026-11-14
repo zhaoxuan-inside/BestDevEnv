@@ -1,0 +1,22 @@
+# 应用档案：codex（S2 重点层批量建档 2026-11-14；四问预填自现有契约，缺口留空待补）
+[meta]
+name = "codex"
+kind = "agent"
+summary = "AI CLI"
+
+[install]
+scope = "user"
+at = "~/.codex"          # 实体家目录散装——迁移候选
+via = "installer"
+verify = "codex --version"
+
+[config]
+via = "agents ③ 正本（runtime wire）"
+
+[data]
+scope = "user"
+at = "user:Apps/Agent/.codex"
+dump = ""
+
+[logs]
+at = "host:Logs/codex"

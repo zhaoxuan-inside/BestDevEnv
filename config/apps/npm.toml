@@ -1,0 +1,22 @@
+# 应用档案：npm（S2 重点层批量建档 2026-11-14；四问预填自现有契约，缺口留空待补）
+[meta]
+name = "npm"
+kind = "toolchain"
+summary = "npm 全局（prefix ① npm-global）"
+
+[install]
+scope = "user"
+at = "user:npm-global"
+via = "npm 自举"
+verify = "npm --version"
+
+[config]
+via = "待收编"
+
+[data]
+scope = "shared"
+at = "shared:Cache/linux/npm"
+dump = ""
+
+[logs]
+at = "host:Logs/npm"
