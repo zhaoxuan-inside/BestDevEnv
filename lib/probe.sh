@@ -289,7 +289,9 @@ except Exception:
 try:
     inv = json.load(open(os.environ["INV_JSON_T"]))
     managed += [t.get("name", "") for t in inv.get("tools", [])]
-    managed += [x.get("name", "") for x in inv.get("discovered", [])]
+    # 库/系统包渠道（pip-user/apt-manual）不计入——清单枚举 ≠ 用户需求（arkcli 教训 2026-11-14）
+    managed += [x.get("name", "") for x in inv.get("discovered", [])
+                if x.get("source", "") not in ("pip-user", "apt-manual")]
 except Exception:
     pass
 

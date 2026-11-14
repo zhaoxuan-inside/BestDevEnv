@@ -159,22 +159,29 @@ for f in glob.glob(os.path.join(os.environ["APPS_DIR"], "*.toml")):
     except Exception:
         pass
 
-seen, missing = {}, {}
-with open(os.environ["OUT"], "w") as out:
+# 渠道分级：应用渠道计入"未建档"警示；库/系统包渠道单列"按需"——清单枚举 ≠ 用户需求
+LIB_SRC = ("pip-user", "apt-manual")
+seen, missing, lib_n = {}, {}, 0
+with open(os.environ["OUT"], "w") as out, open(os.environ["OUT"] + ".lib", "w") as lout:
     for line in open(os.environ["MANAGED"]):
         parts = line.rstrip("\n").split("\t")
         if len(parts) < 2 or not parts[0]:
             continue
         name, src = parts[0], parts[1]
+        is_lib = src.startswith(LIB_SRC) or src in LIB_SRC
         hit = next((n for n in candidates(name) if n in man_names), None)
         if hit:
             seen.setdefault(hit, set()).add(src)
-        else:
-            k = name.strip().lower()
-            if k not in missing:
-                missing[k] = []
-                out.write(f"{name}\t{src}\n")
-            missing[k].append(src)
+            continue
+        if is_lib:
+            lib_n += 1
+            continue  # 库类不进未建档清单（按需处置，不暗示需求）
+        k = name.strip().lower()
+        if k not in missing:
+            missing[k] = []
+            out.write(f"{name}\t{src}\n")
+        missing[k].append(src)
+    lout.write(str(lib_n))
 PY
 }
 
@@ -182,17 +189,18 @@ bde_app_audit() {
     TMPD="$(mktemp -d "${TMPDIR:-/tmp}/bde-app-audit.XXXXXX")"
     trap 'rm -rf "$TMPD"' EXIT
     _app_missing "$TMPD/missing.tsv" || return 2
-    local _n; _n="$(wc -l < "$TMPD/missing.tsv")"
+    local _n _lib
+    _n="$(wc -l < "$TMPD/missing.tsv")"; _lib="$(cat "$TMPD/missing.tsv.lib" 2>/dev/null || echo 0)"
     echo "== 应用档案覆盖审计（档案：$APPS_DIR）=="
     if [ "$_n" -gt 0 ]; then
-        echo "-- 已管未建档 $_n 个（收编：devenv app --migrate 逐项授权建档）--"
+        echo "-- 已管未建档 $_n 个·应用渠道（收编：devenv app --migrate 逐项授权建档）--"
         while IFS=$'\t' read -r name src; do
             printf '  %-16s 来源: %s\n' "$name" "$src"
         done < "$TMPD/missing.tsv"
     else
-        echo "-- 已管未建档 0 个（全量建档 ✓）--"
+        echo "-- 已管未建档 0 个（应用渠道全量建档 ✓）--"
     fi
-    echo "-- 孤儿档案核对：档案名无登记来源对应者由 --migrate/人工核对（apps-classify ∪ home-map ∪ inventory 为已管集合）--"
+    echo "-- 库/系统包层 $_lib 名（依赖为主·按需处置，不计警示——清单枚举≠用户需求）--"
 }
 
 # ── 处置流（逐项授权）：未建档软件 → 四问建档 + 配置收编 ──
