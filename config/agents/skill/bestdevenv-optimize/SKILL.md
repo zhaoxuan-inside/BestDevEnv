@@ -8,6 +8,8 @@ description: BestDevEnv 系统基线与参数优化——经能力总线（lib/c
 
 单一职责：OS 层基线与参数。目录/挂载归 `bestdevenv-dirs`，用户配置文件归 `bestdevenv-config`。
 
+**优化即配置（硬协议）**：一切优化动作的产物 = 受管配置正本（进 `③ config/` + cfg-map 登记 + 漂移巡检）——镜像源、缓存重定向、服务参数、日志轮转无一例外。**不另立优化文档/清单**；未落正本的优化 = 漂移（doctor 必报）。逐软件优化落点查应用档案 `devenv app <name>`（config.manifest 列）。
+
 ## 执行（幂等；L3 编排平台无关——平台差异全部在 adapters/<family>.sh）
 
 ```bash

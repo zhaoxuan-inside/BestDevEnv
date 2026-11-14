@@ -20,7 +20,7 @@ description: BestDevEnv 开发环境总调度——用户提出环境类需求�
 
 > 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `/home/hardstone/DevEnv`；
 > 实体住 `/home/hardstone/DevEnv/apps/<分类>/`（vibecoding 工具 → `apps/agent/`；家目录=入口层：链接 + 原生重定向，收敛路线见宪法 §20.5），bind mount 接回去；配置永远改仓库（`$COMMON/config`）；备份永远靠 push。
-> 物理红线（能力探测 2026-11-14 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；命名一律小写 kebab-case
+> 物理红线（能力探测 2026-11-14 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；文件/代码命名小写 kebab-case；①②③ 自建目录走 naming.toml 规范（NN_ 前缀/首字母大写/4-6 字符/禁中文/同级等长优先——devenv namecheck 校验）
 
 ### 分离法则（宪法 v10.3，调度时必须遵守）
 
@@ -53,6 +53,7 @@ devenv app --all                              # 应用视图（安装/配置/数
 | 新增/接线 runtime、统一记忆/MCP/Skill/会话、切换工具不适 | `bestdevenv-runtime` |
 | code-open/close/nm/out、依赖产物拆分、文件放哪 | `bestdevenv-workflow` |
 | 自检/报告/清缓存/看门/磁盘紧张 | `bestdevenv-health` |
+| 目录命名违规/要内容索引/软件未建档收编/目录未登记 | 直查类命令：`devenv namecheck [--migrate]`（存量改名逐项授权）/ `devenv index`（①②③ 内容索引）/ `devenv app --audit|--migrate`（建档收编逐项授权）|
 | 症状含糊（"环境好像坏了"） | 先 `bestdevenv-health` 诊断，按失败项再路由 |
 
 ## 编排规则
@@ -78,8 +79,9 @@ devenv orch status                              # 查进度与续做指引
 协议（严格执行）：
 1. **开工**：`orch new` → `orch add` 逐条登记；≥2 步的任务必须建日志，单步小任务可免
 2. **每步**：调度前 `orch next` 写指针 → 调度子 Skill → `orch done/fail <n> "<结果>｜doctor 复查结论"`
-3. **续做**（用户说"继续/接着上次的来"）：`orch status` 取最新日志 → **先重跑探环境**（前置条件可能已变）→ 从第一个未完成步骤继续，已完成的靠幂等跳过、绝不重做
-4. **收尾**：全部 done → doctor 终验 → 向用户报告（附 journal 路径）
+3. **改判/回退**：步骤做错或方向变更 → `orch revert <n> "<原因>"` 改判回待做（自动打印回退素材指引：① backup 时间戳备份 / config 正本 git 历史 / seed restore）；失败步骤修复后 `orch done <n>` 改判完成
+4. **续做**（用户说"继续/接着上次的来"）：`orch status` 取最新日志 → **先重跑探环境**（前置条件可能已变）→ 从第一个未完成步骤继续，已完成的靠幂等跳过、绝不重做
+5. **收尾**：全部 done → doctor 终验 → 向用户报告（附 journal 路径）
 
 ## 验收与收尾
 
