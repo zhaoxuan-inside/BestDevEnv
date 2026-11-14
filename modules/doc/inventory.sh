@@ -214,8 +214,84 @@ for s in d["services"]:
     print(f"  {s['name']:<14} {s['state']:<10} {s['detail']}")
 w = d["summary"]["paths_warn"]
 print(f"\n索引：软件 {d['summary']['tools_n']} ｜ 契约路径 ⚠{w}/ℹ{d['summary']['paths_registered']} ｜ 落盘 $DEV/docs/state/inventory.json")
+if w:
+    print(f"{Y}  ⚠ {w} 项待处置 → devenv inventory --migrate（逐项询问：转移并接回/登记保留/跳过）{Z}")
 sys.exit(0)
 PY
+}
+
+# ── 处置流（--migrate）：违规项逐项询问开发者——转移并接回/登记保留/跳过 ──
+# 转移 = 复制校验后移除原实体 + symlink 接回（家目录回归"入口层"，宪法 §20.5）；
+# 推荐目标按 kind 契约：app→① apps/agent、entity→①（env.sh 契约位）、cache→②、xdg→②、legacy→①
+inv_transfer() {  # <src> <dst> → 0=已转移并接回（可单测：不依赖 $HOME）
+    local src=$1 dst=$2
+    [ -e "$src" ] || { bde_skip "无实体可转移：$src"; return 0; }
+    if [ -e "$dst" ]; then
+        bde_info "目标已存在，合并内容（dst 既有文件保留）"
+    fi
+    ensure_dir "$dst" || { bde_fail "目标目录不可建：$dst"; return 1; }
+    local _s1 _d1
+    _s1="$(du -sk "$src" 2>/dev/null | cut -f1)"
+    if ! rsync -aHAX "$src/" "$dst/" >/dev/null 2>&1; then
+        bde_fail "rsync 迁移失败：$src → $dst"; return 1
+    fi
+    _d1="$(du -sk "$dst" 2>/dev/null | cut -f1)"
+    if [ "${_s1:-0}" -gt 0 ] && [ "${_d1:-0}" -lt "$_s1" ]; then
+        bde_fail "体量校验不足（src=${_s1}K dst=${_d1}K）——保留原实体，人工核查"; return 1
+    fi
+    rm -rf "$src" && ln -sfn "$dst" "$src" \
+        && bde_ok "转移接回 ${src/#$HOME/\~} → ${dst/#$HOME/\~}" \
+        || { bde_fail "原实体移除/接回失败：$src"; return 1; }
+}
+
+_inv_migrate_targets() {  # <name> <kind> → echo 推荐目标（契约落点）
+    case "$2" in
+        app)          echo "$DEV/apps/agent/$1" ;;
+        entity)       case "$1" in .cargo) echo "$DEV/cargo" ;; .rustup) echo "$DEV/rustup" ;; *) echo "$DEV/$1" ;; esac ;;
+        entity-legacy) echo "$DEV/$1" ;;
+        cache)        case "$1" in .gradle) echo "$LOCAL/cache/gradle" ;; .m2) echo "$LOCAL/cache/m2" ;; *) echo "$DEV/xdg/cache/$1" ;; esac ;;
+        xdg)          echo "$LOCAL/$1" ;;
+        *)            echo "$DEV/apps/agent/$1" ;;
+    esac
+}
+
+_inv_migrate() {  # 处置流：消费索引中的 warn 项（+登记保留可选项），逐项询问
+    [ -f "$INV_PATH" ] || { _inv_save >/dev/null; }
+    local _warns
+    _warns="$(BDE_INV_JSON="$INV_PATH" python3 -c '
+import json, os
+d = json.load(open(os.environ["BDE_INV_JSON"]))
+for p in d["paths"]:
+    if p["verdict"] == "warn":
+        print(f"{p[\"path\"]}|{p[\"kind\"]}")')"
+    if [ -z "$_warns" ]; then
+        bde_ok "无未登记实体（合规；登记保留项见 inventory 视图 ℹ）"
+        return 0
+    fi
+    bde_info "处置流：以下实体不符合家目录契约（real+未登记）——逐项询问（转移并接回[t·推荐] / 登记保留[r] / 跳过[s]）"
+    local _hm="$COMMON/config/data/home-map.tsv"
+    [ -f "$_hm" ] || _hm="$BDE_ROOT/config/data/home-map.tsv"
+    local _line _name _kind _tgt _a
+    while IFS='|' read -r _name _kind; do
+        [ -n "$_name" ] || continue
+        _tgt="$(_inv_migrate_targets "$_name" "$_kind")"
+        bde_ask _a "【$_name】(kind=$_kind) 转移 → ${_tgt/#$HOME/\~} 并 symlink 接回？[t/r/s]" "t"
+        case "$_a" in
+            t)
+                if inv_transfer "$HOME/$_name" "$_tgt"; then
+                    ensure_line "$_hm" "${_name}|inventory|处置|keep|已转移 → ${_tgt/#$HOME/\~/}（symlink 接回；$(date +%F)）" \
+                        && bde_ok "$_name 已转移（登记行已补）"
+                fi ;;
+            r)
+                ensure_line "$_hm" "${_name}|inventory|处置|keep|登记保留（$(date +%F) 处置流确认）" \
+                    && bde_ok "$_name 登记保留（下次扫描 verdict=info）" ;;
+            *)
+                bde_pending "$_name 跳过（保持现状；下次扫描仍为 ⚠）" ;;
+        esac
+    done <<< "$_warns"
+    # 刷新索引反映处置结果
+    _inv_save >/dev/null
+    bde_ok "处置完成——索引已刷新：$INV_PATH"
 }
 
 # ── 入口 ─────────────────────────────────────────────────────────────────
@@ -224,6 +300,9 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
         --json)
             [ -f "$INV_PATH" ] || bde_probe_save >/dev/null 2>&1
             if [ -f "$INV_PATH" ]; then cat "$INV_PATH"; else _inv_save >/dev/null; cat "$INV_PATH"; fi ;;
+        --migrate)
+            _inv_migrate
+            _inv_view "$INV_PATH" ;;
         --refresh|"")
             _f="$(_inv_save)"
             _inv_view "$_f" ;;

@@ -300,6 +300,26 @@ grep -q "bde.inventory/1" "$BDE_ROOT/modules/doc/inventory.sh" \
 grep -q "P_HOME_STRAY" "$BDE_ROOT/lib/probe.sh" \
     && ok "probe 合规事实 home_stray 在位" || bad "probe 缺 home_stray 事实"
 
+# 7) 处置流单测（inv_transfer：转移=复制校验+移除+symlink 接回；合并语义）
+env -i PATH="$PATH" HOME="$HOME" BDE_ROOT="$BDE_ROOT" SBX="$SBX" bash -c '
+    source "$BDE_ROOT/modules/doc/inventory.sh" --x 2>/dev/null || true
+    mkdir -p "$SBX/src/sub"; echo a > "$SBX/src/a.txt"; echo b > "$SBX/src/sub/b.txt"
+    ln -sf "$SBX/src/a.txt" "$SBX/src/link.txt" 2>/dev/null
+    inv_transfer "$SBX/src" "$SBX/dst" >/dev/null 2>&1; echo "RC=$?"
+    [ -L "$SBX/src" ] && echo "SYMLINK=1"
+    [ -f "$SBX/dst/a.txt" ] && [ -f "$SBX/dst/sub/b.txt" ] && echo "FILES=1"
+    [ "$(readlink "$SBX/src" 2>/dev/null)" = "$SBX/dst" ] && echo "MOVED=1"
+    mkdir -p "$SBX/src2"; echo c > "$SBX/src2/x.txt"; mkdir -p "$SBX/dst2"; echo keep > "$SBX/dst2/keep.txt"
+    inv_transfer "$SBX/src2" "$SBX/dst2" >/dev/null 2>&1
+    { [ -f "$SBX/dst2/keep.txt" ] && [ -f "$SBX/dst2/x.txt" ]; } && echo "MERGE=1"
+' > "$SBX/out" 2>/dev/null
+_o="$(cat "$SBX/out")"
+assert_contains "inv_transfer 转移接回（symlink+文件齐）" "$_o" "SYMLINK=1"
+assert_contains "inv_transfer 文件完整性（含子目录）" "$_o" "FILES=1"
+assert_contains "inv_transfer 原实体已移除" "$_o" "MOVED=1"
+assert_contains "inv_transfer 合并语义（dst 既有保留）" "$_o" "MERGE=1"
+grep -q -- "--migrate" "$BDE_ROOT/modules/doc/inventory.sh"     && ok "处置流入口在位（inventory --migrate）" || bad "处置流入口缺失"
+
 # cfg hosts 机制漂移判定（同源实现）
 printf '# other content\n# >>> generated-by-BestDevEnv >>>\n%s\n# <<< generated-by-BestDevEnv <<<\n' "$_hf" > "$SBX/hosts-fake"
 cat > "$SBX/t3.sh" <<'EOS'
