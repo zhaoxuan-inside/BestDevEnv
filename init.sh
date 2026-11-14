@@ -4,7 +4,7 @@
 # 用法：./init.sh [--yes] [--resume|--rerun] [--status] [--reset] [--dry-run]
 #             [--machine X] [--profile ml-trainer,…] [--langs node,python] [--tools a,b]
 #             [--no-xdg] [--no-log]
-# 交互：角色/语言栈与 vibecoding 工具未显式传旗标时交互询问（--yes/非 tty 自动取默认——bootstrap 免疫）
+# 交互：角色/语言栈/工具询问——vibecoding 工具回车=不装（装什么开发者显式决定）；非交互 bootstrap 取兜底集（构建计划明示）
 set -uo pipefail
 
 BDE_ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -20,7 +20,8 @@ BDE_MACHINE="${BDE_MACHINE:-$(hostname)}"
 BDE_MACHINE="$(printf '%s' "$BDE_MACHINE" | tr '[:upper:]' '[:lower:]')"
 BDE_PROFILE=""
 BDE_LANGS="node,python"
-BDE_TOOLS="claude-code,codex,zcode,arkcli"
+BDE_TOOLS_DFLT="claude-code,codex,zcode,arkcli"   # 非交互 bootstrap 兜底集（--yes/无 tty；构建计划明示）
+BDE_TOOLS="$BDE_TOOLS_DFLT"
 BDE_PROFILE_SET=0; BDE_LANGS_SET=0; BDE_TOOLS_SET=0   # 旗标显式传入标记（显式 = 跳过询问，仍走校验）
 BDE_DRY_RUN=0
 BDE_XDG="y"
@@ -68,7 +69,13 @@ bde_csv_validate() {  # <csv> <默认csv> <类别名> <合法项...> → echo �
         case ",$out," in *",$t,"*) continue ;; esac   # 去重（重复项靠幂等无害，但计划显示不干净）
         out="${out:+$out,}$t"
     done
-    [ -n "$out" ] || { bde_pending "$label 全部非法，回退默认: $dft" >&2; out="$dft"; }
+    if [ -z "$out" ]; then
+        if [ -n "$dft" ]; then
+            bde_pending "$label 全部非法/未选，回退默认: $dft" >&2; out="$dft"
+        else
+            bde_info "$label 未选择（不安装——后续可经 bestdevenv-dev 单独装配）" >&2; out=""
+        fi
+    fi
     printf '%s\n' "$out"
 }
 
@@ -132,8 +139,8 @@ if [ "$BDE_DRY_RUN" != "1" ] && [ -t 0 ] && [ "$BDE_ASSUME_YES" != "1" ]; then
     fi
     if [ "$BDE_TOOLS_SET" != "1" ]; then
         _list="$(printf '%s/' $_tool_valid)"
-        bde_info "可选 vibecoding 工具: ${_list%/}（回车=默认 $BDE_TOOLS）"
-        bde_ask_multi BDE_TOOLS "要安装的 vibecoding 工具（逗号分隔多选）" "$BDE_TOOLS"
+        bde_info "可选 vibecoding 工具: ${_list%/}（回车=不装——装什么由开发者显式决定；非交互 bootstrap 取兜底集）"
+        bde_ask_multi BDE_TOOLS "要安装的 vibecoding 工具（逗号分隔多选）" ""
     fi
 elif [ "$BDE_DRY_RUN" != "1" ]; then
     bde_info "非交互模式：角色/语言栈/工具取旗标或默认（角色: ${BDE_PROFILE:-无} ｜ 语言栈: $BDE_LANGS ｜ 工具: $BDE_TOOLS）"
@@ -170,11 +177,12 @@ if [ "$BDE_DRY_RUN" != "1" ] && [ -t 0 ] && [ "$BDE_ASSUME_YES" != "1" ] && [ "$
     bde_ask_multi BDE_LANGS "要安装的语言栈（逗号分隔多选，可叠加）" "$BDE_LANGS"
 fi
 BDE_LANGS="$(bde_csv_validate "$BDE_LANGS" "node,python" "语言栈" $_lang_valid)"
-BDE_TOOLS="$(bde_csv_validate "$BDE_TOOLS" "claude-code,codex,zcode,arkcli" "vibecoding 工具" $_tool_valid)"
+BDE_TOOLS="$(bde_csv_validate "$BDE_TOOLS" "" "vibecoding 工具" $_tool_valid)"
 export BDE_LANGS BDE_TOOLS
 
 # ===== 构建计划（确认摘要；--dry-run 只预览不执行）=====
-bde_info "构建计划：OS=$BDE_OS_ID（M1: family=$BDE_CAP_FAMILY $([ "$BDE_OS_READY" = "1" ] && echo 'baseline.sh' || echo '跳过——OS 未支持')）｜ 角色: $(printf '%s' "${BDE_PROFILE:-无}" | tr ',' ' ') ｜ 语言栈: $(printf '%s' "$BDE_LANGS" | tr ',' ' ') ｜ 工具: $(printf '%s' "$BDE_TOOLS" | tr ',' ' ')"
+_tools_show="${BDE_TOOLS:-无}"
+bde_info "构建计划：OS=$BDE_OS_ID（M1: family=$BDE_CAP_FAMILY $([ "$BDE_OS_READY" = "1" ] && echo 'baseline.sh' || echo '跳过——OS 未支持')）｜ 角色: $(printf '%s' "${BDE_PROFILE:-无}" | tr ',' ' ') ｜ 语言栈: $(printf '%s' "$BDE_LANGS" | tr ',' ' ') ｜ 工具: $(printf '%s' "$_tools_show" | tr ',' ' ')$( [ -z "$BDE_TOOLS" ] && echo '（未选——可后续经 bestdevenv-dev 装配）' )"
 if [ "$BDE_DRY_RUN" = "1" ]; then
     bde_info "dry-run 结束（未执行任何阶段；实际构建去掉 --dry-run，或先 --status 查看续建进度）"
     exit 0

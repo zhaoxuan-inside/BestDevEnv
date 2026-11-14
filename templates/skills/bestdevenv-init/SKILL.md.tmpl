@@ -13,7 +13,7 @@ description: BestDevEnv 新机初始化——装完 OS 后从空白到 devenv do
 ```bash
 source "$HOME/.config/devspace/env.sh"
 BDE="$COMMON/code/BestDevEnv"
-cd "$BDE" && ./init.sh          # 交互询问：开发者角色（profiles.tsv，回车=跳过）→ vibecoding 工具 → 语言栈；会话内执行先与用户确认清单，经 --profile/--langs/--tools 显式传入
+cd "$BDE" && ./init.sh          # 交互询问：开发者角色（回车=跳过）→ vibecoding 工具（回车=不装——装什么开发者显式决定，可多选 claude-code/codex/zcode/arkcli/gemini-cli/opencode/copilot）→ 语言栈（回车=node,python）；非交互 bootstrap 取兜底集并在构建计划明示；会话内执行先与用户确认清单，经 --profile/--langs/--tools 显式传入
 ./init.sh --profile ml-trainer  # 按角色装配（java-web/python/go/cpp/ml-trainer/fullstack；展开为栈并集）
 ```
 

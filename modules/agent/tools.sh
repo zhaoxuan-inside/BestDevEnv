@@ -5,7 +5,9 @@ source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 source "$BDE_ROOT/lib/ensure.sh"
 
-TOOLS_CSV="${BDE_TOOLS:-claude-code,codex,zcode,arkcli}"
+TOOLS_CSV="${BDE_TOOLS:-}"
+# 无清单不动手（询问开发者的硬协议：清单必须显式传入——init 交互选择或 BDE_TOOLS/--tools；独立执行同规则）
+[ -n "$TOOLS_CSV" ] || { bde_skip "未选择 vibecoding 工具（BDE_TOOLS 空——后续可经 bestdevenv-dev 单独装配）"; return 0 2>/dev/null || exit 0; }
 bde_info "M4 vibecoding 工具（$TOOLS_CSV）"
 
 _have_npm() { command -v npm >/dev/null 2>&1; }
