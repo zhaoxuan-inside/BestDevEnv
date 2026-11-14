@@ -2,7 +2,7 @@
 [meta]
 name = "gemini"
 kind = "agent"
-summary = "AI CLI（注册表应装未装——人工渠道）"
+summary = "AI CLI（未装·按需——用户点名才装；公网可装 npm:@google/gemini-cli）"
 
 [install]
 scope = "user"
