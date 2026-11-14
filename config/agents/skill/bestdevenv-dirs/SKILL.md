@@ -25,7 +25,7 @@ bash "$COMMON/code/BestDevEnv/modules/dirs/linux.sh"
 \- 文件名上限 255B（probe 实测）
 - 依赖实体（node_modules/venv）与私钥绝不放共享盘——住 ①（跨机一致性；bind 接回）
 - 单文件名/深层路径超 255B 上限——gradle/flutter 类缓存留本机盘
-- 文件/代码命名小写 kebab-case；①②③ 自建目录走 naming.toml 规范（NN_ 前缀/首字母大写/4-6 字符/禁中文/同级等长优先——devenv namecheck 校验）
+- 文件/代码命名小写 kebab-case；①②③ 自建目录走 naming.toml 规范（NN_ 前缀/首字母大写/6-10 字符/禁中文/同级等长优先——devenv namecheck 校验）
 
 ## 状态 env 再生（改档案后）
 

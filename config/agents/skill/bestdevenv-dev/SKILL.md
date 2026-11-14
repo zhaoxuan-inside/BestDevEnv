@@ -32,7 +32,7 @@ init.sh 全量管道（自带交互询问与校验）、用户在本次会话已
 
 1. **建档**：`$COMMON/config/apps/<名称>.toml`（安装位置 at / 配置 / 数据 / 日志五要素，字段见 docker.toml）
 2. **配置收编**：`devenv cfg adopt` + `cfg apply`——一切优化（镜像源/缓存重定向/服务参数/日志轮转）以受管配置正本落地，**不另立优化文档**；未落正本的优化=漂移
-3. **登记**：新目录先登记 dir-map（`③ config/data/dir-map.tsv`，命名按 NN_ 大写 4-6 规范）；Runtime 类工具 runtimes.tsv + `devenv runtime wire`
+3. **登记**：新目录先登记 dir-map（`③ config/data/dir-map.tsv`，命名按 NN_ 大写 6-10 规范）；Runtime 类工具 runtimes.tsv + `devenv runtime wire`
 4. **复核**：`devenv app --audit` 覆盖缺口与 `devenv doctor` 巡检
 
 ## 语言栈（按需选装，幂等）
