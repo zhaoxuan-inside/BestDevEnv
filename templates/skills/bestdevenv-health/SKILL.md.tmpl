@@ -1,7 +1,7 @@
 ---
 name: bestdevenv-health
 version: 0.0.1
-description: BestDevEnv 环境健康——devenv doctor 环境自检、devenv report 环境报告、devenv tidy 清理可再生缓存（SAFE 清单）、devenv map 隐藏目录看门、磁盘水位与"环境好像不对劲"的诊断时使用。触发：自检、环境报告、清缓存、磁盘满、未登记目录。；系统环境索引（devenv inventory：已装软件路径/渠道合规 + 家目录登记制判定 + 受管服务实态）查询时使用。触发：环境里装了什么、装哪了、路径合不合规、已装软件索引。
+description: BestDevEnv 环境健康——devenv doctor 环境自检、devenv report 环境报告、devenv tidy 清理可再生缓存、devenv map 隐藏目录看门、devenv inventory 系统环境索引（已装软件路径/渠道合规 + 家目录登记制判定 + 受管服务实态）、违规处置流（inventory --migrate）时使用。触发：自检、环境报告、清缓存、磁盘满、未登记目录、装了什么、装哪了、路径合规、软件索引。
 ---
 
 # 环境健康（doctor / report / tidy / map）
