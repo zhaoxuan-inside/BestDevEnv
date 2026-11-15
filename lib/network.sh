@@ -14,7 +14,7 @@ bde_network_profile() {  # 档案定位（或空 = 无档案）
         echo "$BDE_NETWORK_PROFILE"; return
     fi
     # bootstrap 免疫：③ 正本可能尚未挂载——路径写死与本文件头注释一致
-    [ -f /Share/Common/config/Registry/network.toml ] && { echo /Share/Common/config/Registry/network.toml; return; }
+    [ -f /Share/Common/10_Config/Registry/network.toml ] && { echo /Share/Common/10_Config/Registry/network.toml; return; }
     echo ""
 }
 
@@ -47,7 +47,7 @@ def emit(k, v):
 
 NO_PROXY_DFT = "localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,.aliyuncs.com,.aliyun.com,.cn"
 print(f"# network.env — 网络画像（由 BestDevEnv/lib/network.sh 生成于 {os.environ['BDE_NETWORK_DATE']}；机器 {machine}）")
-print("# 正本 ③ config/Registry/network.toml ｜ 再生: devenv state-env ｜ 勿手改（手改会被再生覆盖）")
+print("# 正本 ③ 10_Config/Registry/network.toml ｜ 再生: devenv state-env ｜ 勿手改（手改会被再生覆盖）")
 
 emit("BDE_TIMEZONE",                get("timezone"))
 emit("BDE_LANG",                    get("lang"))

@@ -97,7 +97,7 @@ _rt_skill_adopt() {
     if ! cp -r "$src" "$dst"; then
         bde_fail "拷贝失败（原目录未动）: $src → $dst"; return 1
     fi
-    bde_ok "收编 $name → $dst（③ 版本化；$COMMON/config commit + push 后跨机器复用）"
+    bde_ok "收编 $name → $dst（③ 版本化；$COMMON/10_Config commit + push 后跨机器复用）"
     if rm -rf "$src" && ln -sfn "$dst" "$src"; then
         bde_ok "原位接回: $src → $dst（symlink 住本机盘，不违反共享盘物理边界）"
     else
@@ -286,7 +286,7 @@ except Exception: print(0)' "$zf" 2>/dev/null || echo 0)" -gt 0 ]; then
 
 # ── 会话调查（只读；工具私有，不迁移不清理）────────────────────────────────
 _rt_sessions() {
-    bde_info "会话库调查（只读；治理政策见 \$COMMON/config/Registry/home-map.tsv）"
+    bde_info "会话库调查（只读；治理政策见 \$COMMON/10_Config/Registry/home-map.tsv）"
     mapfile -t _rows < <(_reg_rows)
     local _r name sess p
     for _r in "${_rows[@]}"; do

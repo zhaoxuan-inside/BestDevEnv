@@ -7,11 +7,11 @@
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 
-DIR_MAP="${BDE_DIR_MAP:-$COMMON/config/Registry/dir-map.tsv}"
+DIR_MAP="${BDE_DIR_MAP:-$COMMON/10_Config/Registry/dir-map.tsv}"
 [ -f "$DIR_MAP" ] || DIR_MAP="$BDE_ROOT/config/Registry/dir-map.tsv"
-HOME_MAP="${BDE_HOME_MAP:-$COMMON/config/Registry/home-map.tsv}"
+HOME_MAP="${BDE_HOME_MAP:-$COMMON/10_Config/Registry/home-map.tsv}"
 [ -f "$HOME_MAP" ] || HOME_MAP="$BDE_ROOT/config/Registry/home-map.tsv"
-APPS_DIR="${BDE_APPS_DIR:-$COMMON/config/AppReg}"
+APPS_DIR="${BDE_APPS_DIR:-$COMMON/10_Config/AppReg}"
 INV_JSON="${BDE_INVENTORY_JSON:-$DEV/docs/state/inventory.json}"
 OUT_JSON="${BDE_DIRINDEX_JSON:-$DEV/docs/state/dirindex.json}"
 

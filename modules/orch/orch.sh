@@ -106,7 +106,7 @@ case "${1:-}" in
             && _ins_record "$_f" "$(printf -- '  ↳ [步骤%s] 改判待做（%s）: %s ｜ %s' "$2" "$(date '+%F %T')" "${3:-}" "$(_doctor)")"
         echo "步骤 ${2} 已改判回待做。该步已产生写入时的回退素材（按需取用）:"
         echo "  - 修改前文件备份: $DEV/docs/backup/（ensure_backup 时间戳版本，取该步改动前的最近一份）"
-        echo "  - 配置正本历史: git -C $COMMON/config log/diff；更早时点: git -C $BDE_ROOT checkout <commit> -- config && devenv cfg restore"
+        echo "  - 配置正本历史: git -C $COMMON/10_Config log/diff；更早时点: git -C $BDE_ROOT checkout <commit> -- config && devenv cfg restore"
         echo "  - 改后核对: devenv doctor ｜ devenv cfg diff（确认回到预期实态再重新调度本步）"
         ;;
     next)

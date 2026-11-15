@@ -15,14 +15,14 @@ description: BestDevEnv 开发环境总调度——用户提出环境类需求�
 @ANCHORS@
 
 > 公货 `@COMMON@`，私货 `@LOCAL@`，工具链和活状态 `@DEV@`；
-> 实体住 `@DEV@/apps/<分类>/`（vibecoding 工具 → `apps/agent/`；家目录=入口层：链接 + 原生重定向，收敛路线见宪法 §20.5），bind mount 接回去；配置永远改仓库（`$COMMON/config`）；备份永远靠 push。
+> 实体住 `@DEV@/apps/<分类>/`（vibecoding 工具 → `apps/agent/`；家目录=入口层：链接 + 原生重定向，收敛路线见宪法 §20.5），bind mount 接回去；配置永远改仓库（`$COMMON/10_Config`）；备份永远靠 push。
 > @PHYSICAL_BRIEF@
 
 ### 分离法则（宪法 v10.3，调度时必须遵守）
 
 1. **用户空间优先**：可再生内容一律落 ①②③，系统目录只留 OS 必需（重装后凭 ①②③ + config 仓库重建）
 2. **存储介质与结构解耦**：只说作用域（shared 跨主机/host 主机/user 用户），介质差异收敛在 L0 存储抽象层（`lib/storage.sh` + `config/Registry/storage.toml` 档案制，跨系统 macOS/Linux/Windows 同一套原则）
-3. **服务三分离**：安装体→①（可再生）｜配置→③ config/services（版本化）｜数据→② Local/data（共享→③）；恢复=重装+应用配置+回灌数据
+3. **服务三分离**：安装体→①（可再生）｜配置→③ 10_Config/services（版本化）｜数据→② Local/data（共享→③）；恢复=重装+应用配置+回灌数据
 4. **构建十分离**：IDE 工具①｜IDE 配置③｜IDE 运行数据②｜代码③｜代码输出②｜代码日志②｜打包工具①｜打包配置③｜缓存包③｜打包结果③exchange——清理只落 ② 与缓存/结果目录
 
 ## 第一步永远是探环境（只读，不改任何东西）
@@ -55,7 +55,7 @@ devenv app --all                              # 应用视图（安装/配置/数
 ## 编排规则
 
 1. **计划先行（硬协议，先于一切执行）**：动系统之前先向用户展示「执行前确认卡」（格式见下节）——**用户明确同意后才动手**；未展示计划就执行 = 违规。改系统类任务（改名/迁移/清理/安装）全部适用，只读查询（doctor/index/list）可免
-2. **确认语境**：确认卡「待确认」段必含两项语境问题——**开发语言**（实际在写什么语言/框架，决定装什么）与**特殊非通用安装**（公司内部工具、私有源、定制版本——用户不提就不装）；**桌面个性化默认集**（终端 konsole/输入法 fcitx5+雾凇/starship/字体）同属个人选择，随卡确认要不要；dev 调度的语言栈/工具清单确认并入本卡，确认结果经 `--langs`/`--tools` 显式传入。**写回制**：卡上用户确认的语境/决定/偏好，默认当场写回 `③ config/Agents/user-context.toml`（正本 → gen 渲染进 AGENTS.md → 全体 Agent 共享；cfg snapshot 同步）
+2. **确认语境**：确认卡「待确认」段必含两项语境问题——**开发语言**（实际在写什么语言/框架，决定装什么）与**特殊非通用安装**（公司内部工具、私有源、定制版本——用户不提就不装）；**桌面个性化默认集**（终端 konsole/输入法 fcitx5+雾凇/starship/字体）同属个人选择，随卡确认要不要；dev 调度的语言栈/工具清单确认并入本卡，确认结果经 `--langs`/`--tools` 显式传入。**写回制**：卡上用户确认的语境/决定/偏好，默认当场写回 `③ 10_Config/Agents/user-context.toml`（正本 → gen 渲染进 AGENTS.md → 全体 Agent 共享；cfg snapshot 同步）
 3. **依赖顺序**：dirs → optimize → config → dev（装语言前先有目录与基线）；health 可随时插队诊断
 4. **幂等**：所有子 Skill 底层脚本可重复执行；中断的 init 用 `--resume` 续建
 5. **多子域任务**：先建编排日志（见下节），逐个调度并逐步记账；不要并行改系统
@@ -122,7 +122,7 @@ devenv orch status                              # 查进度与续做指引
 ## 验收与收尾
 
 - 完成后必跑 `devenv doctor` 复查，向用户报告 ✓/✗ 清单
-- 动过 `$COMMON/config` 就提醒 commit + push；动过系统参数提醒需重启生效项
+- 动过 `$COMMON/10_Config` 就提醒 commit + push；动过系统参数提醒需重启生效项
 - 需要留痕时 `devenv report`（→ `$COMMON/docs/Envstate/`）
 
 ## 子 Skill 维护（改模板 → 重新生成）

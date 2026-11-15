@@ -34,7 +34,7 @@ fi
 
 # ── 2) settings.json 收编（种子缺失时从现状收编，防 apply 覆盖丢配置）──
 _set="$HOME/.config/Code/User/settings.json"
-_seed="$COMMON/config/dot_config/Code/User/settings.json"
+_seed="$COMMON/10_Config/dot_config/Code/User/settings.json"
 if [ -f "$_set" ] && [ ! -f "$_seed" ]; then
     mkdir -p "$(dirname "$_seed")"
     cp "$_set" "$_seed" && bde_ok "settings.json 收编 → config 种子"
@@ -46,7 +46,7 @@ if [ -f "$_set" ] && [ -f "$_seed" ] && ! diff -q "$_set" "$_seed" >/dev/null 2>
 fi
 
 # ── 3) 扩展：按语言档案安装（base + 所选语言；幂等；未入清单的现装扩展只提示）──
-_vdir="$COMMON/config/AppReg/vscode"
+_vdir="$COMMON/10_Config/AppReg/vscode"
 if [ -d "$_vdir" ] && command -v code >/dev/null 2>&1; then
     _list="$HOME/DevEnv/tmp/.vscode-ext-merged.txt"
     mkdir -p "$(dirname "$_list")"
@@ -89,7 +89,7 @@ fi
 # ── 5) JetBrains 系：按开发需求自动推导（映射表驱动，不点名；--no-jetbrains 跳过）──
 # 需求(BDE_LANGS) → jetbrains.map → 产品 → 版本发现(JetBrains releases API)
 # → 介质入库 Common/install/linux/jetbrains/（离线复用）→ 解压 ~/DevEnv/ide/ → 桌面入口
-_jb_map="$COMMON/config/ide/jetbrains.map"
+_jb_map="$COMMON/10_Config/ide/jetbrains.map"
 _edition="${BDE_JB_EDITION:-ultimate}"
 if [ "${BDE_JB_SKIP:-0}" = "1" ]; then
     bde_skip "JetBrains 跳过（--no-jetbrains；随时可重跑补装，介质与入口均幂等）"

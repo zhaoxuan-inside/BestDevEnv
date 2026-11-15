@@ -19,7 +19,7 @@ cd "$BDE" && ./init.sh          # 交互询问：开发者角色（回车=跳过
 
 - 交互契约：构建计划（OS/语言栈/工具/阶段）确认后才动手；`--yes`/非交互终端自动取默认（bootstrap 免疫）；EOF（Ctrl+D）一律不开工
 - **确认卡先行（硬协议）**：`--dry-run` 取构建计划 → 按「执行前确认卡」格式渲染（计划/完成后效果/风险/待确认）经用户同意才执行；**待确认必问**——开发语言与框架（实际在写什么，决定 --langs/--tools）、**特殊非通用安装内容**（公司内部工具/私有源/定制版本——用户不提就不装）、**桌面个性化默认集**（konsole/fcitx5+雾凇/starship/Nerd Font——个人选择，不默认）、三作用域锚点
-- **锚点首问（用户指定制）**：三作用域目录——③ 跨主机共享 / ② 主机内共享 / ① 用户独占——**由用户指定**，不得静默采用默认路径。构建前先向用户展示 `storage.toml` 机器节现状并征询确认/修改（默认段给推荐值）；确认结果写入 `③ config/Registry/storage.toml` 的 `<机器名>.<作用域>` 节并 commit。doctor 硬项「作用域锚点已按机器指定」巡检此项
+- **锚点首问（用户指定制）**：三作用域目录——③ 跨主机共享 / ② 主机内共享 / ① 用户独占——**由用户指定**，不得静默采用默认路径。构建前先向用户展示 `storage.toml` 机器节现状并征询确认/修改（默认段给推荐值）；确认结果写入 `③ 10_Config/Registry/storage.toml` 的 `<机器名>.<作用域>` 节并 commit。doctor 硬项「作用域锚点已按机器指定」巡检此项
 
 - 共享盘未挂载先按 ③ `storage.toml` 档案手动挂一次（hgfs 后端示例：`sudo mkdir -p /Share/Common /Share/Local && sudo vmhgfs-fuse .host:/Common /Share/Common -o allow_other`；local/passthrough 后端无需挂载，直接构建即可）
 - 仓库缺失时先 clone：`git clone git@github.com:zhaoxuan-inside/BestDevEnv.git "$COMMON/code/BestDevEnv"`
@@ -44,4 +44,4 @@ cd "$BDE" && ./init.sh          # 交互询问：开发者角色（回车=跳过
 
 ## 完成动作
 
-`devenv doctor` 全绿 → 检查 `$COMMON/config` 是否已 commit/push → 向用户报告验收清单与人工项（apt 源切换、`im-config -n fcitx5` 输入法启用）。
+`devenv doctor` 全绿 → 检查 `$COMMON/10_Config` 是否已 commit/push → 向用户报告验收清单与人工项（apt 源切换、`im-config -n fcitx5` 输入法启用）。

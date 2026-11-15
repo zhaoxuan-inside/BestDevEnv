@@ -19,7 +19,7 @@
 本仓库有**三重身份**：
 
 1. **安装器**——`init.sh` / `init.ps1` 交互式引导，从空白 VM 构建完整开发环境；
-2. **配置源**——`config/` 即 chezmoi 源（按主题平铺），安装时初始化 `/Share/Common/config`；
+2. **配置源**——`config/` 即 chezmoi 源（按主题平铺），安装时初始化 `/Share/Common/10_Config`；
 3. **生成器**——生成 `AGENTS.md`（AI 协作统一指令）与**环境描述文档**（机器现状报告）。
 
 **边界**：只管环境，不碰业务仓库内容（宪法原则 7——环境与业务代码分离）。
@@ -34,13 +34,13 @@
 | 1 | **路径即契约** | 锚点常量（`DEV`/`SHARE`/`COMMON`/`LOCAL`）唯一出处是 `lib/paths.sh`；任何脚本禁止硬编码散路径 |
 | 2 | **可再生性分离** | 能再生的（缓存/产物/安装包）→ 脚本内重定向到 `/Share`；不可再生的（DB/工作区）→ 留本机 |
 | 3 | **环境即代码** | 零手工步骤；所有写操作走幂等原语 `ensure_*`，任何模块可重复执行不出错 |
-| 4 | **单一事实源** | 配置源 = 本仓库 `config/` + `/Share/Common/config` 镜像；机器数据唯一出处 = `hosts.toml` |
+| 4 | **单一事实源** | 配置源 = 本仓库 `config/` + `/Share/Common/10_Config` 镜像；机器数据唯一出处 = `hosts.toml` |
 | 5 | **外置优先** | 目录模块默认把大件（缓存/模型/XDG 用户目录）落在 `/Share`，VM 盘只留工具链与活状态 |
 | 6 | **数据与视图分离** | 目录只存数据：config 主题平铺 + `.chezmoiignore` 规则；分组/标签由 `repos.toml` 与工具承载 |
 | 7 | **环境与业务代码分离** | `DevEnv` 100% 环境；业务代码住 `/Share/Common/code`（热区 `~/Code`）；互不掺杂 |
 | 8 | **用户空间优先** | 可再生内容一律落 ①②③ 用户空间；系统目录只留 OS 必需。验收：重装系统后凭 ①②③ + config 仓库完整重建 |
 | 9 | **锚点是逻辑目录** | `Common`/`Local` 不绑定介质——本机盘/宿主机盘/云盘皆可为后端；路径恒定，差异收敛在挂载适配器 |
-| 10 | **服务三分离** | 安装体（①可再生）／配置（③ config 仓库版本化）／数据（②本机或③共享）——恢复=重装+应用配置+回灌数据 |
+| 10 | **服务三分离** | 安装体（①可再生）／配置（③ 10_Config 仓库版本化）／数据（②本机或③共享）——恢复=重装+应用配置+回灌数据 |
 | 11 | **构建十分离** | IDE 工具/IDE 配置/IDE 数据/代码/代码输出/代码日志/打包工具/打包配置/缓存包/打包结果 十类各归其位，任一目录可独立清空（宪法 §19.4） |
 
 另有一条**物理边界**（来自实测，写进每个模块的守卫）：
@@ -71,7 +71,7 @@ BestDevEnv/
 │   ├── common.sh                    交互菜单（whiptail 优先/read 兜底）、颜色、日志、确认
 │   ├── ensure.sh                    幂等原语：ensure_pkg / ensure_dir / ensure_line / ensure_fstab / ensure_symlink
 │   └── probe.sh                     环境探针（doctor / report / AGENTS.md 三方共用的唯一数据源）
-├── hosts.toml                       机器数据表（与 /Share/Common/config/hosts.toml 同源同步）
+├── hosts.toml                       机器数据表（与 /Share/Common/10_Config/hosts.toml 同源同步）
 ├── modules/
 │   ├── os/                          M1 系统基线与优化（需求 2）
 │   │   ├── ubuntu.sh
@@ -121,9 +121,9 @@ BestDevEnv/
     └── doctor.sh                    devenv doctor 本体（安装时分发到 ~/DevEnv/bin）
 ```
 
-**`config/` 与 `/Share/Common/config` 的关系（防双源漂移）**：`config/` 只是**种子**——
-仅当 `/Share/Common/config` 不存在时用其初始化（git init + 首次 apply）；一旦存在，以
-`/Share/Common/config` 为准（本机改动 → push GitHub → 其他机 pull），种子不再参与。
+**`config/` 与 `/Share/Common/10_Config` 的关系（防双源漂移）**：`config/` 只是**种子**——
+仅当 `/Share/Common/10_Config` 不存在时用其初始化（git init + 首次 apply）；一旦存在，以
+`/Share/Common/10_Config` 为准（本机改动 → push GitHub → 其他机 pull），种子不再参与。
 
 ## 4. 模块总览（需求 2–6 的映射）
 
@@ -179,7 +179,7 @@ BestDevEnv/
 
 | 问 | 答案 |
 |---|---|
-| 正本在哪 | `modules/cfg/cfg-map.tsv` 登记；内容住 `$COMMON/config/{services,apt,dot_config}/`（git 版本化） |
+| 正本在哪 | `modules/cfg/cfg-map.tsv` 登记；内容住 `$COMMON/10_Config/{services,apt,dot_config}/`（git 版本化） |
 | 怎么应用 | `devenv cfg apply`——copy（备份+整文件落位）/ append（fstab 片段逐行）/ chezmoi（归事实源） |
 | 漂移怎么发现 | `devenv cfg diff` ＋ doctor「系统/服务配置无漂移」「config 仓库干净」巡检 |
 
@@ -202,8 +202,8 @@ claude-code  codex  gemini-cli  opencode  zcode  trae/trae-cn  antigravity  qode
 | 域 | 正本 | 工具落点 | 命令 |
 |---|---|---|---|
 | 记忆 | ① `~/.config/devspace/agents/AGENTS.md`（每机器 probe 渲染——可复用的是模板） | 各工具约定路径 symlink（claude/codex/gemini/opencode/zcode/arkcli） | `devenv runtime wire` |
-| Skill | ③ `$COMMON/config/Agents/skill/<name>/`（config 仓库版本化，跨机器复用） | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽——ZCode 原生扫描该目录，~/.zcode/skills 双根曾致同名 skill 重复注册，2026-11-08 实证）逐项 symlink；枢纽真实技能目录 `devenv runtime skill adopt <name> <路径>` 收编 | `devenv runtime wire` |
-| MCP | ③ `$COMMON/config/Agents/mcp.json`（版本化；`${DEV}` 等锚点投影前按本机展开；密钥不入正本） | claude `~/.claude.json`、codex TOML 托管块、gemini/opencode/copilot JSON 合并、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
+| Skill | ③ `$COMMON/10_Config/Agents/skill/<name>/`（config 仓库版本化，跨机器复用） | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽——ZCode 原生扫描该目录，~/.zcode/skills 双根曾致同名 skill 重复注册，2026-11-08 实证）逐项 symlink；枢纽真实技能目录 `devenv runtime skill adopt <name> <路径>` 收编 | `devenv runtime wire` |
+| MCP | ③ `$COMMON/10_Config/Agents/mcp.json`（版本化；`${DEV}` 等锚点投影前按本机展开；密钥不入正本） | claude `~/.claude.json`、codex TOML 托管块、gemini/opencode/copilot JSON 合并、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
 | 会话 | 工具私有（注册表登记） | 只调查不迁移；跨工具续做走 `devenv orch` | `devenv runtime sessions` |
 
 - **注册表**：`modules/agent/runtimes.tsv` 是唯一事实源（新 runtime = 加一行）；接线器只按注册表干活
@@ -266,7 +266,7 @@ EOF（Ctrl+D）一律不开工。**Skill 层硬协议**：会话内由 AI 执行
 装 OS（建用户 hardstone、设唯一 hostname）→ 宿主机开 VMware 共享（Local、Common）
   → clone 本仓库 → ./init.sh（或 init.ps1）
   → 交互确认（§5 八项）→ M1 系统基线 → M2 目录架构 → M3 语言栈 → M4 工具+AGENTS.md → M5 报告
-  → devenv doctor 全绿 → 完成（此后日常演进走 /Share/Common/config 的 git）
+  → devenv doctor 全绿 → 完成（此后日常演进走 /Share/Common/10_Config 的 git）
 ```
 
 ## 6.1 执行进度记录（可续建）

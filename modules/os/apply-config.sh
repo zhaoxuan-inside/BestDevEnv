@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# M1.5: chezmoi 安装 + config 应用（种子 → /Share/Common/config → 应用层）
+# M1.5: chezmoi 安装 + config 应用（种子 → /Share/Common/10_Config → 应用层）
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
@@ -8,8 +8,8 @@ source "$BDE_ROOT/lib/ensure.sh"
 bde_info "M1.5 config 应用"
 
 # 1) 机器数据表同步（config 源中 hosts.toml 与工程根保持一致）
-if [ -d "$COMMON/config" ] && [ -f "$BDE_ROOT/hosts.toml" ]; then
-    cp "$BDE_ROOT/hosts.toml" "$COMMON/config/hosts.toml" && bde_ok "hosts.toml 同步 → config"
+if [ -d "$COMMON/10_Config" ] && [ -f "$BDE_ROOT/hosts.toml" ]; then
+    cp "$BDE_ROOT/hosts.toml" "$COMMON/10_Config/hosts.toml" && bde_ok "hosts.toml 同步 → config"
 fi
 
 # 2) chezmoi 安装（curl 优先用户级，snap 兜底）
@@ -28,12 +28,12 @@ fi
 # 3) 备份 + 应用（宪法：应用层由事实源再生，但改前必须留底）
 ensure_backup "$HOME/.zshrc"
 ensure_backup "$HOME/.gitconfig"
-if [ -f "$COMMON/config/.chezmoiignore" ]; then
-    if chezmoi apply -S "$COMMON/config" --destination "$HOME" --force >/dev/null 2>&1; then
+if [ -f "$COMMON/10_Config/.chezmoiignore" ]; then
+    if chezmoi apply -S "$COMMON/10_Config" --destination "$HOME" --force >/dev/null 2>&1; then
         bde_ok "chezmoi apply 完成（config → 应用层）"
     else
         bde_pending "chezmoi apply 失败"
     fi
 else
-    bde_pending "config 源缺失：$COMMON/config"
+    bde_pending "config 源缺失：$COMMON/10_Config"
 fi

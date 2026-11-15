@@ -72,7 +72,7 @@ cap__im_ensure() {
 # ── zram（压缩内存交换；zram-tools + /etc/default/zramswap 正本，cfg-map zramswap 同步治理）──
 cap__zram_ensure() {
     cap_pkg_install zram || return 1
-    local src="$COMMON/config/Services/zram/zramswap" dst="${BDE_CAP_ZRAMSWAP_CONF:-/etc/default/zramswap}"
+    local src="$COMMON/10_Config/Services/zram/zramswap" dst="${BDE_CAP_ZRAMSWAP_CONF:-/etc/default/zramswap}"
     [ -f "$src" ] || { bde_pending "zramswap 正本缺失：$src"; return 1; }
     sudo -n mkdir -p "$(dirname "$dst")" 2>/dev/null
     local _zram_cfg_changed=0

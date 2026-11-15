@@ -102,7 +102,7 @@ fi
 
 # ── SKILL 数值来源（@CFGVAL@ 渲染：③ 正本优先，seed 兜底——文档零复述，改值必经正本+再生）──
 _cfg_src() {  # <③ 相对路径 config/...> → 实际可读正本路径
-    local f="$COMMON/config/${1#config/}"
+    local f="$COMMON/10_Config/${1#config/}"
     [ -f "$f" ] && { printf '%s\n' "$f"; return; }
     printf '%s\n' "$BDE_ROOT/$1"
 }
@@ -119,9 +119,9 @@ for _v in "$_V_INOTIFY" "$_V_SWAP" "$_V_JMAX" "$_V_JKEEP" "$_V_JRET" "$_V_NOFILE
     [ -n "$_v" ] || { _missing=$((_missing+1)); bde_pending "SKILL 数值来源缺失（cfgval 取空——③ 正本未就绪？gen 后需复查）"; break; }
 done
 
-# ── 用户语境正本渲染（③ config/Agents/user-context.toml → AGENTS.md「用户语境」章节）──
+# ── 用户语境正本渲染（③ 10_Config/Agents/user-context.toml → AGENTS.md「用户语境」章节）──
 # 写回制：确认卡确认的语境/决定/偏好由 Skill 当场写回正本；gen 只渲染不采集
-_USERCTX_SRC="$COMMON/config/Agents/user-context.toml"
+_USERCTX_SRC="$COMMON/10_Config/Agents/user-context.toml"
 [ -f "$_USERCTX_SRC" ] || _USERCTX_SRC="$BDE_ROOT/config/agents/user-context.toml"
 _USERCTX="(（正本缺失：config/agents/user-context.toml）)"
 [ -f "$_USERCTX_SRC" ] && _USERCTX="$(USERCTX_FILE="$_USERCTX_SRC" python3 <<'PY'

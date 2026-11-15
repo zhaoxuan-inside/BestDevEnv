@@ -25,7 +25,7 @@ bde_storage_profile() {
     fi
     local local_copy="${BDE_STORAGE_STATE:-$HOME/DevEnv/docs/state/storage.toml}"
     [ -f "$local_copy" ] && { echo "$local_copy"; return; }
-    if [ -f /Share/Common/config/Registry/storage.toml ]; then echo /Share/Common/config/Registry/storage.toml; return; fi
+    if [ -f /Share/Common/10_Config/Registry/storage.toml ]; then echo /Share/Common/10_Config/Registry/storage.toml; return; fi
     echo ""
 }
 

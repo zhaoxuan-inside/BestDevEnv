@@ -100,7 +100,7 @@ EOF
         done
     } | awk -F'\t' '$1 != "" && !seen[$1]++' | sort > "$_INV_A"
     # 家目录契约路径：path|kind → state(absent/symlink/real) + verdict（登记制：real+未登记=warn）
-    local _hm="$COMMON/config/Registry/home-map.tsv"
+    local _hm="$COMMON/10_Config/Registry/home-map.tsv"
     [ -f "$_hm" ] || _hm="$BDE_ROOT/config/Registry/home-map.tsv"
     local _e _kind _pp _st _tgt _vd
     while read -r _e _kind; do
@@ -304,7 +304,7 @@ for p in d["paths"]:
         return 0
     fi
     bde_info "处置流：以下实体不符合家目录契约（real+未登记）——逐项询问（转移并接回[t·推荐] / 登记保留[r] / 跳过[s]）"
-    local _hm="$COMMON/config/Registry/home-map.tsv"
+    local _hm="$COMMON/10_Config/Registry/home-map.tsv"
     [ -f "$_hm" ] || _hm="$BDE_ROOT/config/Registry/home-map.tsv"
     local _line _name _kind _tgt _a
     while IFS='|' read -r _name _kind; do

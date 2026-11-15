@@ -50,7 +50,7 @@ cap__pkg_check_source() {
 # ── zram（zram-generator 机制：conf 落位 + daemon-reload；setup@zram0 启动或重启后生效）──
 cap__zram_ensure() {
     cap_pkg_install zram || return 1
-    local src="$COMMON/config/Services/systemd/zram-generator.conf" dst="${BDE_CAP_ZRAM_CONF:-/etc/systemd/zram-generator.conf}"
+    local src="$COMMON/10_Config/Services/systemd/zram-generator.conf" dst="${BDE_CAP_ZRAM_CONF:-/etc/systemd/zram-generator.conf}"
     [ -f "$src" ] || { bde_pending "zram-generator 正本缺失：$src"; return 1; }
     sudo -n mkdir -p "$(dirname "$dst")" 2>/dev/null
     if ! cmp -s "$src" "$dst" 2>/dev/null; then

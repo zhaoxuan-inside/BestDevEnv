@@ -11,9 +11,9 @@ source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 source "$BDE_ROOT/lib/ensure.sh"
 
-APPS_DIR="${BDE_APPS_DIR:-$COMMON/config/AppReg}"
-CLASSIFY_TSV="$COMMON/config/Registry/apps-classify.tsv"
-HOME_MAP="$COMMON/config/Registry/home-map.tsv"
+APPS_DIR="${BDE_APPS_DIR:-$COMMON/10_Config/AppReg}"
+CLASSIFY_TSV="$COMMON/10_Config/Registry/apps-classify.tsv"
+HOME_MAP="$COMMON/10_Config/Registry/home-map.tsv"
 INV_JSON="${BDE_INVENTORY_JSON:-$DEV/docs/state/inventory.json}"
 
 bde_app_render() {  # <manifest 绝对路径>
@@ -73,7 +73,7 @@ if cfg.get("manifest"):
     src = os.path.join(roots["shared"], "config", cfg["manifest"])
     dst = os.path.expanduser(cfg.get("applied", ""))
     state = "应用层缺失" if not os.path.exists(dst) else ("一致" if _cmp_ok(src, dst) else "漂移")
-    print(f"  配置    ③ config/{cfg['manifest']} → {dst} ｜ {state}（via {cfg.get('via', '-')}；devenv cfg diff 巡检）")
+    print(f"  配置    ③ 10_Config/{cfg['manifest']} → {dst} ｜ {state}（via {cfg.get('via', '-')}；devenv cfg diff 巡检）")
 # 数据（作用域 + 体量）
 dat = m.get("data", {})
 if dat.get("path") or dat.get("at"):

@@ -29,7 +29,7 @@ devenv cfg         # 配置治理：清单/漂移/apply/adopt（详见 bestdeven
 
 - **清**：gradle/npm/pnpm/go-build 缓存、Electron/浏览器标准缓存子目录（不碰登录态）、vscode-server 旧版本、Trash、journal 压至 100M
 - **绝不碰**：工具运行时（codex-runtimes）、浏览器配置/登录态、JetBrains 索引、用户会话数据（opencode.db）、未知目录
-- 新隐藏目录出现 → `devenv map` 报未登记 → 在 `$COMMON/config/Registry/home-map.tsv` 补一行并 commit（登记数据进 config 仓库）
+- 新隐藏目录出现 → `devenv map` 报未登记 → 在 `$COMMON/10_Config/Registry/home-map.tsv` 补一行并 commit（登记数据进 config 仓库）
 
 ## 验收
 
