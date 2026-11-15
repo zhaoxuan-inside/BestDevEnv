@@ -10,13 +10,13 @@ description: BestDevEnv runtime 统一管理层——所有 vibecoding 工具视
 
 ## 四域正本与落点
 
-分层：**Skill/MCP 正本住 ③**（`$COMMON/config/Agents/`，config 仓库 git 版本化——push/pull 即跨机器复用）；**记忆住 ①**（每机器 probe 渲染产物，可复用的是模板）；路径锚点（`${DEV}` 等）在投影时按本机展开。
+分层：**Skill/MCP 正本住 ③**（`$COMMON/10_Config/Agents/`，config 仓库 git 版本化——push/pull 即跨机器复用）；**记忆住 ①**（每机器 probe 渲染产物，可复用的是模板）；路径锚点（`${DEV}` 等）在投影时按本机展开。
 
 | 域 | 正本 | 各工具落点（symlink/投影） | 动作 |
 |---|---|---|---|
 | 记忆 | ① `~/.config/devspace/agents/AGENTS.md` | `~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.gemini/GEMINI.md`、`~/.config/opencode/AGENTS.md`、`~/.zcode/AGENTS.md`、`~/.agents/AGENTS.md`（arkcli） | `devenv runtime wire` |
-| Skill | ③ `$COMMON/config/Agents/skill/<name>/` | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽，ZCode 原生扫描）逐项 symlink | `devenv runtime wire` |
-| MCP | ③ `$COMMON/config/Agents/mcp.json`（锚点按本机展开） | claude `~/.claude.json`、codex `config.toml` 托管块、gemini `settings.json`、opencode `opencode.json`、copilot `mcp-config.json`、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
+| Skill | ③ `$COMMON/10_Config/Agents/skill/<name>/` | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽，ZCode 原生扫描）逐项 symlink | `devenv runtime wire` |
+| MCP | ③ `$COMMON/10_Config/Agents/mcp.json`（锚点按本机展开） | claude `~/.claude.json`、codex `config.toml` 托管块、gemini `settings.json`、opencode `opencode.json`、copilot `mcp-config.json`、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
 | 会话 | 工具私有（登记于 `modules/agent/runtimes.tsv`） | 各工具自管 | `devenv runtime sessions`（只读调查） |
 
 ## 执行
@@ -40,7 +40,7 @@ vibe <tool> [args]                               # 统一启动（source env.sh 
 3. **绝不覆盖工具真实配置**：已有真实文件 → `ensure_backup` + pending 人工合并；工具自有状态（如 `~/.zcode/cli/config.json`）只在已有非空 `mcp.servers` 时受控合并。**投影写前必留痕**：`ensure_json_key_equal` 判等跳过（无变化报 [=]），有差异先 `ensure_backup` 再合并——正本为空时也要能自证"未清工具本地键"（2026-11-12 实测：投影曾无条件重写报 ✓，与幂等验收矛盾且无备份可查）
 4. **会话库永不迁移/清理**（home-map 政策为准）；跨工具任务续做 = `devenv orch`（journal 落 `$DEV/docs/progress/`）
 5. **收编**：工具内手动加的 MCP server 属工具本地——要全局生效就抄进 ③ `mcp.json` 正本再 `mcp sync`；枢纽出现的真实技能目录（如工具自更新重建）→ `skill adopt` 收编回 ③，防散落
-6. 验收：`devenv doctor`「Runtime 统一接线」项 ✓ + 「agents 正本已入 ③ config 仓库」项 ✓ + `devenv runtime wire` 二次执行全 skip（幂等；投影行无变化必须 [=] 而非 ✓——[✓] 仅代表真实写入）
+6. 验收：`devenv doctor`「Runtime 统一接线」项 ✓ + 「agents 正本已入 ③ 10_Config 仓库」项 ✓ + `devenv runtime wire` 二次执行全 skip（幂等；投影行无变化必须 [=] 而非 ✓——[✓] 仅代表真实写入）
 
 ## 长任务编排
 

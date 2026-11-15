@@ -6,13 +6,13 @@ description: BestDevEnv 配置规范与漂移治理——改用户配置（zshrc
 
 # 配置规范与漂移治理（M1.5 chezmoi + M1.6 统一配置治理 + config 仓库）
 
-单一职责：配置的规范变更与漂移回收。唯一事实源：**`$COMMON/config`**（git 仓库。宪法：配置永远改仓库，备份永远靠 push）。
+单一职责：配置的规范变更与漂移回收。唯一事实源：**`$COMMON/10_Config`**（git 仓库。宪法：配置永远改仓库，备份永远靠 push）。
 
 ## 标准变更流（chezmoi 管的应用层 dotfile）
 
 ```bash
 source "$HOME/.config/devspace/env.sh"
-CFG="$COMMON/config"
+CFG="$COMMON/10_Config"
 $EDITOR "$CFG/dot_zshrc"                                # 例：改某一配置源文件
 git -C "$CFG" add -A && git -C "$CFG" commit -m "..." && git -C "$CFG" push
 chezmoi apply -S "$CFG" --destination "$HOME" --force   # 应用到本机（改前自动备份 ~/.zshrc ~/.gitconfig）
@@ -24,7 +24,7 @@ chezmoi apply -S "$CFG" --destination "$HOME" --force   # 应用到本机（改�
 ## 统一配置治理（M1.6：系统/服务配置，宪法 §19.3）
 
 任何服务/软件/工具的配置文件都有登记表：BestDevEnv `modules/cfg/cfg-map.tsv`；
-正本住 `$COMMON/config/{services,apt,dot_config}/`（git 版本化），应用层由正本再生：
+正本住 `$COMMON/10_Config/{services,apt,dot_config}/`（git 版本化），应用层由正本再生：
 
 ```bash
 devenv cfg list                # 清单：项|类|正本|应用层|机制|漂移（devenv svc 只看服务类）

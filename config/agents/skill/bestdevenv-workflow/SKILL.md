@@ -24,7 +24,7 @@ code-close <repo>           # 释放：拆除本仓库全部 bind（实体留 �
 | 对象 | 归属 |
 |---|---|
 | IDE 工具 | ① DevEnv/ide |
-| IDE 配置 | ③ Common/config/AppReg（应用层再生） |
+| IDE 配置 | ③ Common/10_Config/AppReg（应用层再生） |
 | IDE 运行数据（索引/会话状态） | ② Local/40_IdeRun/<ide>（正式约定，骨架已建） |
 | 代码 | ③ Common/code/<repo> |
 | 代码输出（构建中间产物） | ② Local/20_Build/<repo>（code-out bind） |
@@ -38,8 +38,8 @@ code-close <repo>           # 释放：拆除本仓库全部 bind（实体留 �
 
 ### 新建目录/文件协议（登记制 + 命名规范）
 
-1. **先登记后创建**：①②③ 下任何新目录先在 `③ config/Registry/dir-map.tsv` 补一行（作用域|路径|职责|分类）——未登记 = namecheck 硬违规
-2. **命名按规范**：`NN_` 序号前缀 + 首字母大写 + 6-10 字符 + 禁中文 + **同级等长优先（美观第一）**——6-10 内用完整词，超长才换词；**取名信雅达**（信=名实相符、达=达意流畅、雅=优雅得体/成系列）；规范细节见 `③ config/data/naming.toml`，`devenv namecheck` 校验
+1. **先登记后创建**：①②③ 下任何新目录先在 `③ 10_Config/Registry/dir-map.tsv` 补一行（作用域|路径|职责|分类）——未登记 = namecheck 硬违规
+2. **命名按规范**：`NN_` 序号前缀 + 首字母大写 + 6-10 字符 + 禁中文 + **同级等长优先（美观第一）**——6-10 内用完整词，超长才换词；**取名信雅达**（信=名实相符、达=达意流畅、雅=优雅得体/成系列）；规范细节见 `③ 10_Config/data/naming.toml`，`devenv namecheck` 校验
 3. **名实匹配**：目录名与登记职责一致；存量改名走 `devenv namecheck --migrate`（同级等长成套建议，逐项授权后执行）
 
 ### 依赖与产物拆分（按工具速查）
@@ -57,7 +57,7 @@ code-close <repo>           # 释放：拆除本仓库全部 bind（实体留 �
 ## 放置判断（写任何文件前）
 
 > 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `/home/hardstone/DevEnv`；代码单份 /Share/Common/code；
-> 实体住 /home/hardstone/DevEnv bind 接回；用户目录住 /Share/Local；配置改仓库（`$COMMON/config`）；备份靠 push。
+> 实体住 /home/hardstone/DevEnv bind 接回；用户目录住 /Share/Local；配置改仓库（`$COMMON/10_Config`）；备份靠 push。
 > 物理红线（能力探测 2026-11-14 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；文件/代码命名小写 kebab-case；①②③ 自建目录走 naming.toml 规范（NN_ 前缀/首字母大写/6-10 字符/禁中文/同级等长优先——devenv namecheck 校验）；跨机成品走 `$COMMON/50_Exchange/<repo>/`。
 
 ## 故障速查

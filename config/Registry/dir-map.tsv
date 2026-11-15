@@ -4,27 +4,26 @@
 # - 目标名 = 授权整改树（本文件即迁移目标正本）：devenv namecheck --migrate 逐项授权后改名并回写本行
 # - 深层目录（第 3 层及以下）执行迁移时同规则递归登记；分类供 devenv index 聚合
 # —— shared ③（跨主机共享；锚点由用户指定，见 storage.toml）——
-shared|code|00_Code|代码仓库（单份平铺；仓库目录名随上游，豁免）|代码|主干
-shared|config|10_Config|配置正本仓库（git 版本化）|配置|主干
-shared|config/services|config/Serv|服务配置正本|配置|深层登记
-shared|config/apt|config/Pkgs|软件源/包配置|配置|深层登记
-shared|config/apps|config/Apps|应用档案与 IDE 配置|配置|深层登记
-shared|config/agents|config/Agent|vibecoding 工具配置（skill/MCP 正本）|配置|深层登记
-shared|config/data|config/Data|治理数据表（dir-map/naming/home-map）|配置|深层登记
-shared|config/ide||IDE 配置（待并入 config/Apps）|配置|存量待并入：迁移时处置
-shared|docs|20_Docs|文档|文档|主干
-shared|docs/Handbook|docs/Spec|规范手册/宪法|文档|深层登记
-shared|docs/hosts|docs/Host|机器数据表|文档|深层登记
-shared|docs/env|docs/Envs|环境实况报告|文档|深层登记
-shared|Data|30_Data|共享数据|数据|主干（大小写已合规，补 NN_ 前缀）
-shared|data/models|data/Model|模型文件（gguf/huggingface/modelscope）|数据|深层登记
-shared|data/datasets|data/Sets|数据集|数据|深层登记
-shared|data/fixtures|data/Fixt|测试夹具|数据|深层登记
-shared|cache|40_Cache|共享包缓存（npm/pnpm/pip/uv/windows）|缓存|主干
-shared|exchange|50_Relay|跨机交换交付（打包结果）|交付|主干
-shared|install|60_Media|安装介质（iso/win/linux/fonts）|介质|主干
-shared|templates|70_Tmpl|模板（skill 模板等）|模板|主干
-shared|archive|90_Vault|冷归档|归档|主干
+shared|code||代码仓库（单份平铺；仓库目录名随上游，豁免）|代码|暂缓：用户指定不改名（2026-11-15）
+shared|10_Config||配置正本仓库（git 版本化）|配置|主干
+shared|10_Config/Services||服务配置正本|配置|深层登记
+shared|10_Config/PkgSource||软件源/包配置|配置|深层登记
+shared|10_Config/AppReg||应用档案与 IDE 配置|配置|深层登记
+shared|10_Config/Agents||vibecoding 工具配置（skill/MCP 正本）|配置|深层登记
+shared|10_Config/data||治理数据表（dir-map/naming/home-map）|配置|深层登记
+shared|20_DocSpace||文档|文档|主干
+shared|docs/Handbook||规范手册/宪法|文档|深层登记
+shared|docs/Hostmap||机器数据表|文档|深层登记
+shared|docs/Envstate||环境实况报告|文档|深层登记
+shared|30_DataSpace||共享数据|数据|主干（大小写已合规，补 NN_ 前缀）
+shared|data/Models||模型文件（gguf/huggingface/modelscope）|数据|深层登记
+shared|data/Datasets||数据集|数据|深层登记
+shared|data/Fixtures||测试夹具|数据|深层登记
+shared|cache||包缓存（npm/pip/uv/windows）|缓存|暂缓：hgfs rename 阻塞（大缓存树）——tidy 清空后补改 40_CachePool
+shared|50_Exchange||跨机交换交付（打包结果）|交付|主干
+shared|60_Installers||安装介质（iso/win/linux/fonts）|介质|主干
+shared|70_Templates||模板（skill 模板等）|模板|主干
+shared|90_Archive||冷归档|归档|主干
 # —— host ②（主机内共享；锚点由用户指定）——
 host|20_Build||编译产物（code-out 挂点）|产物|主干
 host|10_Cache||锁敏感缓存（gradle/m2）|缓存|主干
