@@ -8,7 +8,7 @@
 |---|---|
 | 版本 | **v0.19（能力总线架构：先抽象能力，再按平台实现——L2 `lib/cap.sh` 能力总线（pkg/svc/kernel/limits/logs/trim/timesync/hostname/fonts/shell/im/terminal/group 13 契约 + 优雅降级） + `_linux-systemd` 基座 + debian/fedora/arch/suse/darwin 适配器族（ubuntu.sh/arch.sh 单体退役，L3 编排零平台字面量）；系统优化默认集（swappiness=10/vfs_cache_pressure=50/file-max/journald 上限/nofile 65535/fstrim.timer）经 cfg 治理自动生效；cfg-map 新增 hosts 动态机制（hosts.toml→/etc/hosts 标记片段）与 `os_family` 条件键；漂移判定同源化（bde_cfg_diff_one 唯一出处，probe/cfg 共用）；存储后端 +nfs/smb/rclone（NAS/云盘，options 键携带 credentials）；开发者角色 profiles.tsv（java-web/python/go/cpp/ml-trainer/fullstack）+ `init --profile` 按需装配；新增 cpp 栈；ai 栈充实（Miniconda tuna + condarc 正本 + CUDA 体检）；字体统一（JetBrainsMono Nerd Font）；doctor 扩至 30 项；rclone systemd 用户单元持久化；hosts 自身 127.0.1.1 行；konsole 统一 profile（JetBrainsMono NF）；适配器桩测试套件 verify/test-cap.sh（84 断言·五家族）+ 实机验收清单 verify/ACCEPTANCE.md）** |
 | 日期 | 2026-11-12 |
-| 上游宪法 | devspace-design.md **v10.3**（位于 `/Share/Common/docs/dev-env/design.md`）；MCP/会话/Skill 统一为 §10.9 延伸、配置治理落实 §19.3，提请宪法增补 |
+| 上游宪法 | devspace-design.md **v10.3**（位于 `/Share/Common/docs/Handbook/design.md`）；MCP/会话/Skill 统一为 §10.9 延伸、配置治理落实 §19.3，提请宪法增补 |
 | 适用范围 | **跨系统：Linux（Ubuntu/Arch）/ macOS / Windows 为目标**；Common/Local 为逻辑目录（本机盘/宿主机盘/云盘皆可为后端）。**当前生产实装 = Ubuntu 系**（adapters/debian.sh）；fedora/arch/suse 适配器代码就绪（未实机验证），darwin 最小实装（brew），windows 走 init.ps1 占位（P2/P3 里程碑，实机验证后才算数） |
 | 远端 | `git@github.com:zhaoxuan-inside/BestDevEnv.git` |
 
@@ -154,7 +154,7 @@ BestDevEnv/
   XDG 重定向（user-dirs.dirs）+ home 兼容 symlink → 归位提示（现有内容对号入座的检查清单）。
 - `windows.ps1`：`C:\Dev` 骨架 → mklink 指向 `\\vmware-host\Shared Folders\{Local,Common}` → S:/L: 兼容盘符。
 - **选择点**（走档案与旗标，非交互问询）：锚点/后端 ← `storage.toml` 机器段 ｜ 死挂载清理 ←
-  `config/data/mount-fixups.tsv` ｜ XDG 重定向开关 ← `--no-xdg`（默认开）｜ 骨架默认全量。
+  `config/Registry/mount-fixups.tsv` ｜ XDG 重定向开关 ← `--no-xdg`（默认开）｜ 骨架默认全量。
 
 ### M3 语言开发环境（需求 4）
 
@@ -202,8 +202,8 @@ claude-code  codex  gemini-cli  opencode  zcode  trae/trae-cn  antigravity  qode
 | 域 | 正本 | 工具落点 | 命令 |
 |---|---|---|---|
 | 记忆 | ① `~/.config/devspace/agents/AGENTS.md`（每机器 probe 渲染——可复用的是模板） | 各工具约定路径 symlink（claude/codex/gemini/opencode/zcode/arkcli） | `devenv runtime wire` |
-| Skill | ③ `$COMMON/config/agents/skill/<name>/`（config 仓库版本化，跨机器复用） | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽——ZCode 原生扫描该目录，~/.zcode/skills 双根曾致同名 skill 重复注册，2026-11-08 实证）逐项 symlink；枢纽真实技能目录 `devenv runtime skill adopt <name> <路径>` 收编 | `devenv runtime wire` |
-| MCP | ③ `$COMMON/config/agents/mcp.json`（版本化；`${DEV}` 等锚点投影前按本机展开；密钥不入正本） | claude `~/.claude.json`、codex TOML 托管块、gemini/opencode/copilot JSON 合并、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
+| Skill | ③ `$COMMON/config/Agents/skill/<name>/`（config 仓库版本化，跨机器复用） | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽——ZCode 原生扫描该目录，~/.zcode/skills 双根曾致同名 skill 重复注册，2026-11-08 实证）逐项 symlink；枢纽真实技能目录 `devenv runtime skill adopt <name> <路径>` 收编 | `devenv runtime wire` |
+| MCP | ③ `$COMMON/config/Agents/mcp.json`（版本化；`${DEV}` 等锚点投影前按本机展开；密钥不入正本） | claude `~/.claude.json`、codex TOML 托管块、gemini/opencode/copilot JSON 合并、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
 | 会话 | 工具私有（注册表登记） | 只调查不迁移；跨工具续做走 `devenv orch` | `devenv runtime sessions` |
 
 - **注册表**：`modules/agent/runtimes.tsv` 是唯一事实源（新 runtime = 加一行）；接线器只按注册表干活
@@ -255,7 +255,7 @@ EOF（Ctrl+D）一律不开工。**Skill 层硬协议**：会话内由 AI 执行
 前必须先向用户确认清单（见 bestdevenv-dev Skill「先确认再装」）。
 
 其余机器差异不走问询，由数据档案承载（宪法 §20，机器段覆盖默认段）：
-锚点/存储后端 → `config/data/storage.toml` ｜ 镜像/代理 → `network.toml` ｜
+锚点/存储后端 → `config/Registry/storage.toml` ｜ 镜像/代理 → `network.toml` ｜
 机器登记 → `hosts.toml`（克隆 VM 同名时 `--machine` 指定）。
 
 旗标清单：`--yes --resume --rerun --status --reset --dry-run --machine X --langs a,b --tools a,b --no-xdg --no-jetbrains --no-log`

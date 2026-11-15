@@ -42,8 +42,8 @@ export MAVEN_OPTS="${MAVEN_OPTS:+$MAVEN_OPTS }-Dmaven.repo.local=$LOCAL/10_Cache
 # ── 下载缓存与模型（③，linux 域三机共享）─────────────────
 export PIP_CACHE_DIR="$COMMON/cache/linux/pip"
 export UV_CACHE_DIR="$COMMON/cache/linux/uv"
-export HF_HOME="$COMMON/data/models/huggingface"
-export MODELSCOPE_CACHE="$COMMON/data/models/modelscope"
+export HF_HOME="$COMMON/30_DataSpace/Models/huggingface"
+export MODELSCOPE_CACHE="$COMMON/30_DataSpace/Models/modelscope"
 
 # ── 家目录收敛契约（宪法 §20.5：支持原生重定向的工具，入口一律迁出家目录）──
 export IPYTHONDIR="$DEV/apps/dev/.ipython"            # 实体 ①（家目录 .ipython 链接退役）

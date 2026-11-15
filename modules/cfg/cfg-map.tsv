@@ -9,17 +9,17 @@
 #   backend_common=<后端>｜backend_host=<后端>，& 连接，空=无条件
 # - 落位成功（非 skip）自动触发该文件类型的生效动作（sysctl --system / journald 重启）——cfg.sh _cfg_post_apply
 # - 新装服务/软件/工具的配置：devenv cfg adopt <name> <应用层路径> 收编一行即纳管
-sysctl-devspace|system|$COMMON/config/services/sysctl/99-devspace.conf|/etc/sysctl.d/99-devspace.conf|copy|y|os_family=linux|inotify+swappiness+vfs_cache_pressure+file-max（v0.19 系统优化默认集）
-journald-devspace|system|$COMMON/config/services/systemd/journald-devspace.conf|/etc/systemd/journald.conf.d/99-devspace.conf|copy|y|os_family=linux|journald drop-in：宿主日志 512M/KeepFree 1G/14day（v0.19）
-limits-devspace|system|$COMMON/config/services/limits/99-devspace.conf|/etc/security/limits.d/99-devspace.conf|copy|y|os_family=linux|nofile 65535（v0.19）
-zramswap|system|$COMMON/config/services/zram/zramswap|/etc/default/zramswap|copy|y|os=ubuntu,debian,linuxmint|zram 参数 zstd/50%（zram-tools；svc 归 zram 能力，v0.19）
-zram-generator|system|$COMMON/config/services/systemd/zram-generator.conf|/etc/systemd/zram-generator.conf|copy|y|os=fedora,rhel,centos,rocky,alma,arch,manjaro,endeavouros,garuda,opensuse-leap,opensuse-tumbleweed,sles|zram-generator conf（fedora/arch/suse 系；svc 归 zram 能力，v0.19）
+sysctl-devspace|system|$COMMON/config/Services/sysctl/99-devspace.conf|/etc/sysctl.d/99-devspace.conf|copy|y|os_family=linux|inotify+swappiness+vfs_cache_pressure+file-max（v0.19 系统优化默认集）
+journald-devspace|system|$COMMON/config/Services/systemd/journald-devspace.conf|/etc/systemd/journald.conf.d/99-devspace.conf|copy|y|os_family=linux|journald drop-in：宿主日志 512M/KeepFree 1G/14day（v0.19）
+limits-devspace|system|$COMMON/config/Services/limits/99-devspace.conf|/etc/security/limits.d/99-devspace.conf|copy|y|os_family=linux|nofile 65535（v0.19）
+zramswap|system|$COMMON/config/Services/zram/zramswap|/etc/default/zramswap|copy|y|os=ubuntu,debian,linuxmint|zram 参数 zstd/50%（zram-tools；svc 归 zram 能力，v0.19）
+zram-generator|system|$COMMON/config/Services/systemd/zram-generator.conf|/etc/systemd/zram-generator.conf|copy|y|os=fedora,rhel,centos,rocky,alma,arch,manjaro,endeavouros,garuda,opensuse-leap,opensuse-tumbleweed,sles|zram-generator conf（fedora/arch/suse 系；svc 归 zram 能力，v0.19）
 hosts-fragment|system|$COMMON/config/hosts.toml|/etc/hosts|hosts|y|os_family=linux|hosts.toml→/etc/hosts 标记片段（ip 空机器段跳过 + 自身 127.0.1.1；apply 幂等再生）
-docker-daemon|service|$COMMON/config/services/docker/daemon.json|/etc/docker/daemon.json|copy-expand|y||registry-mirrors+日志轮转；data-root=/var/lib/docker（实际数据在 ①，见 docker-root-mount；宪法 §10.6）
-docker-root-mount|service|$COMMON/config/services/docker/var-lib-docker.mount|/etc/systemd/system/var-lib-docker.mount|copy-expand|y||${DEV}/services/docker → /var/lib/docker bind：gvfs 只暴露 $HOME 下挂载，容器 rootfs 假卷消失（落位后 daemon-reload + enable --now）
-docker-datadir-order|service|$COMMON/config/services/docker/10-datadir.conf|/etc/systemd/system/docker.service.d/10-datadir.conf|copy|y||docker.service RequiresMountsFor=/var/lib/docker（先挂载后起 dockerd；daemon-reload 生效）
-fstab-hgfs|system|$COMMON/config/services/mount/hgfs.fstab|/etc/fstab|append|y|backend_common=hgfs&backend_host=hgfs|hgfs 挂载两行片段（仅 hgfs 后端机器生效；M2 写入，2026-11-08 收编）
-apt-ubuntu|system|$COMMON/config/apt/ubuntu.sources|/etc/apt/sources.list.d/ubuntu.sources|copy|y|os=ubuntu,debian,linuxmint|tuna noble 四组件（2026-11-08 修复后收编）
+docker-daemon|service|$COMMON/config/Services/docker/daemon.json|/etc/docker/daemon.json|copy-expand|y||registry-mirrors+日志轮转；data-root=/var/lib/docker（实际数据在 ①，见 docker-root-mount；宪法 §10.6）
+docker-root-mount|service|$COMMON/config/Services/docker/var-lib-docker.mount|/etc/systemd/system/var-lib-docker.mount|copy-expand|y||${DEV}/services/docker → /var/lib/docker bind：gvfs 只暴露 $HOME 下挂载，容器 rootfs 假卷消失（落位后 daemon-reload + enable --now）
+docker-datadir-order|service|$COMMON/config/Services/docker/10-datadir.conf|/etc/systemd/system/docker.service.d/10-datadir.conf|copy|y||docker.service RequiresMountsFor=/var/lib/docker（先挂载后起 dockerd；daemon-reload 生效）
+fstab-hgfs|system|$COMMON/config/Services/mount/hgfs.fstab|/etc/fstab|append|y|backend_common=hgfs&backend_host=hgfs|hgfs 挂载两行片段（仅 hgfs 后端机器生效；M2 写入，2026-11-08 收编）
+apt-ubuntu|system|$COMMON/config/PkgSource/ubuntu.sources|/etc/apt/sources.list.d/ubuntu.sources|copy|y|os=ubuntu,debian,linuxmint|tuna noble 四组件（2026-11-08 修复后收编）
 user-dirs|dotfile|$COMMON/config/dot_config/user-dirs.dirs.tmpl|$HOME/.config/user-dirs.dirs|chezmoi|n||XDG 用户目录 → ② Local 锚点（.tmpl 按本机数据渲染；chezmoi 再生；M2 不再直写）
 fcitx5-rime|dotfile|$COMMON/config/dot_local/share/fcitx5/rime/default.custom.yaml|$HOME/DevEnv/xdg/local/fcitx5/rime/default.custom.yaml|copy|n||Fcitx5 actual XDG location
 fcitx5-autostart|dotfile|$COMMON/config/dot_config/autostart/org.fcitx.Fcitx5.desktop|$HOME/DevEnv/xdg/config/autostart/org.fcitx.Fcitx5.desktop|copy|n||Fcitx5 actual XDG location

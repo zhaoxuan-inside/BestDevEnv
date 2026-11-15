@@ -45,7 +45,7 @@ elif [ "$_cap_link" = "1" ] && { [ ! -e "$MP" ] || [ -L "$MP" ] || { [ -d "$MP" 
     fi
     if ln -s "$REAL" "$MP" 2>/dev/null; then
         bde_ok "symlink: $REPO/$SUB → $REAL（共享盘支持 symlink，免 bind）"
-        bde_info "产物落点: $REAL ｜ 跨机成品 → $COMMON/exchange/$REPO/"
+        bde_info "产物落点: $REAL ｜ 跨机成品 → $COMMON/50_Exchange/$REPO/"
         exit 0
     fi
     bde_info "symlink 落位失败，回退 bind 策略"
@@ -66,4 +66,4 @@ fi
 
 LINE="$REPO|$SUB|$REAL"
 grep -qF -- "$LINE" "$LIST" 2>/dev/null || printf '%s\n' "$LINE" >> "$LIST"
-bde_info "产物落点: $REAL ｜ 跨机成品 → $COMMON/exchange/$REPO/"
+bde_info "产物落点: $REAL ｜ 跨机成品 → $COMMON/50_Exchange/$REPO/"

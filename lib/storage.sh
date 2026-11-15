@@ -6,7 +6,7 @@
 #   user    用户级  （本机本用户）       ← 兼容别名 ① DEV
 # 后端：passthrough（已有挂载）| hgfs | local | nfs | smb（options 键携带 credentials 等）| rclone（云盘）
 # 档案解析顺序（bootstrap 免疫）：$BDE_STORAGE_PROFILE → ① docs/state/storage.toml
-#   → ③ 正本 config/data/storage.toml（可达则用）→ 内置默认（auto 探测）
+#   → ③ 正本 config/Registry/storage.toml（可达则用）→ 内置默认（auto 探测）
 # 本文件不依赖 paths.sh/common.sh；对上层只暴露 bde_storage_load / bde_storage_ensure /
 # bde_storage_anchors_emit / BDE_SCOPE_* / BDE_STORAGE_PROFILE_ERROR
 # 机器段匹配按小写归一（hostname 大小写不敏感；克隆 VM / 大写主机名场景不丢段）
@@ -25,7 +25,7 @@ bde_storage_profile() {
     fi
     local local_copy="${BDE_STORAGE_STATE:-$HOME/DevEnv/docs/state/storage.toml}"
     [ -f "$local_copy" ] && { echo "$local_copy"; return; }
-    if [ -f /Share/Common/config/data/storage.toml ]; then echo /Share/Common/config/data/storage.toml; return; fi
+    if [ -f /Share/Common/config/Registry/storage.toml ]; then echo /Share/Common/config/Registry/storage.toml; return; fi
     echo ""
 }
 

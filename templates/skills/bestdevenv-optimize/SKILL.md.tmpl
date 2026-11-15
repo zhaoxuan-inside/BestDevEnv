@@ -25,9 +25,9 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 
 | 项 | 落点 | 验收 |
 |---|---|---|
-| 内核参数 | 正本 ③ `config/services/sysctl/99-devspace.conf` → `/etc/sysctl.d/`（inotify=@CFG_INOTIFY@ / swappiness=@CFG_SWAP@ / vfs_cache_pressure / file-max；cfg-map `sysctl-devspace`，落位后自动 `sysctl --system`） | `sysctl vm.swappiness` ｜ doctor |
-| journald 上限 | 正本 ③ `config/services/systemd/journald-devspace.conf` → drop-in（SystemMaxUse=@CFG_JMAX@ / KeepFree=@CFG_JKEEP@ / Retention=@CFG_JRET@；落位后自动重启 journald） | `ls /etc/systemd/journald.conf.d/` |
-| nofile 上限 | 正本 ③ `config/services/limits/99-devspace.conf` → `/etc/security/limits.d/`（nofile=@CFG_NOFILE@，登录会话生效） | `ulimit -n`（新会话） |
+| 内核参数 | 正本 ③ `config/Services/sysctl/99-devspace.conf` → `/etc/sysctl.d/`（inotify=@CFG_INOTIFY@ / swappiness=@CFG_SWAP@ / vfs_cache_pressure / file-max；cfg-map `sysctl-devspace`，落位后自动 `sysctl --system`） | `sysctl vm.swappiness` ｜ doctor |
+| journald 上限 | 正本 ③ `config/Services/systemd/journald-devspace.conf` → drop-in（SystemMaxUse=@CFG_JMAX@ / KeepFree=@CFG_JKEEP@ / Retention=@CFG_JRET@；落位后自动重启 journald） | `ls /etc/systemd/journald.conf.d/` |
+| nofile 上限 | 正本 ③ `config/Services/limits/99-devspace.conf` → `/etc/security/limits.d/`（nofile=@CFG_NOFILE@，登录会话生效） | `ulimit -n`（新会话） |
 | SSD TRIM | `fstrim.timer` enable --now（对机械盘无操作=无害） | `systemctl is-enabled fstrim.timer` |
 | zram 压缩内存交换 | 语义包 zram（debian=zram-tools+`/etc/default/zramswap`；fedora/arch/suse=zram-generator conf）；@CFG_ZRAM_ALGO@/@CFG_ZRAM_PCT@% RAM | `swapon --show`（zram0 尺寸 = PERCENT×RAM——参数落位后自动 restart 生效，只 ensure 不 restart 会留旧参数运行态，2026-11-12 实测） |
 | 笔记本电源 | 语义包 power-suite（tlp[+tlp-rdw]）；**无电池自动跳过**（台式机/VM） | `systemctl is-active tlp`（仅电池机） |
@@ -35,7 +35,7 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 | 时间同步 | 只体检不装（timesyncd/chronyd 运行态 → doctor 项） | doctor「时间同步服务运行中」 |
 | 开发者字体 | JetBrainsMono Nerd Font 用户级（③ install/fonts 本地投放优先 → ② 缓存网络兜底 → fonts 能力落位） | `fc-list \| grep -c JetBrains` |
 | inotify 上限 | 同内核参数行（watches=524288 / instances=1024） | `sysctl fs.inotify.max_user_watches` |
-| docker 配置 | cfg-map 收编：正本 ③ `config/services/docker/daemon.json` → `/etc/docker/daemon.json`（`devenv cfg apply`） | `devenv cfg diff` ｜ `docker info` |
+| docker 配置 | cfg-map 收编：正本 ③ `config/Services/docker/daemon.json` → `/etc/docker/daemon.json`（`devenv cfg apply`） | `devenv cfg diff` ｜ `docker info` |
 | docker 数据根 | ① `DevEnv/services/docker`，经 `var-lib-docker.mount` bind 成 `/var/lib/docker` 给 dockerd（数据仍在 ①；挂载点必须在 `$HOME` 外，否则容器的 rootfs/overlayfs/\<id\> 会被 gvfs 当可卸载假卷） | `findmnt /var/lib/docker` ｜ `docker info` Docker Root Dir=`/var/lib/docker` ｜ `docker system df` |
 | docker 安装体 | 语义包 `docker-engine`（适配器别名：apt=docker.io）+ svc ensure + group ensure | `systemctl is-active docker` |
 | apt 源 | 只检测报告，不自动切（人工切阿里/清华） | 执行输出 pending 项 |

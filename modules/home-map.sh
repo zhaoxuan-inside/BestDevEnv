@@ -7,7 +7,7 @@
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 
-MAP="${BDE_HOME_MAP:-$COMMON/config/data/home-map.tsv}"
+MAP="${BDE_HOME_MAP:-$COMMON/config/Registry/home-map.tsv}"
 [ -f "$MAP" ] || { bde_fail "注册表缺失：$MAP"; exit 1; }
 
 # 1) 注册表视图

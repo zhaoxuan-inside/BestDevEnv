@@ -11,9 +11,9 @@ source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 source "$BDE_ROOT/lib/ensure.sh"
 
-APPS_DIR="${BDE_APPS_DIR:-$COMMON/config/apps}"
-CLASSIFY_TSV="$COMMON/config/data/apps-classify.tsv"
-HOME_MAP="$COMMON/config/data/home-map.tsv"
+APPS_DIR="${BDE_APPS_DIR:-$COMMON/config/AppReg}"
+CLASSIFY_TSV="$COMMON/config/Registry/apps-classify.tsv"
+HOME_MAP="$COMMON/config/Registry/home-map.tsv"
 INV_JSON="${BDE_INVENTORY_JSON:-$DEV/docs/state/inventory.json}"
 
 bde_app_render() {  # <manifest 绝对路径>

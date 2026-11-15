@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # lib/network.sh — L0 网络画像层（与 lib/storage.sh 同构）：站点 → 镜像/出口解析，屏蔽网络环境差异
 # 镜像与代理是"站点属性"（家庭 LAN / 办公室 / 云主机），不是机器属性——差异只存在于档案本文件
-# 档案：③ 正本 config/data/network.toml（[default] 基线 + [hostname] 机器段覆盖）
+# 档案：③ 正本 config/Registry/network.toml（[default] 基线 + [hostname] 机器段覆盖）
 # 语义：https_proxy 留空 = 直连（不导出任何代理变量）；镜像键留空 = 不导出该镜像变量
 # 解析失败（无 python3≥3.11 / toml 损坏）→ 输出为空，调用方走 env.sh 内置兜底（bootstrap 免疫）
 # 对上层只暴露：bde_network_emit（stdout = network.env 内容；空输出 = 档案未生效）
@@ -14,7 +14,7 @@ bde_network_profile() {  # 档案定位（或空 = 无档案）
         echo "$BDE_NETWORK_PROFILE"; return
     fi
     # bootstrap 免疫：③ 正本可能尚未挂载——路径写死与本文件头注释一致
-    [ -f /Share/Common/config/data/network.toml ] && { echo /Share/Common/config/data/network.toml; return; }
+    [ -f /Share/Common/config/Registry/network.toml ] && { echo /Share/Common/config/Registry/network.toml; return; }
     echo ""
 }
 
@@ -47,7 +47,7 @@ def emit(k, v):
 
 NO_PROXY_DFT = "localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,.aliyuncs.com,.aliyun.com,.cn"
 print(f"# network.env — 网络画像（由 BestDevEnv/lib/network.sh 生成于 {os.environ['BDE_NETWORK_DATE']}；机器 {machine}）")
-print("# 正本 ③ config/data/network.toml ｜ 再生: devenv state-env ｜ 勿手改（手改会被再生覆盖）")
+print("# 正本 ③ config/Registry/network.toml ｜ 再生: devenv state-env ｜ 勿手改（手改会被再生覆盖）")
 
 emit("BDE_TIMEZONE",                get("timezone"))
 emit("BDE_LANG",                    get("lang"))

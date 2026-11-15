@@ -106,22 +106,22 @@ _cfg_src() {  # <③ 相对路径 config/...> → 实际可读正本路径
     [ -f "$f" ] && { printf '%s\n' "$f"; return; }
     printf '%s\n' "$BDE_ROOT/$1"
 }
-_V_INOTIFY="$(bde_cfgval "$(_cfg_src config/services/sysctl/99-devspace.conf)" '^fs\.inotify\.max_user_watches')"
-_V_SWAP="$(bde_cfgval "$(_cfg_src config/services/sysctl/99-devspace.conf)" '^vm\.swappiness')"
-_V_JMAX="$(bde_cfgval "$(_cfg_src config/services/systemd/journald-devspace.conf)" '^SystemMaxUse')"
-_V_JKEEP="$(bde_cfgval "$(_cfg_src config/services/systemd/journald-devspace.conf)" '^SystemKeepFree')"
-_V_JRET="$(bde_cfgval "$(_cfg_src config/services/systemd/journald-devspace.conf)" '^MaxRetentionSec')"
-_V_NOFILE="$(bde_cfgval "$(_cfg_src config/services/limits/99-devspace.conf)" '^root hard nofile')"
-_V_ZRAM_PCT="$(bde_cfgval "$(_cfg_src config/services/zram/zramswap)" '^PERCENT')"
-_V_ZRAM_ALGO="$(bde_cfgval "$(_cfg_src config/services/zram/zramswap)" '^ALGO')"
+_V_INOTIFY="$(bde_cfgval "$(_cfg_src config/Services/sysctl/99-devspace.conf)" '^fs\.inotify\.max_user_watches')"
+_V_SWAP="$(bde_cfgval "$(_cfg_src config/Services/sysctl/99-devspace.conf)" '^vm\.swappiness')"
+_V_JMAX="$(bde_cfgval "$(_cfg_src config/Services/systemd/journald-devspace.conf)" '^SystemMaxUse')"
+_V_JKEEP="$(bde_cfgval "$(_cfg_src config/Services/systemd/journald-devspace.conf)" '^SystemKeepFree')"
+_V_JRET="$(bde_cfgval "$(_cfg_src config/Services/systemd/journald-devspace.conf)" '^MaxRetentionSec')"
+_V_NOFILE="$(bde_cfgval "$(_cfg_src config/Services/limits/99-devspace.conf)" '^root hard nofile')"
+_V_ZRAM_PCT="$(bde_cfgval "$(_cfg_src config/Services/zram/zramswap)" '^PERCENT')"
+_V_ZRAM_ALGO="$(bde_cfgval "$(_cfg_src config/Services/zram/zramswap)" '^ALGO')"
 _missing=0
 for _v in "$_V_INOTIFY" "$_V_SWAP" "$_V_JMAX" "$_V_JKEEP" "$_V_JRET" "$_V_NOFILE" "$_V_ZRAM_PCT" "$_V_ZRAM_ALGO"; do
     [ -n "$_v" ] || { _missing=$((_missing+1)); bde_pending "SKILL 数值来源缺失（cfgval 取空——③ 正本未就绪？gen 后需复查）"; break; }
 done
 
-# ── 用户语境正本渲染（③ config/agents/user-context.toml → AGENTS.md「用户语境」章节）──
+# ── 用户语境正本渲染（③ config/Agents/user-context.toml → AGENTS.md「用户语境」章节）──
 # 写回制：确认卡确认的语境/决定/偏好由 Skill 当场写回正本；gen 只渲染不采集
-_USERCTX_SRC="$COMMON/config/agents/user-context.toml"
+_USERCTX_SRC="$COMMON/config/Agents/user-context.toml"
 [ -f "$_USERCTX_SRC" ] || _USERCTX_SRC="$BDE_ROOT/config/agents/user-context.toml"
 _USERCTX="(（正本缺失：config/agents/user-context.toml）)"
 [ -f "$_USERCTX_SRC" ] && _USERCTX="$(USERCTX_FILE="$_USERCTX_SRC" python3 <<'PY'

@@ -30,9 +30,9 @@ init.sh 全量管道（自带交互询问与校验）、用户在本次会话已
 
 ## 装后四步（验收前逐项过）
 
-1. **建档**：`$COMMON/config/apps/<名称>.toml`（安装位置 at / 配置 / 数据 / 日志五要素，字段见 docker.toml）
+1. **建档**：`$COMMON/config/AppReg/<名称>.toml`（安装位置 at / 配置 / 数据 / 日志五要素，字段见 docker.toml）
 2. **配置收编**：`devenv cfg adopt` + `cfg apply`——一切优化（镜像源/缓存重定向/服务参数/日志轮转）以受管配置正本落地，**不另立优化文档**；未落正本的优化=漂移
-3. **登记**：新目录先登记 dir-map（`③ config/data/dir-map.tsv`，命名按 NN_ 大写 6-10 规范）；Runtime 类工具 runtimes.tsv + `devenv runtime wire`
+3. **登记**：新目录先登记 dir-map（`③ config/Registry/dir-map.tsv`，命名按 NN_ 大写 6-10 规范）；Runtime 类工具 runtimes.tsv + `devenv runtime wire`
 4. **复核**：`devenv app --audit` 覆盖缺口与 `devenv doctor` 巡检
 
 ## 语言栈（按需选装，幂等）
@@ -65,9 +65,9 @@ bash "$BDE/modules/ide/ide.sh" --no-jetbrains   # VS Code 离线 deb + 扩展档
 
 - **BDE_TOOLS/BDE_LANGS 均为逗号分隔 CSV**——空格分隔会被拼成一个非法名字（2026-11-12 实测）
 - opencode 实体契约位 = ① `$DEV/apps/agent/.opencode/bin`（env.sh PATH 预置）：installer 默认落 `~/.opencode/bin`，tools.sh 安装/发现时自动归位 ①；已装判 `command -v` 与契约位双查
-- 扩展档案在 `$COMMON/config/ide/vscode/{base,<语言>}.txt`——新装扩展未入档案时 ide.sh 会提示补录
+- 扩展档案在 `$COMMON/config/AppReg/vscode/{base,<语言>}.txt`——新装扩展未入档案时 ide.sh 会提示补录
 - GUI 类工具（trae/antigravity/qoder）走人工安装，脚本只登记
-- **装服务/软件/工具后**：按「装后四步」走——建档（apps/<name>.toml）+ `devenv cfg adopt <name> <路径>` 收编进 `$COMMON/config/services/`（版本化 + `devenv cfg apply` 落位 + doctor 巡检漂移）；Runtime 类工具另走 runtimes.tsv 登记 + `devenv runtime wire`
+- **装服务/软件/工具后**：按「装后四步」走——建档（apps/<name>.toml）+ `devenv cfg adopt <name> <路径>` 收编进 `$COMMON/config/Services/`（版本化 + `devenv cfg apply` 落位 + doctor 巡检漂移）；Runtime 类工具另走 runtimes.tsv 登记 + `devenv runtime wire`
 - **存量软件受管化**：位置违规的已装软件用 `devenv app --migrate` 处置——先展示影响（体积/引用/服务），**逐项经用户授权后**实体搬入受管根 + 原位 symlink 接回，迁移后验证可用
 
 ## 验收

@@ -15,7 +15,7 @@ source "$HOME/.config/devspace/env.sh"
 bash "$COMMON/code/BestDevEnv/modules/dirs/linux.sh"
 ```
 
-内容：死挂载清理（清单制 ③ `config/data/mount-fixups.tsv`）→ 作用域就绪（**L0 存储抽象层** `lib/storage.sh`：`bde_storage_ensure shared/host`——M2 不感知介质；后端由 ③ `storage.toml` 档案决定：已挂载任意后端直接就绪 ｜ hgfs ｜ local 本机目录，锚点恒定）→ **每机器状态 env**（`state-env.sh` → ① `anchors.env` 锚点正本 + `network.env` 网络画像，env.sh 自动 source）→ **共享盘能力探测**（symlink/hardlink/大小写/权限/文件名长度 → probe 事实，物理边界按事实渲染）→ 骨架 50 目录 → app 实体归位（清单制 ③ `config/data/apps-classify.tsv`）→ config 种子（仅共享盘无 config 时）→ `~/DevEnv/bin/devenv`（含 `state-env` 子命令）与 code-* 四件套分发 → XDG 用户目录重定向（先搬家后 symlink）。
+内容：死挂载清理（清单制 ③ `config/Registry/mount-fixups.tsv`）→ 作用域就绪（**L0 存储抽象层** `lib/storage.sh`：`bde_storage_ensure shared/host`——M2 不感知介质；后端由 ③ `storage.toml` 档案决定：已挂载任意后端直接就绪 ｜ hgfs ｜ local 本机目录，锚点恒定）→ **每机器状态 env**（`state-env.sh` → ① `anchors.env` 锚点正本 + `network.env` 网络画像，env.sh 自动 source）→ **共享盘能力探测**（symlink/hardlink/大小写/权限/文件名长度 → probe 事实，物理边界按事实渲染）→ 骨架 50 目录 → app 实体归位（清单制 ③ `config/Registry/apps-classify.tsv`）→ config 种子（仅共享盘无 config 时）→ `~/DevEnv/bin/devenv`（含 `state-env` 子命令）与 code-* 四件套分发 → XDG 用户目录重定向（先搬家后 symlink）。
 
 ## 物理边界（本机实测，由 probe 能力探测生成；换后端自动重测）
 

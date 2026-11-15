@@ -13,7 +13,7 @@ shared|config/agents|config/Agent|vibecoding 工具配置（skill/MCP 正本）|
 shared|config/data|config/Data|治理数据表（dir-map/naming/home-map）|配置|深层登记
 shared|config/ide||IDE 配置（待并入 config/Apps）|配置|存量待并入：迁移时处置
 shared|docs|20_Docs|文档|文档|主干
-shared|docs/dev-env|docs/Spec|规范手册/宪法|文档|深层登记
+shared|docs/Handbook|docs/Spec|规范手册/宪法|文档|深层登记
 shared|docs/hosts|docs/Host|机器数据表|文档|深层登记
 shared|docs/env|docs/Envs|环境实况报告|文档|深层登记
 shared|Data|30_Data|共享数据|数据|主干（大小写已合规，补 NN_ 前缀）

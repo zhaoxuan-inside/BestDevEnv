@@ -46,7 +46,7 @@ if [ -f "$_set" ] && [ -f "$_seed" ] && ! diff -q "$_set" "$_seed" >/dev/null 2>
 fi
 
 # ── 3) 扩展：按语言档案安装（base + 所选语言；幂等；未入清单的现装扩展只提示）──
-_vdir="$COMMON/config/ide/vscode"
+_vdir="$COMMON/config/AppReg/vscode"
 if [ -d "$_vdir" ] && command -v code >/dev/null 2>&1; then
     _list="$HOME/DevEnv/tmp/.vscode-ext-merged.txt"
     mkdir -p "$(dirname "$_list")"
@@ -69,7 +69,7 @@ if [ -d "$_vdir" ] && command -v code >/dev/null 2>&1; then
     done < "$_list"
     printf '%s' "$_installed" | while IFS= read -r _e; do
         [ -z "$_e" ] && continue
-        grep -qi "^${_e}\$" "$_list" || bde_pending "扩展未入档案（补进 config/ide/vscode/）: $_e"
+        grep -qi "^${_e}\$" "$_list" || bde_pending "扩展未入档案（补进 config/AppReg/vscode/）: $_e"
     done
 else
     bde_pending "语言档案缺失：$_vdir（base.txt）"
@@ -122,7 +122,7 @@ print(r["version"], r["downloads"]["linux"]["link"])' 2>/dev/null || true)"
             continue
         fi
         # 介质入库（断点续传；已存在则跳过下载）
-        _tgz="$COMMON/install/linux/jetbrains/${_bin}-${_ver}.tar.gz"
+        _tgz="$COMMON/60_Installers/linux/jetbrains/${_bin}-${_ver}.tar.gz"
         mkdir -p "$(dirname "$_tgz")"
         if [ ! -s "$_tgz" ]; then
             bde_info "下载 $_pname $_ver → ${_tgz#$COMMON/}（约 1GB，断点续传）"

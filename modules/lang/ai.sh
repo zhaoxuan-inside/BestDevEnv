@@ -14,10 +14,10 @@ bde_info "M3 ai（模型训练栈）"
 [ -f "$DEV/docs/state/network.env" ] && . "$DEV/docs/state/network.env"
 
 # 1) 模型权重目录 → ③（单份全机共享；HF/ModelScope 镜像与落点由 env.sh/network.toml 契约）
-for d in "$COMMON/data/models/gguf" "$COMMON/data/models/huggingface" "$COMMON/data/models/modelscope"; do
+for d in "$COMMON/30_DataSpace/Models/gguf" "$COMMON/30_DataSpace/Models/huggingface" "$COMMON/30_DataSpace/Models/modelscope"; do
     ensure_dir "$d" 2>/dev/null || true
 done
-bde_ok "模型权重目录 → $COMMON/data/models（单份全机共享）"
+bde_ok "模型权重目录 → $COMMON/30_DataSpace/Models（单份全机共享）"
 
 # 2) conda 环境/包缓存目录 → ①（symlink 需要；.condarc 已指此）
 ensure_dir "$DEV/deps/conda/envs" 2>/dev/null || true

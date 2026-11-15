@@ -15,7 +15,7 @@ source "$HOME/.config/devspace/env.sh"
 devenv doctor      # 自检：存储（后端/持久化/档案对账）/共享盘能力/分发器/正本 gen 指纹/机器登记/env.sh/骨架/AGENTS.md/Runtime 接线/cfg 漂移/config 仓库干净/备份通道/IDE/XDG/inotify（Linux 项）/叠层/根盘水位
 devenv map         # 隐藏目录注册表 + 未登记/失踪检测（--sizes 附体量与最近使用，较慢）
 devenv tidy        # 清可再生缓存（SAFE 清单，~10G 级）
-devenv report      # markdown 报告 → $COMMON/docs/env/<机器名>-<时间>.md
+devenv report      # markdown 报告 → $COMMON/docs/Envstate/<机器名>-<时间>.md
 devenv cfg         # 配置治理：清单/漂移/apply/adopt（详见 bestdevenv-config）
 ```
 
@@ -29,7 +29,7 @@ devenv cfg         # 配置治理：清单/漂移/apply/adopt（详见 bestdeven
 
 - **清**：gradle/npm/pnpm/go-build 缓存、Electron/浏览器标准缓存子目录（不碰登录态）、vscode-server 旧版本、Trash、journal 压至 100M
 - **绝不碰**：工具运行时（codex-runtimes）、浏览器配置/登录态、JetBrains 索引、用户会话数据（opencode.db）、未知目录
-- 新隐藏目录出现 → `devenv map` 报未登记 → 在 `$COMMON/config/data/home-map.tsv` 补一行并 commit（登记数据进 config 仓库）
+- 新隐藏目录出现 → `devenv map` 报未登记 → 在 `$COMMON/config/Registry/home-map.tsv` 补一行并 commit（登记数据进 config 仓库）
 
 ## 验收
 

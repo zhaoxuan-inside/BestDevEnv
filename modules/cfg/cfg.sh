@@ -18,8 +18,8 @@ source "$BDE_ROOT/lib/common.sh"
 source "$BDE_ROOT/lib/ensure.sh"
 
 CFG_MAP="$BDE_ROOT/modules/cfg/cfg-map.tsv"
-CFG_SRC_SERVICES="$COMMON/config/services"
-CFG_SRC_APT="$COMMON/config/apt"
+CFG_SRC_SERVICES="$COMMON/config/Services"
+CFG_SRC_APT="$COMMON/config/PkgSource"
 
 _cfg_usage() {
     cat <<'EOF'
@@ -28,7 +28,7 @@ _cfg_usage() {
   apply [name]      正本 → 应用层（幂等；root 项走 sudo -n；copy-expand 按本机锚点展开；
                     落位后自动触发该文件类型的生效动作——sysctl --system / journald 重启）
   diff              全量漂移检测（非零退出 = 有漂移；条件不适用项自动缺席）
-  adopt             收编：应用层现有文件 → $COMMON/config/services/<name>/ 正本并登记
+  adopt             收编：应用层现有文件 → $COMMON/config/Services/<name>/ 正本并登记
   snapshot          备份：③ 正本 → 工程仓库 config/ seed 快照（rsync 镜像 + commit；工程 git push 即异地备份）
   restore [name] [dry]  回退/重建：工程仓库 seed → ③ 正本（snapshot 的逆通道；落盘前先备份 ③ 现状 → ① backup；
                     dry=只预览不落盘。③ 正本缺失时=灾后重建通道。回任意历史时点：
@@ -201,7 +201,7 @@ _cfg_adopt() {
         else cp "$target" "$src" || { bde_fail "收编失败"; return 1; } fi
         bde_ok "收编正本 $src"
     fi
-    local line="${name}|${cls}|\$COMMON/config/services/${name}/$(basename "$target")|${target/#$HOME/\$HOME}|copy|${root}||adopt 收编"
+    local line="${name}|${cls}|\$COMMON/config/Services/${name}/$(basename "$target")|${target/#$HOME/\$HOME}|copy|${root}||adopt 收编"
     if grep -qF -- "${name}|" "$CFG_MAP" 2>/dev/null; then
         bde_pending "登记表已有 $name 行（不重复登记）"
     else

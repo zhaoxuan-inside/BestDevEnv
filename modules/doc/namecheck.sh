@@ -10,13 +10,13 @@ source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 source "$BDE_ROOT/lib/ensure.sh"
 
-DIR_MAP="${BDE_DIR_MAP:-$COMMON/config/data/dir-map.tsv}"
-[ -f "$DIR_MAP" ] || DIR_MAP="$BDE_ROOT/config/data/dir-map.tsv"
+DIR_MAP="${BDE_DIR_MAP:-$COMMON/config/Registry/dir-map.tsv}"
+[ -f "$DIR_MAP" ] || DIR_MAP="$BDE_ROOT/config/Registry/dir-map.tsv"
 OUT_JSON="${BDE_NAMECHECK_JSON:-$DEV/docs/state/namecheck.json}"
 
 # ── naming.toml 档案解析（storage.sh 同款：python tomllib → eval；作用域覆写）──
 _naming_load() {
-    local prof="${BDE_NAMING_PROFILE:-$COMMON/config/data/naming.toml}"
+    local prof="${BDE_NAMING_PROFILE:-$COMMON/config/Registry/naming.toml}"
     [ -f "$prof" ] || prof="$BDE_ROOT/config/data/naming.toml"
     [ -f "$prof" ] || { bde_fail "命名档案缺失：naming.toml"; return 1; }
     eval "$(BDE_NAMING_PROFILE_FILE="$prof" python3 <<'PY'

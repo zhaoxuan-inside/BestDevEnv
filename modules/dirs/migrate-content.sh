@@ -52,14 +52,14 @@ fi
 
 # 3) Models/GGUF → data/models/gguf
 if [ -d "$COMMON/Models/GGUF" ]; then
-    merge_dir "$COMMON/Models/GGUF" "$COMMON/data/models/gguf"
+    merge_dir "$COMMON/Models/GGUF" "$COMMON/30_DataSpace/Models/gguf"
     rmdir "$COMMON/Models" 2>/dev/null && bde_ok "Models 已清空移除"
 fi
 
 # 4) Caches 对号入座
 merge_dir "$COMMON/Caches/go-mod"      "$COMMON/cache/linux/go-mod"
-merge_dir "$COMMON/Caches/huggingface" "$COMMON/data/models/huggingface"
-merge_dir "$COMMON/Caches/modelscope"  "$COMMON/data/models/modelscope"
+merge_dir "$COMMON/Caches/huggingface" "$COMMON/30_DataSpace/Models/huggingface"
+merge_dir "$COMMON/Caches/modelscope"  "$COMMON/30_DataSpace/Models/modelscope"
 merge_dir "$COMMON/Caches/pip"         "$COMMON/cache/linux/pip"
 merge_dir "$COMMON/Caches/pub-cache"   "$COMMON/cache/linux/pub-cache"
 if [ -d "$COMMON/Caches" ]; then
@@ -67,9 +67,9 @@ if [ -d "$COMMON/Caches" ]; then
     if [ "$_left" -eq 0 ]; then
         rmdir "$COMMON/Caches" && bde_ok "Caches 已清空移除"
     else
-        ensure_dir "$COMMON/archive/caches-legacy" 2>/dev/null
+        ensure_dir "$COMMON/90_Archive/caches-legacy" 2>/dev/null
         shopt -s dotglob nullglob
-        for f in "$COMMON/Caches"/*; do mv "$f" "$COMMON/archive/caches-legacy/"; done
+        for f in "$COMMON/Caches"/*; do mv "$f" "$COMMON/90_Archive/caches-legacy/"; done
         shopt -u dotglob nullglob
         rmdir "$COMMON/Caches" && bde_pending "Caches 未识别项 → archive/caches-legacy"
     fi
@@ -80,8 +80,8 @@ if [ -d "$COMMON/Packages" ]; then
     shopt -s nullglob
     for f in "$COMMON/Packages"/*; do
         case "$(basename "${f,,}")" in
-            *.exe|*.msi) _t="$COMMON/install/win" ;;
-            *)           _t="$COMMON/install/linux" ;;
+            *.exe|*.msi) _t="$COMMON/60_Installers/win" ;;
+            *)           _t="$COMMON/60_Installers/linux" ;;
         esac
         ensure_dir "$_t" 2>/dev/null
         mv "$f" "$_t"/ 2>/dev/null || bde_pending "Packages 迁移失败: $(basename "$f")"
@@ -91,19 +91,19 @@ if [ -d "$COMMON/Packages" ]; then
 fi
 
 # 6) Data 对号入座
-merge_dir "$COMMON/Data/datasets" "$COMMON/data/datasets"
-merge_dir "$COMMON/Data/fixtures" "$COMMON/data/fixtures"
+merge_dir "$COMMON/Data/datasets" "$COMMON/30_DataSpace/Datasets"
+merge_dir "$COMMON/Data/fixtures" "$COMMON/30_DataSpace/Fixtures"
 move_dir  "$COMMON/Data/android"  "$COMMON/data/android"
 move_dir  "$COMMON/Data/business" "$COMMON/data/business"
 move_dir  "$COMMON/Data/databases" "$COMMON/data/databases"
-move_dir  "$COMMON/Data/Backups"  "$COMMON/archive/Backups"
+move_dir  "$COMMON/Data/Backups"  "$COMMON/90_Archive/Backups"
 
 # 7) Component → install/components（服务组件介质）
 if [ -d "$COMMON/Component" ]; then
-    ensure_dir "$COMMON/install/components" 2>/dev/null
+    ensure_dir "$COMMON/60_Installers/components" 2>/dev/null
     shopt -s dotglob nullglob
     for f in "$COMMON/Component"/*; do
-        mv "$f" "$COMMON/install/components"/ 2>/dev/null || bde_pending "Component 迁移失败: $(basename "$f")"
+        mv "$f" "$COMMON/60_Installers/components"/ 2>/dev/null || bde_pending "Component 迁移失败: $(basename "$f")"
     done
     shopt -u dotglob nullglob
     rmdir "$COMMON/Component" 2>/dev/null && bde_ok "Component → install/components"

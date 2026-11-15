@@ -78,9 +78,9 @@ else
 fi
 
 # 6) 声明式系统配置：正本 → 能力生效（正本缺失只提示——config seed 由 M2 建立）
-cap_run kernel ensure "$COMMON/config/services/sysctl/99-devspace.conf" || true
-cap_run logs   ensure "$COMMON/config/services/systemd/journald-devspace.conf" || true
-cap_run limits ensure "$COMMON/config/services/limits/99-devspace.conf" || true
+cap_run kernel ensure "$COMMON/config/Services/sysctl/99-devspace.conf" || true
+cap_run logs   ensure "$COMMON/config/Services/systemd/journald-devspace.conf" || true
+cap_run limits ensure "$COMMON/config/Services/limits/99-devspace.conf" || true
 
 # 7) SSD 周期 TRIM / 时间同步 / 时区画像 / zram / 笔记本电源（各能力自带条件化与降级）
 cap_run trim ensure || true

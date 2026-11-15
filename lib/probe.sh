@@ -24,10 +24,10 @@ bde_templates_hash() {
 # 改值未重跑 devenv gen = 代际漂移，doctor「正本与模板同代」项检出（闭环：数据变更必经再生）
 bde_cfg_sources_hash() {
     for f in \
-        "$COMMON/config/services/sysctl/99-devspace.conf" \
-        "$COMMON/config/services/systemd/journald-devspace.conf" \
-        "$COMMON/config/services/limits/99-devspace.conf" \
-        "$COMMON/config/services/zram/zramswap"; do
+        "$COMMON/config/Services/sysctl/99-devspace.conf" \
+        "$COMMON/config/Services/systemd/journald-devspace.conf" \
+        "$COMMON/config/Services/limits/99-devspace.conf" \
+        "$COMMON/config/Services/zram/zramswap"; do
         [ -f "$f" ] && sha256sum "$f" 2>/dev/null
     done | LC_ALL=C sort | sha256sum | cut -d' ' -f1
 }
@@ -124,8 +124,8 @@ bde_probe_collect() {
     P_ENV_SH=0; [ -f "$HOME/.config/devspace/env.sh" ] && P_ENV_SH=1
     P_XDG_DOC=""; grep -m1 'XDG_DOCUMENTS_DIR' "$HOME/.config/user-dirs.dirs" 2>/dev/null | grep -q 'Share/Local' && P_XDG_DOC="重定向"
     P_AGENTS_MD=0; [ -f "$HOME/.config/devspace/agents/AGENTS.md" ] && P_AGENTS_MD=1
-    P_SKELETON=0; [ -d "$COMMON/data/models" ] && [ -d "$LOCAL/20_Build" ] && P_SKELETON=1
-    P_IDE_OK=0; { [ -f "$HOME/.config/Code/User/settings.json" ] && [ -f "$COMMON/config/ide/vscode/base.txt" ] \
+    P_SKELETON=0; [ -d "$COMMON/30_DataSpace/Models" ] && [ -d "$LOCAL/20_Build" ] && P_SKELETON=1
+    P_IDE_OK=0; { [ -f "$HOME/.config/Code/User/settings.json" ] && [ -f "$COMMON/config/AppReg/vscode/base.txt" ] \
         && command -v code >/dev/null 2>&1; } && P_IDE_OK=1
 
     # 部署层一致性（分发器 / 正本同代指纹 / 机器登记）
@@ -197,7 +197,7 @@ bde_probe_collect() {
     fi
     # agents 正本 ③ 版本化（Skill/MCP 正本入 config 仓库——跨机器复用；非 git 环境判 0 不误报）
     P_AGENTS_CANON=0
-    if [ -d "$COMMON/config/agents/skill" ] \
+    if [ -d "$COMMON/config/Agents/skill" ] \
        && command -v git >/dev/null 2>&1 && [ -d "$COMMON/config/.git" ] \
        && [ -n "$(git -C "$COMMON/config" ls-files agents 2>/dev/null | head -1)" ]; then
         P_AGENTS_CANON=1
@@ -220,7 +220,7 @@ bde_probe_collect() {
     fi
     # 家目录契约路径合规（登记制：real+未登记=流浪实体；数据源 home-map.tsv——登记是合规的唯一豁免）
     P_HOME_STRAY=0
-    _hm="$COMMON/config/data/home-map.tsv"; [ -f "$_hm" ] || _hm="$BDE_ROOT/config/data/home-map.tsv"
+    _hm="$COMMON/config/Registry/home-map.tsv"; [ -f "$_hm" ] || _hm="$BDE_ROOT/config/Registry/home-map.tsv"
     for _sp in .cache .cargo .rustup .claude .codex .zcode .opencode .gradle .m2 .conda Desktop Documents Downloads Music Pictures Public Templates Videos; do
         _pp="$HOME/$_sp"
         { [ -d "$_pp" ] || [ -f "$_pp" ]; } && [ ! -L "$_pp" ] || continue
@@ -229,7 +229,7 @@ bde_probe_collect() {
 
     # 作用域锚点已按机器登记（用户指定制：storage.toml 机器节；未登记=初始化首问未完成）
     P_ANCHOR_REG=0
-    _stf="$COMMON/config/data/storage.toml"; [ -f "$_stf" ] || _stf="$BDE_ROOT/config/data/storage.toml"
+    _stf="$COMMON/config/Registry/storage.toml"; [ -f "$_stf" ] || _stf="$BDE_ROOT/config/Registry/storage.toml"
     [ -f "$_stf" ] && grep -qs "^\[${BDE_MACHINE,,}\." "$_stf" && P_ANCHOR_REG=1
 
     # 目录登记制 + 命名规范（单实现委托 namecheck：静默扫描三锚点一级 + dir-map，harvest 计数）
@@ -251,8 +251,8 @@ PY
 
     # 应用档案覆盖缺口（已管集合 apps-classify ∪ home-map 所属应用 ∪ inventory 软件名 vs 档案数）
     P_APP_NOARCH=0
-    eval "$(APPS_DIR_T="$COMMON/config/apps" CLASSIFY_T="$COMMON/config/data/apps-classify.tsv" \
-            HOME_MAP_T="$COMMON/config/data/home-map.tsv" INV_JSON_T="$DEV/docs/state/inventory.json" \
+    eval "$(APPS_DIR_T="$COMMON/config/AppReg" CLASSIFY_T="$COMMON/config/Registry/apps-classify.tsv" \
+            HOME_MAP_T="$COMMON/config/Registry/home-map.tsv" INV_JSON_T="$DEV/docs/state/inventory.json" \
             python3 <<'PY'
 import os, json, glob, tomllib, shlex
 

@@ -19,8 +19,8 @@ NF_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrai
 # 1) 源解析：③ 手工投放 → ② 下载缓存（幂等）
 _src=""
 ensure_dir "$LOCAL/10_Cache/fonts" 2>/dev/null || true
-if [ -d "$COMMON/install/fonts/$FONT_ID" ] && ls "$COMMON/install/fonts/$FONT_ID"/*.ttf >/dev/null 2>&1; then
-    _src="$COMMON/install/fonts/$FONT_ID"
+if [ -d "$COMMON/60_Installers/fonts/$FONT_ID" ] && ls "$COMMON/60_Installers/fonts/$FONT_ID"/*.ttf >/dev/null 2>&1; then
+    _src="$COMMON/60_Installers/fonts/$FONT_ID"
     bde_skip "字体源：③ 本地投放 $_src"
 else
     _cache="$LOCAL/10_Cache/fonts/$FONT_ID"
@@ -36,7 +36,7 @@ else
         bde_ok "字体下载解包 → $_cache"
     else
         rm -f "$LOCAL/10_Cache/fonts/JetBrainsMono.tar.xz" 2>/dev/null
-        bde_pending "Nerd Font 下载失败（github 可达性；可手工投放 ttf → $COMMON/install/fonts/$FONT_ID 后重跑）"
+        bde_pending "Nerd Font 下载失败（github 可达性；可手工投放 ttf → $COMMON/60_Installers/fonts/$FONT_ID 后重跑）"
     fi
 fi
 

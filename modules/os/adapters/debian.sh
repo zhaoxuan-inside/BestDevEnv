@@ -56,7 +56,7 @@ cap__pkg_check_source() {  # 只报告不盲切（宪法：人工确认后才动
         bde_ok "apt 源已是国内镜像"
         return 0
     fi
-    bde_pending "apt 源为官方（人工确认后切阿里/清华；正本 config/apt/ubuntu.sources 可经 devenv cfg apply 落位）"
+    bde_pending "apt 源为官方（人工确认后切阿里/清华；正本 config/PkgSource/ubuntu.sources 可经 devenv cfg apply 落位）"
     return 1
 }
 
@@ -72,7 +72,7 @@ cap__im_ensure() {
 # ── zram（压缩内存交换；zram-tools + /etc/default/zramswap 正本，cfg-map zramswap 同步治理）──
 cap__zram_ensure() {
     cap_pkg_install zram || return 1
-    local src="$COMMON/config/services/zram/zramswap" dst="${BDE_CAP_ZRAMSWAP_CONF:-/etc/default/zramswap}"
+    local src="$COMMON/config/Services/zram/zramswap" dst="${BDE_CAP_ZRAMSWAP_CONF:-/etc/default/zramswap}"
     [ -f "$src" ] || { bde_pending "zramswap 正本缺失：$src"; return 1; }
     sudo -n mkdir -p "$(dirname "$dst")" 2>/dev/null
     local _zram_cfg_changed=0

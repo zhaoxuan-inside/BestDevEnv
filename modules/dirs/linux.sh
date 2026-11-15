@@ -12,8 +12,8 @@ ROOT="$(bde_root)"
 
 bde_info "M2 目录架构（机器: $MACHINE ｜ 目标锚点: $BDE_SHARE_ROOT）"
 
-# 1) 死挂载清理（清单制：③ config/data/mount-fixups.tsv——机器差异进数据，代码不背单机历史）
-_fixups="$COMMON/config/data/mount-fixups.tsv"
+# 1) 死挂载清理（清单制：③ config/Registry/mount-fixups.tsv——机器差异进数据，代码不背单机历史）
+_fixups="$COMMON/config/Registry/mount-fixups.tsv"
 if [ -f "$_fixups" ]; then
     while IFS='|' read -r _m _mp _note; do
         case "${_m:-}" in ''|'#'*) continue ;; esac
@@ -29,7 +29,7 @@ if [ -f "$_fixups" ]; then
         fi
     done < "$_fixups"
 else
-    bde_skip "无 mount-fixups 清单（③ config/data/mount-fixups.tsv）"
+    bde_skip "无 mount-fixups 清单（③ config/Registry/mount-fixups.tsv）"
 fi
 
 # 2) 作用域就绪——存储抽象层（宪法 §20：M2 不感知介质；作用域→后端解析见 lib/storage.sh + ③ storage.toml）
@@ -49,14 +49,14 @@ fi
 
 # 3) 骨架目录（Common 八区 / Local / DevEnv / 业务热区）
 _bde_dirs=(
-    "$COMMON/code" "$COMMON/config" "$COMMON/config/services"
-    "$COMMON/install/iso" "$COMMON/install/win" "$COMMON/install/linux" "$COMMON/install/fonts"
+    "$COMMON/code" "$COMMON/config" "$COMMON/config/Services"
+    "$COMMON/60_Installers/iso" "$COMMON/60_Installers/win" "$COMMON/60_Installers/linux" "$COMMON/60_Installers/fonts"
     "$COMMON/cache/linux/npm" "$COMMON/cache/linux/pnpm-store" "$COMMON/cache/linux/pip" "$COMMON/cache/linux/uv"
     "$COMMON/cache/windows"
-    "$COMMON/data/models/gguf" "$COMMON/data/models/huggingface" "$COMMON/data/models/modelscope"
-    "$COMMON/data/datasets" "$COMMON/data/fixtures"
-    "$COMMON/exchange" "$COMMON/docs/dev-env" "$COMMON/docs/hosts" "$COMMON/docs/env"
-    "$COMMON/templates" "$COMMON/archive"
+    "$COMMON/30_DataSpace/Models/gguf" "$COMMON/30_DataSpace/Models/huggingface" "$COMMON/30_DataSpace/Models/modelscope"
+    "$COMMON/30_DataSpace/Datasets" "$COMMON/30_DataSpace/Fixtures"
+    "$COMMON/50_Exchange" "$COMMON/docs/Handbook" "$COMMON/docs/Hostmap" "$COMMON/docs/Envstate"
+    "$COMMON/70_Templates" "$COMMON/90_Archive"
     "$LOCAL/20_Build" "$LOCAL/10_Cache/gradle" "$LOCAL/10_Cache/m2"
     "$LOCAL/40_IdeRun" "$LOCAL/30_Logs"
     "$LOCAL/00_Data/Dump" "$LOCAL/00_Data/Export" "$LOCAL/docs"
@@ -75,7 +75,7 @@ else
 fi
 
 # 3.5) app 实体分类归位（家目录=链接层；实体按分类住 apps/<分类>/ —— 宪法 §19.6/§20.2）
-# 配置点：③ config/data/apps-classify.tsv 一张清单即分类（agent=vibecoding / ide=编辑器 / dev=语言与开发工具链）
+# 配置点：③ config/Registry/apps-classify.tsv 一张清单即分类（agent=vibecoding / ide=编辑器 / dev=语言与开发工具链）
 # 双来源迁移：apps 顶层旧位 → 分类 ｜ 家目录真实目录 → 分类（收编，mv 同盘瞬时+链接接回）
 _migrate_app() {  # <name> <分类>
     local n=$1 cat=$2
@@ -92,7 +92,7 @@ _migrate_app() {  # <name> <分类>
     APPS_MOVED=$((APPS_MOVED+1))
 }
 APPS_MOVED=0
-_applist="$COMMON/config/data/apps-classify.tsv"
+_applist="$COMMON/config/Registry/apps-classify.tsv"
 if [ -f "$_applist" ]; then
     while IFS='|' read -r _cat _n; do
         case "${_cat:-}" in ''|'#'*) continue ;; esac
@@ -101,7 +101,7 @@ if [ -f "$_applist" ]; then
     done < "$_applist"
     [ "$APPS_MOVED" -gt 0 ] && bde_ok "app 实体分类归位（$APPS_MOVED 个，清单 $_applist）" || bde_skip "app 实体分类已是最新"
 else
-    bde_pending "无 apps-classify 清单（③ config/data/apps-classify.tsv）——app 归位跳过"
+    bde_pending "无 apps-classify 清单（③ config/Registry/apps-classify.tsv）——app 归位跳过"
 fi
 
 # 4) config 种子（仅当共享盘尚无 config —— 防双源漂移）

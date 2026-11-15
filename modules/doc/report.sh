@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# modules/doc/report.sh — L3 报告视图：probe.json → markdown → $COMMON/docs/env/
+# modules/doc/report.sh — L3 报告视图：probe.json → markdown → $COMMON/docs/Envstate/
 # 纯渲染：数据来自 L1 快照（bde_probe_save），本文件不含采集逻辑（宪法 §19.5）
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
@@ -10,10 +10,10 @@ source "$BDE_ROOT/lib/probe.sh"
 bde_info "M5 环境描述文档（报告视图）"
 F_JSON="$(bde_probe_save)" || { bde_pending "probe 快照失败"; exit 1; }
 
-ensure_dir "$COMMON/docs/env" || { echo "报告目录不可用：$COMMON/docs/env"; exit 1; }
+ensure_dir "$COMMON/docs/Envstate" || { echo "报告目录不可用：$COMMON/docs/Envstate"; exit 1; }
 
 _machine="${BDE_MACHINE:-$(hostname)}"
-_f="$COMMON/docs/env/${_machine}-$(date +%Y%m%d-%H%M).md"
+_f="$COMMON/docs/Envstate/${_machine}-$(date +%Y%m%d-%H%M).md"
 PROGRESS="$(bde_progress_show 2>/dev/null || true)"
 PENDING_TXT=""
 [ "${BDE_PENDING_N:-0}" -gt 0 ] && PENDING_TXT="$(printf -- '- [ ] %s\n' "${BDE_PENDINGS[@]}")"

@@ -286,7 +286,7 @@ except Exception: print(0)' "$zf" 2>/dev/null || echo 0)" -gt 0 ]; then
 
 # ── 会话调查（只读；工具私有，不迁移不清理）────────────────────────────────
 _rt_sessions() {
-    bde_info "会话库调查（只读；治理政策见 \$COMMON/config/data/home-map.tsv）"
+    bde_info "会话库调查（只读；治理政策见 \$COMMON/config/Registry/home-map.tsv）"
     mapfile -t _rows < <(_reg_rows)
     local _r name sess p
     for _r in "${_rows[@]}"; do

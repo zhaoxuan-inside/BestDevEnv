@@ -10,13 +10,13 @@ description: BestDevEnv runtime 统一管理层——所有 vibecoding 工具视
 
 ## 四域正本与落点
 
-分层：**Skill/MCP 正本住 ③**（`$COMMON/config/agents/`，config 仓库 git 版本化——push/pull 即跨机器复用）；**记忆住 ①**（每机器 probe 渲染产物，可复用的是模板）；路径锚点（`${DEV}` 等）在投影时按本机展开。
+分层：**Skill/MCP 正本住 ③**（`$COMMON/config/Agents/`，config 仓库 git 版本化——push/pull 即跨机器复用）；**记忆住 ①**（每机器 probe 渲染产物，可复用的是模板）；路径锚点（`${DEV}` 等）在投影时按本机展开。
 
 | 域 | 正本 | 各工具落点（symlink/投影） | 动作 |
 |---|---|---|---|
 | 记忆 | ① `~/.config/devspace/agents/AGENTS.md` | `~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.gemini/GEMINI.md`、`~/.config/opencode/AGENTS.md`、`~/.zcode/AGENTS.md`、`~/.agents/AGENTS.md`（arkcli） | `devenv runtime wire` |
-| Skill | ③ `$COMMON/config/agents/skill/<name>/` | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽，ZCode 原生扫描）逐项 symlink | `devenv runtime wire` |
-| MCP | ③ `$COMMON/config/agents/mcp.json`（锚点按本机展开） | claude `~/.claude.json`、codex `config.toml` 托管块、gemini `settings.json`、opencode `opencode.json`、copilot `mcp-config.json`、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
+| Skill | ③ `$COMMON/config/Agents/skill/<name>/` | `~/.claude/skills`、`~/.agents/skills`（zcode/arkcli 共用枢纽，ZCode 原生扫描）逐项 symlink | `devenv runtime wire` |
+| MCP | ③ `$COMMON/config/Agents/mcp.json`（锚点按本机展开） | claude `~/.claude.json`、codex `config.toml` 托管块、gemini `settings.json`、opencode `opencode.json`、copilot `mcp-config.json`、zcode/arkcli 走 `~/.agents/mcp.json` 兜底 | `devenv runtime mcp sync` |
 | 会话 | 工具私有（登记于 `modules/agent/runtimes.tsv`） | 各工具自管 | `devenv runtime sessions`（只读调查） |
 
 ## 执行
