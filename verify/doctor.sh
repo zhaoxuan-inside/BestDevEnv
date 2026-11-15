@@ -14,7 +14,7 @@ source "$BDE_ROOT/lib/probe.sh"
 
 BDE_DOCTOR_JSON="${BDE_DOCTOR_JSON:-0}"
 [ "${1:-}" = "--json" ] && BDE_DOCTOR_JSON=1
-_PJSON="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}/probe.json"
+_PJSON="${BDE_PROBE_STATE_DIR:-$DEV/80_Records/20_Snapshots}/probe.json"
 bde_probe_save >/dev/null || { echo "✗ probe 采集/落快照失败"; exit 2; }
 JSON="$(cat "$_PJSON" 2>/dev/null)"
 [ -n "$JSON" ] || { echo "✗ probe 快照读取失败：$_PJSON"; exit 2; }

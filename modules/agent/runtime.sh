@@ -296,7 +296,7 @@ _rt_sessions() {
         [ -e "$p" ] || continue
         printf "  %-12s %8s  %s\n" "$name" "$(du -sh "$p" 2>/dev/null | cut -f1)" "$p"
     done
-    bde_info "跨工具长任务续做一律走 devenv orch（journal：\$DEV/docs/progress/orch-*.md）"
+    bde_info "跨工具长任务续做一律走 devenv orch（journal：\$DEV/80_Records/00_Progress/orch-*.md）"
 }
 
 # ── 现状视图 ──────────────────────────────────────────────────────────────

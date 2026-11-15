@@ -88,7 +88,7 @@ case "$BDE_CAP_FAMILY" in
 esac
 export BDE_OS_ID BDE_CAP_FAMILY
 
-BDE_PROGRESS_DIR="${BDE_PROGRESS_DIR:-$DEV/docs/progress}"
+BDE_PROGRESS_DIR="${BDE_PROGRESS_DIR:-$DEV/80_Records/00_Progress}"
 mkdir -p "$BDE_PROGRESS_DIR" 2>/dev/null || true
 
 # 执行留痕（全量输出落日志，便于事后排查；--no-log 关闭）

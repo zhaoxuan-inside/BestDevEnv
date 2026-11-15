@@ -18,7 +18,7 @@ else
 fi
 
 # 2) venv 根目录与缓存
-ensure_dir "$DEV/virtualenvs" && bde_ok "venv 根：$DEV/virtualenvs"
+ensure_dir "$DEV/30_VirtualEnv" && bde_ok "venv 根：$DEV/30_VirtualEnv"
 ensure_dir "$COMMON/cache/linux/uv" 2>/dev/null || true
 ensure_dir "$COMMON/cache/linux/pip" 2>/dev/null || true
 

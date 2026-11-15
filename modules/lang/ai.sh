@@ -11,7 +11,7 @@ source "$BDE_ROOT/lib/cap.sh"
 bde_info "M3 ai（模型训练栈）"
 
 # 站点网络画像接入（Miniconda 拉取走站点代理/镜像契约）
-[ -f "$DEV/docs/state/network.env" ] && . "$DEV/docs/state/network.env"
+[ -f "$DEV/80_Records/20_Snapshots/network.env" ] && . "$DEV/80_Records/20_Snapshots/network.env"
 
 # 1) 模型权重目录 → ③（单份全机共享；HF/ModelScope 镜像与落点由 env.sh/network.toml 契约）
 for d in "$COMMON/30_DataSpace/Models/gguf" "$COMMON/30_DataSpace/Models/huggingface" "$COMMON/30_DataSpace/Models/modelscope"; do
@@ -20,11 +20,11 @@ done
 bde_ok "模型权重目录 → $COMMON/30_DataSpace/Models（单份全机共享）"
 
 # 2) conda 环境/包缓存目录 → ①（symlink 需要；.condarc 已指此）
-ensure_dir "$DEV/deps/conda/envs" 2>/dev/null || true
-ensure_dir "$DEV/deps/conda/pkgs" 2>/dev/null || true
+ensure_dir "$DEV/20_Deps/conda/envs" 2>/dev/null || true
+ensure_dir "$DEV/20_Deps/conda/pkgs" 2>/dev/null || true
 
 # 3) Miniconda（清华镜像静默安装 → ① services；幂等）
-MCONDA="$DEV/services/miniconda3"
+MCONDA="$DEV/50_Services/miniconda3"
 if command -v conda >/dev/null 2>&1 || [ -x "$MCONDA/bin/conda" ]; then
     bde_skip "conda 已就绪（$MCONDA）"
 elif command -v python3 >/dev/null 2>&1 && uname -m | grep -q x86_64; then

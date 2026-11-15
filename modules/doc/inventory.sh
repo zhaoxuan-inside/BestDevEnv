@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # modules/doc/inventory.sh — 系统环境索引（L1 采集 → L2 落盘 → L3 视图；宪法 §19.5 同构）
 # 采集：已装软件（名称/版本/路径/真实路径/渠道）+ 家目录契约路径实态（登记制判定）+ 受管服务实态
-# 索引：① $DEV/docs/state/inventory.json（schema bde.inventory/1，原子写）——了解系统环境的唯一入口
+# 索引：① $DEV/80_Records/20_Snapshots/inventory.json（schema bde.inventory/1，原子写）——了解系统环境的唯一入口
 # 视图：默认人类表格；--json 机器输出（读索引文件，不重采——与 report/doctor 同一数据契约）
 # 合规范范（判定依据）：实体/依赖住 ①、缓存住 ②③、家目录=入口层（symlink/登记）——数据源 home-map.tsv
 # 用法：devenv inventory ｜ inventory.sh [--json] [--refresh]
@@ -11,7 +11,7 @@ source "$BDE_ROOT/lib/common.sh"
 source "$BDE_ROOT/lib/ensure.sh"
 source "$BDE_ROOT/lib/probe.sh"   # bde_is_mounted（docker bind 实态判定）
 
-INV_PATH="${BDE_INVENTORY_PATH:-$DEV/docs/state/inventory.json}"
+INV_PATH="${BDE_INVENTORY_PATH:-$DEV/80_Records/20_Snapshots/inventory.json}"
 
 # ── L1 采集 ──────────────────────────────────────────────────────────────
 _v() {  # <cmd…> → 首行版本（15s 超时；落盘捕获防管道挂起——probe 同款）
@@ -145,7 +145,7 @@ EOF
     _s="docker";      _st="absent"; _d="未安装"
     command -v docker >/dev/null 2>&1 && { _st="installed"; _d="$(_v docker --version)"; bde_is_mounted /var/lib/docker && { _st="bind"; _d="$_d · 数据根 bind ①"; }; }
     printf '%s\t%s\t%s\n' "$_s" "$_st" "$_d" >> "$_INV_S"
-    _s="miniconda3";  [ -x "$DEV/services/miniconda3/bin/conda" ] && { _st="installed"; _d="$DEV/services/miniconda3（① 安装体）"; } || { _st="absent"; _d="未安装"; }
+    _s="miniconda3";  [ -x "$DEV/50_Services/miniconda3/bin/conda" ] && { _st="installed"; _d="$DEV/50_Services/miniconda3（① 安装体）"; } || { _st="absent"; _d="未安装"; }
     printf '%s\t%s\t%s\n' "$_s" "$_st" "$_d" >> "$_INV_S"
     _s="fstrim.timer";   systemctl is-enabled --quiet fstrim.timer 2>/dev/null && { _st="enabled"; _d="SSD 周期 TRIM"; } || { _st="off"; _d="未启用"; }
     printf '%s\t%s\t%s\n' "$_s" "$_st" "$_d" >> "$_INV_S"
@@ -153,7 +153,7 @@ EOF
     printf '%s\t%s\t%s\n' "$_s" "$_st" "$_d" >> "$_INV_S"
     _s="journald 上限";  [ -f /etc/systemd/journald.conf.d/99-devspace.conf ] && { _st="on"; _d="drop-in（cfg-map）"; } || { _st="off"; _d="未落位"; }
     printf '%s\t%s\t%s\n' "$_s" "$_st" "$_d" >> "$_INV_S"
-    _s="environment.d";  [ -f "$DEV/xdg/config/environment.d/50-devspace.conf" ] && { _st="on"; _d="IM 环境变量契约"; } || { _st="off"; _d="未落位"; }
+    _s="environment.d";  [ -f "$DEV/85_XdgRoot/config/environment.d/50-devspace.conf" ] && { _st="on"; _d="IM 环境变量契约"; } || { _st="off"; _d="未落位"; }
     printf '%s\t%s\t%s\n' "$_s" "$_st" "$_d" >> "$_INV_S"
 }
 
@@ -248,7 +248,7 @@ for s in d["services"]:
     print(f"  {s['name']:<14} {s['state']:<10} {s['detail']}")
 w = d["summary"]["paths_warn"]
 all_n = d["summary"].get("tools_all_n", d["summary"]["tools_n"])
-print(f"\n索引：软件 {all_n}（重点 {d['summary']['tools_n']}）｜ 契约路径 ⚠{w}/ℹ{d['summary']['paths_registered']} ｜ 落盘 $DEV/docs/state/inventory.json")
+print(f"\n索引：软件 {all_n}（重点 {d['summary']['tools_n']}）｜ 契约路径 ⚠{w}/ℹ{d['summary']['paths_registered']} ｜ 落盘 $DEV/80_Records/20_Snapshots/inventory.json")
 if w:
     print(f"{Y}  ⚠ {w} 项待处置 → devenv inventory --migrate（逐项询问：转移并接回/登记保留/跳过）{Z}")
 sys.exit(0)
@@ -281,12 +281,12 @@ inv_transfer() {  # <src> <dst> → 0=已转移并接回（可单测：不依赖
 
 _inv_migrate_targets() {  # <name> <kind> → echo 推荐目标（契约落点）
     case "$2" in
-        app)          echo "$DEV/apps/agent/$1" ;;
-        entity)       case "$1" in .cargo) echo "$DEV/cargo" ;; .rustup) echo "$DEV/rustup" ;; *) echo "$DEV/$1" ;; esac ;;
+        app)          echo "$DEV/10_Apps/agent/$1" ;;
+        entity)       case "$1" in .cargo) echo "$DEV/40_Toolchain/CargoHome" ;; .rustup) echo "$DEV/40_Toolchain/Rustup" ;; *) echo "$DEV/$1" ;; esac ;;
         entity-legacy) echo "$DEV/$1" ;;
-        cache)        case "$1" in .gradle) echo "$LOCAL/10_Cache/gradle" ;; .m2) echo "$LOCAL/10_Cache/m2" ;; *) echo "$DEV/xdg/cache/$1" ;; esac ;;
+        cache)        case "$1" in .gradle) echo "$LOCAL/10_Cache/gradle" ;; .m2) echo "$LOCAL/10_Cache/m2" ;; *) echo "$DEV/85_XdgRoot/cache/$1" ;; esac ;;
         xdg)          echo "$LOCAL/$1" ;;
-        *)            echo "$DEV/apps/agent/$1" ;;
+        *)            echo "$DEV/10_Apps/agent/$1" ;;
     esac
 }
 

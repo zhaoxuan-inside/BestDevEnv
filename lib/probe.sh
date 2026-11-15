@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # lib/probe.sh — L1 采集器：环境事实的唯一来源（宪法 §19.5 数据/视图分层）
-# 职责：只采集，不渲染。产出 schema 化 JSON 快照 → $DEV/docs/state/probe.json
+# 职责：只采集，不渲染。产出 schema 化 JSON 快照 → $DEV/80_Records/20_Snapshots/probe.json
 # 视图（doctor/report/AGENTS/SKILL）一律消费快照，绝不自行采集。
 # 硬件/OS 差异在这里转为事实：存储后端/持久化/期望对账、共享盘能力探测（symlink/
 # hardlink/大小写/权限/文件名长度）——视图层按事实渲染，不硬编码介质名词。
@@ -11,7 +11,7 @@
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"   # bde_os_id/bde_cfg_cond_ok（cfg 漂移条件列）——含 include 守卫，重复 source 幂等
 
-BDE_PROBE_STATE_DIR="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}"
+BDE_PROBE_STATE_DIR="${BDE_PROBE_STATE_DIR:-$DEV/80_Records/20_Snapshots}"
 
 # 部署层指纹：templates/ 目录内容哈希——agents-md.sh 生成正本时落 gen-fingerprint，
 # doctor 以此比对"正本代际 vs 模板现状"（env→devenv 重命名未重放致全链路漂移，2026-11-08 实证）
@@ -130,14 +130,14 @@ bde_probe_collect() {
 
     # 部署层一致性（分发器 / 正本同代指纹 / 机器登记）
     P_DISPATCHER_OK=0
-    { [ -x "$DEV/bin/devenv" ] && [ ! -e "$DEV/bin/env" ]; } && P_DISPATCHER_OK=1
+    { [ -x "$DEV/00_Exec/devenv" ] && [ ! -e "$DEV/00_Exec/env" ]; } && P_DISPATCHER_OK=1
     P_HOST_REG=0
     if [ -f "$BDE_ROOT/hosts.toml" ] && grep -qi "^\[$BDE_MACHINE\]" "$BDE_ROOT/hosts.toml" 2>/dev/null; then
         P_HOST_REG=1
     fi
     P_GEN_FRESH=0
     P_GEN_STALE=""
-    _gen_state="$DEV/docs/state/gen-fingerprint"
+    _gen_state="$DEV/80_Records/20_Snapshots/gen-fingerprint"
     if [ -f "$_gen_state" ] && [ -n "$(bde_templates_hash)" ]; then
         _gen_ok=0
         _stale_t=0; _stale_c=0
@@ -236,8 +236,8 @@ bde_probe_collect() {
     # 校验器异常时不堵塞 doctor（计数归 0 通过——③ 档案缺失会先红在更基础的巡检项上）
     P_DIR_UNREG=0; P_NAME_LEGACY=0
     if BDE_NAMECHECK_QUIET=1 bash "$BDE_ROOT/modules/doc/namecheck.sh" >/dev/null 2>&1 \
-       && [ -f "$DEV/docs/state/namecheck.json" ]; then
-        eval "$(python3 - "$DEV/docs/state/namecheck.json" <<'PY'
+       && [ -f "$DEV/80_Records/20_Snapshots/namecheck.json" ]; then
+        eval "$(python3 - "$DEV/80_Records/20_Snapshots/namecheck.json" <<'PY'
 import json, sys, os, shlex
 try:
     s = json.load(open(sys.argv[1]))["summary"]
@@ -252,7 +252,7 @@ PY
     # 应用档案覆盖缺口（已管集合 apps-classify ∪ home-map 所属应用 ∪ inventory 软件名 vs 档案数）
     P_APP_NOARCH=0
     eval "$(APPS_DIR_T="$COMMON/10_Config/AppReg" CLASSIFY_T="$COMMON/10_Config/Registry/apps-classify.tsv" \
-            HOME_MAP_T="$COMMON/10_Config/Registry/home-map.tsv" INV_JSON_T="$DEV/docs/state/inventory.json" \
+            HOME_MAP_T="$COMMON/10_Config/Registry/home-map.tsv" INV_JSON_T="$DEV/80_Records/20_Snapshots/inventory.json" \
             python3 <<'PY'
 import os, json, glob, tomllib, shlex
 
@@ -313,7 +313,7 @@ PY
     P_DOCKER_ROOT_BIND=0; bde_is_mounted /var/lib/docker && P_DOCKER_ROOT_BIND=1
 
     # 时区与站点画像一致（画像值：① network.env BDE_TIMEZONE——state-env 再生；缺失回退 Asia/Shanghai 与生成器默认同源）
-    [ -f "$DEV/docs/state/network.env" ] && . "$DEV/docs/state/network.env"
+    [ -f "$DEV/80_Records/20_Snapshots/network.env" ] && . "$DEV/80_Records/20_Snapshots/network.env"
     P_TZ_CUR="$(timedatectl show -p Timezone --value 2>/dev/null)"
     P_TZ_WANT="${BDE_TIMEZONE:-Asia/Shanghai}"
     P_TZ_OK=0; { [ -n "$P_TZ_CUR" ] && [ "$P_TZ_CUR" = "$P_TZ_WANT" ]; } && P_TZ_OK=1

@@ -6,7 +6,7 @@ summary = "火山引擎 CLI（skills 双根枢纽）"
 
 [install]
 scope = "user"
-at = "user:apps/agent/.agents"
+at = "user:10_Apps/agent/.agents"
 via = "人工渠道"
 verify = "arkcli --version"
 

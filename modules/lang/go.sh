@@ -14,5 +14,5 @@ else
     command -v go >/dev/null 2>&1 && bde_ok "go 安装：$(go version)"
 fi
 
-ensure_dir "$DEV/go" 2>/dev/null || true
+ensure_dir "$DEV/40_Toolchain/Golang" 2>/dev/null || true
 [ -f "$HOME/.config/devspace/env.sh" ] && bde_ok "GOPROXY/GOPATH → env.sh 就绪"

@@ -2,7 +2,7 @@
 # modules/doc/dirindex.sh — 系统内容索引（devenv index；宪法 §19.5 L1→L2→L3 同构）
 # 聚合四层登记：dir-map.tsv（①②③ 树级"位置+职责"）+ home-map.tsv（$HOME 隐藏层）
 #             + config/apps/*.toml（应用档案）+ inventory.json（软件层，在则纳入）
-# 用法: devenv index [--json] ｜ JSON: ① docs/state/dirindex.json（bde.dirindex/1，原子写）
+# 用法: devenv index [--json] ｜ JSON: ① 80_Records/20_Snapshots/dirindex.json（bde.dirindex/1，原子写）
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
@@ -12,8 +12,8 @@ DIR_MAP="${BDE_DIR_MAP:-$COMMON/10_Config/Registry/dir-map.tsv}"
 HOME_MAP="${BDE_HOME_MAP:-$COMMON/10_Config/Registry/home-map.tsv}"
 [ -f "$HOME_MAP" ] || HOME_MAP="$BDE_ROOT/config/Registry/home-map.tsv"
 APPS_DIR="${BDE_APPS_DIR:-$COMMON/10_Config/AppReg}"
-INV_JSON="${BDE_INVENTORY_JSON:-$DEV/docs/state/inventory.json}"
-OUT_JSON="${BDE_DIRINDEX_JSON:-$DEV/docs/state/dirindex.json}"
+INV_JSON="${BDE_INVENTORY_JSON:-$DEV/80_Records/20_Snapshots/inventory.json}"
+OUT_JSON="${BDE_DIRINDEX_JSON:-$DEV/80_Records/20_Snapshots/dirindex.json}"
 
 TMPD="$(mktemp -d "${TMPDIR:-/tmp}/bde-dirindex.XXXXXX")"
 trap 'rm -rf "$TMPD"' EXIT

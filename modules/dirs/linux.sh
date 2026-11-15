@@ -62,8 +62,8 @@ _bde_dirs=(
     "$LOCAL/00_Data/Dump" "$LOCAL/00_Data/Export" "$LOCAL/docs"
     "$LOCAL/Desktop" "$LOCAL/Documents" "$LOCAL/Downloads" "$LOCAL/Music"
     "$LOCAL/Pictures" "$LOCAL/Public" "$LOCAL/Templates" "$LOCAL/Videos"
-    "$DEV/deps" "$DEV/data" "$DEV/bin" "$DEV/docs" "$DEV/tmp" "$DEV/pub-cache"
-    "$DEV/services" "$DEV/ide" "$DEV/apps/agent" "$DEV/apps/ide"
+    "$DEV/20_Deps" "$DEV/data" "$DEV/00_Exec" "$DEV/80_Records" "$DEV/90_Scratch" "$DEV/40_Toolchain/PubCache"
+    "$DEV/50_Services" "$DEV/ide" "$DEV/10_Apps/agent" "$DEV/10_Apps/ide"
     "$HOME/Code"
 )
 _miss=0
@@ -79,8 +79,8 @@ fi
 # 双来源迁移：apps 顶层旧位 → 分类 ｜ 家目录真实目录 → 分类（收编，mv 同盘瞬时+链接接回）
 _migrate_app() {  # <name> <分类>
     local n=$1 cat=$2
-    local old="$DEV/apps/.$n" dst="$DEV/apps/$cat/.$n" link="$HOME/.$n"   # 拆行：同句 local 的展开先于赋值（$n 会读空）
-    mkdir -p "$DEV/apps/$cat" 2>/dev/null || return 0
+    local old="$DEV/10_Apps/.$n" dst="$DEV/10_Apps/$cat/.$n" link="$HOME/.$n"   # 拆行：同句 local 的展开先于赋值（$n 会读空）
+    mkdir -p "$DEV/10_Apps/$cat" 2>/dev/null || return 0
     [ -e "$dst" ] && return 0
     if [ -d "$old" ] && [ -L "$link" ]; then
         mv "$old" "$dst" && ln -sfn "$dst" "$link"
@@ -113,7 +113,7 @@ fi
 
 # 5) env 分发器（~/DevEnv/bin/devenv → doctor / report / tidy / orch / runtime / migrate-finish）
 # 每次重跑都再生（生成物；防升级漂移——旧版仅首次创建，模板加子命令后旧机不更新）
-cat > "$DEV/bin/devenv" <<EOF
+cat > "$DEV/00_Exec/devenv" <<EOF
 #!/usr/bin/env bash
 # devenv — 开发环境入口（由 BestDevEnv 生成于 $(date +%F)）
 BDE_ROOT="$BDE_ROOT"
@@ -137,15 +137,15 @@ case "\${1:-}" in
     *) echo "用法: devenv doctor|report|tidy|map|inventory|index|namecheck|orch|runtime|cfg|cap|app|svc|gen|state-env|migrate-finish"; exit 1 ;;
 esac
 EOF
-chmod +x "$DEV/bin/devenv"
+chmod +x "$DEV/00_Exec/devenv"
 for _w in code-open code-close code-nm code-out; do
-    printf "#!/usr/bin/env bash\nexec bash \"%s/modules/workflow/%s.sh\" \"\$@\"\n" "$BDE_ROOT" "$_w" > "$DEV/bin/$_w"
-    chmod +x "$DEV/bin/$_w"
+    printf "#!/usr/bin/env bash\nexec bash \"%s/modules/workflow/%s.sh\" \"\$@\"\n" "$BDE_ROOT" "$_w" > "$DEV/00_Exec/$_w"
+    chmod +x "$DEV/00_Exec/$_w"
 done
 # vibe — Runtime 统一入口：source env.sh 后 exec 工具/子命令（等同 devenv runtime ...）
-printf "#!/usr/bin/env bash\n. \"\$HOME/.config/devspace/env.sh\" 2>/dev/null\nexec bash \"%s/modules/agent/runtime.sh\" \"\$@\"\n" "$BDE_ROOT" > "$DEV/bin/vibe"
-chmod +x "$DEV/bin/vibe"
-rm -f "$DEV/bin/env"   # 旧分发器除名（曾遮蔽 coreutils env——命名规范 §20.4）
+printf "#!/usr/bin/env bash\n. \"\$HOME/.config/devspace/env.sh\" 2>/dev/null\nexec bash \"%s/modules/agent/runtime.sh\" \"\$@\"\n" "$BDE_ROOT" > "$DEV/00_Exec/vibe"
+chmod +x "$DEV/00_Exec/vibe"
+rm -f "$DEV/00_Exec/env"   # 旧分发器除名（曾遮蔽 coreutils env——命名规范 §20.4）
 bde_ok "分发 code-open/close/nm/out + devenv（doctor/report/tidy/map/orch/runtime/cfg/app/svc/gen/state-env/migrate-finish）+ vibe；旧 env 已除名"
 
 # 6) XDG 用户目录重定向 + home 兼容 symlink

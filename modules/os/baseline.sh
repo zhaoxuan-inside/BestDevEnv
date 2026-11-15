@@ -18,7 +18,7 @@ fi
 bde_info "M1 系统基线与优化（family=$BDE_CAP_FAMILY）"
 
 # 站点网络画像接入（本层有外网下载点——starship/字体；代理与镜像由 ③ network.toml 契约，不写死）
-[ -f "$DEV/docs/state/network.env" ] && . "$DEV/docs/state/network.env"
+[ -f "$DEV/80_Records/20_Snapshots/network.env" ] && . "$DEV/80_Records/20_Snapshots/network.env"
 
 # 1) 基础包 + 构建链（语义包名；平台包名差异收敛在适配器别名表）
 cap_pkg_install base

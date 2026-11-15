@@ -4,7 +4,7 @@
 # 判定分级：未登记 = 硬违规（exit 1）；已登记目录样式违规 = 存量违规（提示级——只报不改，--migrate 授权处置）；
 #          同级等长 = 优先级提示（永不失败）。XDG 等协议固定名走档案豁免名单。
 # 扫描范围：三锚点（①②③，路径由用户指定见 storage.toml）一级目录 + dir-map.tsv 深层登记项
-# 用法: devenv namecheck [--json] [--migrate] ｜ JSON: ① docs/state/namecheck.json（bde.namecheck/1，原子写）
+# 用法: devenv namecheck [--json] [--migrate] ｜ JSON: ① 80_Records/20_Snapshots/namecheck.json（bde.namecheck/1，原子写）
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
@@ -12,7 +12,7 @@ source "$BDE_ROOT/lib/ensure.sh"
 
 DIR_MAP="${BDE_DIR_MAP:-$COMMON/10_Config/Registry/dir-map.tsv}"
 [ -f "$DIR_MAP" ] || DIR_MAP="$BDE_ROOT/config/Registry/dir-map.tsv"
-OUT_JSON="${BDE_NAMECHECK_JSON:-$DEV/docs/state/namecheck.json}"
+OUT_JSON="${BDE_NAMECHECK_JSON:-$DEV/80_Records/20_Snapshots/namecheck.json}"
 
 # ── naming.toml 档案解析（storage.sh 同款：python tomllib → eval；作用域覆写）──
 _naming_load() {

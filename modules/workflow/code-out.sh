@@ -22,7 +22,7 @@ mkdir -p "$REAL" || { bde_fail "无法创建 $REAL"; exit 1; }
 
 # ── 能力事实：probe 快照优先，过期/缺失时现场复测兜底 ──
 _cap_link=0
-_pj="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}/probe.json"   # 尊循 probe.sh 状态目录契约（可注入测试）
+_pj="${BDE_PROBE_STATE_DIR:-$DEV/80_Records/20_Snapshots}/probe.json"   # 尊循 probe.sh 状态目录契约（可注入测试）
 if [ -f "$_pj" ] && command -v python3 >/dev/null 2>&1; then
     _cap_link="$(BDE_PROBE_JSON="$_pj" python3 -c 'import json,os;print(json.load(open(os.environ["BDE_PROBE_JSON"])).get("share_caps",{}).get("symlink",0))' 2>/dev/null || echo 0)"
 fi

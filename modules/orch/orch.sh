@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # orch — 编排进度日志（主 Skill 专用：多子 Skill 长任务的进度落盘、跨会话续做与步骤改判回退）
-# 日志位置：$DEV/docs/progress/orch-<时间戳>.md（本机活状态住 DevEnv；markdown 便于人读+LLM 读写）
+# 日志位置：$DEV/80_Records/00_Progress/orch-<时间戳>.md（本机活状态住 DevEnv；markdown 便于人读+LLM 读写）
 # 账本结构（三分区各归其位）：
 #   ## 计划    —— 步骤复选框行（- [ ] N. 子skill —— 职责；add 落此区）
 #   ## 记录    —— 时间线备注行（↳ [步骤N] 完成/失败/改判；done/fail/revert 落此区）
@@ -19,7 +19,7 @@
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
 
-ORCH_DIR="${BDE_ORCH_DIR:-$DEV/docs/progress}"
+ORCH_DIR="${BDE_ORCH_DIR:-$DEV/80_Records/00_Progress}"
 mkdir -p "$ORCH_DIR" 2>/dev/null
 
 _latest()  { ls -1t "$ORCH_DIR"/orch-*.md 2>/dev/null | head -1; }
@@ -105,7 +105,7 @@ case "${1:-}" in
         sed -i "s|^- \[.\] ${2}\. |- [ ] ${2}. |" "$_f" \
             && _ins_record "$_f" "$(printf -- '  ↳ [步骤%s] 改判待做（%s）: %s ｜ %s' "$2" "$(date '+%F %T')" "${3:-}" "$(_doctor)")"
         echo "步骤 ${2} 已改判回待做。该步已产生写入时的回退素材（按需取用）:"
-        echo "  - 修改前文件备份: $DEV/docs/backup/（ensure_backup 时间戳版本，取该步改动前的最近一份）"
+        echo "  - 修改前文件备份: $DEV/80_Records/10_Backups/（ensure_backup 时间戳版本，取该步改动前的最近一份）"
         echo "  - 配置正本历史: git -C $COMMON/10_Config log/diff；更早时点: git -C $BDE_ROOT checkout <commit> -- config && devenv cfg restore"
         echo "  - 改后核对: devenv doctor ｜ devenv cfg diff（确认回到预期实态再重新调度本步）"
         ;;

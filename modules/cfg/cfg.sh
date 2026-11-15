@@ -69,7 +69,7 @@ _cfg_post_apply() {  # <name>
             # ⚠ 已装 docker 且有存量数据的机器：bind 生效前必须先迁移 /var/lib/docker → ①，
             #   否则空 ① 目录遮蔽旧数据（镜像/容器"消失"）——下方自动安全迁移（停服→rsync→挂载→起服→验证）
             sudo -n systemctl daemon-reload >/dev/null 2>&1 || { bde_pending "daemon-reload 失败（人工执行）"; return 0; }
-            local _dst="$DEV/services/docker" _legacy=0 _migrated=0
+            local _dst="$DEV/50_Services/docker" _legacy=0 _migrated=0
             mkdir -p "$_dst" 2>/dev/null
             if [ -d /var/lib/docker/overlay2 ] && [ ! -d "$_dst/overlay2" ]; then
                 _legacy=1
@@ -237,7 +237,7 @@ _cfg_snapshot() {
     # snapshot 后 doctor「正本与模板同代」曾翻红（2026-11-12 实测）——此处显式对账并给
     # 组件级定位，把"神秘红"转成可执行指引（跑 devenv gen），不再盲猜
     [ -f "$BDE_ROOT/lib/probe.sh" ] && source "$BDE_ROOT/lib/probe.sh"
-    local _gs="$DEV/docs/state/gen-fingerprint"
+    local _gs="$DEV/80_Records/20_Snapshots/gen-fingerprint"
     if [ -f "$_gs" ] && command -v bde_templates_hash >/dev/null 2>&1; then
         local _ok_t=1 _ok_c=1
         [ "$(sed -n 's/^templates_hash=//p' "$_gs" | head -1)" = "$(bde_templates_hash)" ] || _ok_t=0
@@ -259,7 +259,7 @@ _cfg_restore() {
     [ -d "$BDE_ROOT/config" ] && [ -n "$(ls -A "$BDE_ROOT/config" 2>/dev/null)" ] \
         || { bde_fail "工程仓库无 seed 快照（先 devenv cfg snapshot 生成）"; return 1; }
     command -v rsync >/dev/null 2>&1 || { bde_fail "rsync 不可用（apt install rsync）"; return 1; }
-    local _bdir="$DEV/docs/backup/cfg-restore-$(date +%Y%m%d-%H%M%S)"
+    local _bdir="$DEV/80_Records/10_Backups/cfg-restore-$(date +%Y%m%d-%H%M%S)"
     if [ -n "$name" ]; then
         # 单项回退：登记行正本路径（$COMMON/10_Config/ 下）与 seed 树一一对应
         local _row _src _rel _item

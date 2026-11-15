@@ -66,7 +66,7 @@ cap__im_ensure() {
     bash "$BDE_ROOT/modules/os/fcitx5-theme.sh"
     bde_pending "启用 fcitx5：im-config -n fcitx5 后注销重登（人工执行；IM 环境变量由 config 仓库 environment.d 下发，不要写 .profile）"
     bde_pending "GNOME Wayland 限制：Wayland 原生客户端（Chromium/Electron 的 ozone-wayland、GNOME Shell 自身界面）无法用 fcitx5，需该客户端走 XWayland 或改用 IBus"
-    bde_pending "rime-ice 雾凇方案（可选大词库）：github.com/amzxyz/rime-ice → $HOME/DevEnv/xdg/local/fcitx5/rime/（人工）"
+    bde_pending "rime-ice 雾凇方案（可选大词库）：github.com/amzxyz/rime-ice → $HOME/DevEnv/85_XdgRoot/local/fcitx5/rime/（人工）"
 }
 
 # ── zram（压缩内存交换；zram-tools + /etc/default/zramswap 正本，cfg-map zramswap 同步治理）──
@@ -113,7 +113,7 @@ cap__terminal_ensure() {
         # 统一 profile 指针（profile 本体由 cfg-map konsole-profile 落 XDG_DATA_HOME；
         # konsolerc 显式指 XDG_CONFIG_HOME 契约位——M1 上下文无 env.sh，不能依赖相对查找）
         if command -v kwriteconfig5 >/dev/null 2>&1; then
-            kwriteconfig5 --file "${XDG_CONFIG_HOME:-$DEV/xdg/config}/konsolerc" --group General --key DefaultProfile devspace.profile \
+            kwriteconfig5 --file "${XDG_CONFIG_HOME:-$DEV/85_XdgRoot/config}/konsolerc" --group General --key DefaultProfile devspace.profile \
                 && bde_ok "konsole 默认 profile → devspace（字体/外观统一）"
         else
             bde_pending "kwriteconfig5 缺失：人工执行 kwriteconfig5 --file konsolerc --group General --key DefaultProfile devspace.profile"

@@ -6,7 +6,7 @@ summary = "版本管理器（数据 ① XDG local，实测渠道）"
 
 [install]
 scope = "user"
-at = "user:xdg/local/mise"
+at = "user:85_XdgRoot/local/mise"
 via = "installer"
 verify = "mise --version"
 
@@ -15,7 +15,7 @@ via = "待收编"
 
 [data]
 scope = "user"
-at = "user:xdg/local/mise"
+at = "user:85_XdgRoot/local/mise"
 dump = ""
 
 [logs]

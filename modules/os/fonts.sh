@@ -11,7 +11,7 @@ source "$BDE_ROOT/lib/cap.sh"
 bde_info "M1.9 字体统一（JetBrainsMono Nerd Font）"
 
 # 站点网络画像接入（下载走站点代理/镜像契约，不写死网络字面量）
-[ -f "$DEV/docs/state/network.env" ] && . "$DEV/docs/state/network.env"
+[ -f "$DEV/80_Records/20_Snapshots/network.env" ] && . "$DEV/80_Records/20_Snapshots/network.env"
 
 FONT_ID="JetBrainsMono-NF"
 NF_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz"

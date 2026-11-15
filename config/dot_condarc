@@ -11,7 +11,7 @@ custom_channels:
   conda-forge: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
   pytorch: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
 envs_dirs:
-  - ${DEV}/deps/conda/envs
+  - ${DEV}/20_Deps/conda/envs
 pkgs_dirs:
-  - ${DEV}/deps/conda/pkgs
+  - ${DEV}/20_Deps/conda/pkgs
 auto_activate_base: false

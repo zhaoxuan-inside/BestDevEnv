@@ -12,7 +12,7 @@ source "$BDE_ROOT/lib/probe.sh"
 
 bde_info "M4 AGENTS.md 统一构建（指令视图：消费 probe.json 快照——纯视图零采集，§19.5）"
 bde_probe_save >/dev/null     # 采集+落快照（唯一采集入口；渲染一律取自快照文件）
-F_PROBE_JSON="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}/probe.json"
+F_PROBE_JSON="${BDE_PROBE_STATE_DIR:-$DEV/80_Records/20_Snapshots}/probe.json"
 
 # 物理边界事实从快照渲染（曾从活采集的 P_* shell 变量渲染——同一进程两次采集，结构上是旁路）。
 # 快照只出"原料"（probed/backend/constraints），成句在 bash 侧做——日期要冻结（见下），句子模板只留一处。
@@ -70,7 +70,7 @@ sys.stdout.write("\n".join(f"| {k} | {v} |" for k, v in sorted(t.items())))
 # 日期冻结（gen 幂等）：日期戳渲染进 ③ SKILL 正文（@PHYSICAL_BRIEF@），曾致跨日 gen 产生
 # "纯日期 diff"提交噪音（2026-11-12→13 实证）——日期只在能力集合/后端变化时更新，否则沿用 ① state 原值。
 _caps_key="probed=$_p_probed backend=$_be $(printf '%s ' "${_constraints[@]}")"
-_caps_state="$DEV/docs/state/share-caps-date"
+_caps_state="$DEV/80_Records/20_Snapshots/share-caps-date"
 mkdir -p "$(dirname "$_caps_state")" 2>/dev/null
 _old_key=""; _old_date=""
 [ -f "$_caps_state" ] && { _old_key="$(sed -n 's/^caps_key=//p' "$_caps_state" | head -1)"; _old_date="$(sed -n 's/^date=//p' "$_caps_state" | head -1)"; }
@@ -218,8 +218,8 @@ if [ -d "$SKILLS_SRC" ]; then
             cmp -s "$_od/SKILL.md" "$SKILL_CANON_BASE/$_on/SKILL.md" 2>/dev/null || { _drift=1; break; }
         done
         if [ "$_drift" = "1" ]; then
-            _bk="$DEV/docs/backup/$(date +%Y%m%d)-agents-skill-old"
-            mkdir -p "$DEV/docs/backup" 2>/dev/null
+            _bk="$DEV/80_Records/10_Backups/$(date +%Y%m%d)-agents-skill-old"
+            mkdir -p "$DEV/80_Records/10_Backups" 2>/dev/null
             if cp -r "$CANON_DIR/skill" "$_bk" 2>/dev/null; then
                 bde_pending "旧 skill 正本与再生产物有差异——整目录已备份 $_bk（人工对账后可清）"
             else
@@ -239,11 +239,11 @@ else
 fi
 
 # ── 生成指纹落盘（doctor 巡检部署层代际：正本生成时的 templates 哈希 vs 当前哈希）──
-mkdir -p "$DEV/docs/state" 2>/dev/null
+mkdir -p "$DEV/80_Records/20_Snapshots" 2>/dev/null
 {
     echo "templates_hash=$(bde_templates_hash)"
     echo "cfg_sources_hash=$(bde_cfg_sources_hash)"
     echo "bde_commit=$(git -C "$BDE_ROOT" rev-parse --short HEAD 2>/dev/null || echo none)"
     echo "machine=${BDE_MACHINE:-$(hostname)}"
     echo "date=$(date '+%F %T')"
-} > "$DEV/docs/state/gen-fingerprint" && bde_ok "生成指纹（模板+CFGVAL 来源正本）→ gen-fingerprint（doctor 巡检代际）"
+} > "$DEV/80_Records/20_Snapshots/gen-fingerprint" && bde_ok "生成指纹（模板+CFGVAL 来源正本）→ gen-fingerprint（doctor 巡检代际）"

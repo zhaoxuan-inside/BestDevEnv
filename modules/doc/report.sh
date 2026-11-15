@@ -60,7 +60,7 @@ L.append(pending if pending else "- 无（init 全默认执行）")
 L.append("")
 L.append("## 数据快照")
 L.append("")
-L.append(f"- 本报告数据源：`$DEV/docs/state/probe.json`（schema {doc['schema']}，视图唯一数据源）")
+L.append(f"- 本报告数据源：`$DEV/80_Records/20_Snapshots/probe.json`（schema {doc['schema']}，视图唯一数据源）")
 with open(os.environ["BDE_OUT"], "w") as fh:
     fh.write("\n".join(L) + "\n")
 print(f"[✓] 报告 → {os.environ['BDE_OUT']}")

@@ -68,7 +68,7 @@ ensure_fstab() {
 # 同日多次修改的中间态全保留（旧版"同日同名只备一次"会丢中间态）；幂等重跑零垃圾）
 ensure_backup() {
     local f=$1
-    local bdir="${BDE_BACKUP_DIR:-$DEV/docs/backup}"
+    local bdir="${BDE_BACKUP_DIR:-$DEV/80_Records/10_Backups}"
     [ -f "$f" ] || { return 0; }
     ensure_dir "$bdir" || { bde_pending "备份目录不可用：$bdir"; return 1; }
     local _name; _name="$(basename "$f")"

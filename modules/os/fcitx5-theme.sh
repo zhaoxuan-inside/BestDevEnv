@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # M1 补充: fcitx5 macOS 皮肤（macos12 light/dark）+ rime 简体默认——幂等落位
-# 主题/rime 实体 → ① $DEV/xdg/local/fcitx5/（XDG_DATA_HOME 重定向落点，GUI 会话一致）
+# 主题/rime 实体 → ① $DEV/85_XdgRoot/local/fcitx5/（XDG_DATA_HOME 重定向落点，GUI 会话一致）
 # 皮肤选择在 config 仓库 dot_config/fcitx5/conf/classicui.conf（chezmoi 下发，本脚本不碰）
 # 拉取链路: git clone → jsDelivr CDN → api.github.com contents（2026-11-08 实证主站被 RST 时 API 仍通）
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"

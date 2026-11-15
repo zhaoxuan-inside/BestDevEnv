@@ -14,7 +14,7 @@ source "$BDE_ROOT/lib/ensure.sh"
 APPS_DIR="${BDE_APPS_DIR:-$COMMON/10_Config/AppReg}"
 CLASSIFY_TSV="$COMMON/10_Config/Registry/apps-classify.tsv"
 HOME_MAP="$COMMON/10_Config/Registry/home-map.tsv"
-INV_JSON="${BDE_INVENTORY_JSON:-$DEV/docs/state/inventory.json}"
+INV_JSON="${BDE_INVENTORY_JSON:-$DEV/80_Records/20_Snapshots/inventory.json}"
 
 bde_app_render() {  # <manifest 绝对路径>
     BDE_APP_MANIFEST="$1" \

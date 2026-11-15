@@ -5,7 +5,7 @@
 #   host    主机级  （同机多用户共享）   ← 兼容别名 ② LOCAL
 #   user    用户级  （本机本用户）       ← 兼容别名 ① DEV
 # 后端：passthrough（已有挂载）| hgfs | local | nfs | smb（options 键携带 credentials 等）| rclone（云盘）
-# 档案解析顺序（bootstrap 免疫）：$BDE_STORAGE_PROFILE → ① docs/state/storage.toml
+# 档案解析顺序（bootstrap 免疫）：$BDE_STORAGE_PROFILE → ① 80_Records/20_Snapshots/storage.toml
 #   → ③ 正本 config/Registry/storage.toml（可达则用）→ 内置默认（auto 探测）
 # 本文件不依赖 paths.sh/common.sh；对上层只暴露 bde_storage_load / bde_storage_ensure /
 # bde_storage_anchors_emit / BDE_SCOPE_* / BDE_STORAGE_PROFILE_ERROR

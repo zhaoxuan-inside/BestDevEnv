@@ -28,7 +28,7 @@ cd "$BDE" && ./init.sh          # 交互询问：开发者角色（回车=跳过
 
 ```bash
 ./init.sh --dry-run --profile cpp   # 预览构建计划（family/角色/语言栈/工具/阶段），不询问不执行
-./init.sh --status    # 各阶段最近状态（状态文件 ~/DevEnv/docs/progress/<机器名>.state）
+./init.sh --status    # 各阶段最近状态（状态文件 ~/DevEnv/80_Records/00_Progress/<机器名>.state）
 ./init.sh --resume    # 跳过 done 阶段，失败阶段重跑
 ./init.sh --rerun     # 强制全量
 ```
@@ -37,7 +37,7 @@ cd "$BDE" && ./init.sh          # 交互询问：开发者角色（回车=跳过
 
 ## 失败处理
 
-1. 全量日志：`~/DevEnv/docs/progress/init-<时间戳>.log`
+1. 全量日志：`~/DevEnv/80_Records/00_Progress/init-<时间戳>.log`
 2. 状态文件中 failed 阶段 → 排除原因后 `--resume`
 3. 批量 pending 且涉及 sudo → 检查 sudo 免密（脚本写操作依赖 `sudo -n`）
 4. `--machine <名>` 指定机器名（克隆 VM hostname 相同时必用，避免 hosts.toml/进度文件互撞）

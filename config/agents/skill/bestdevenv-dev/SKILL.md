@@ -64,7 +64,7 @@ bash "$BDE/modules/ide/ide.sh" --no-jetbrains   # VS Code 离线 deb + 扩展档
 ```
 
 - **BDE_TOOLS/BDE_LANGS 均为逗号分隔 CSV**——空格分隔会被拼成一个非法名字（2026-11-12 实测）
-- opencode 实体契约位 = ① `$DEV/apps/agent/.opencode/bin`（env.sh PATH 预置）：installer 默认落 `~/.opencode/bin`，tools.sh 安装/发现时自动归位 ①；已装判 `command -v` 与契约位双查
+- opencode 实体契约位 = ① `$DEV/10_Apps/agent/.opencode/bin`（env.sh PATH 预置）：installer 默认落 `~/.opencode/bin`，tools.sh 安装/发现时自动归位 ①；已装判 `command -v` 与契约位双查
 - 扩展档案在 `$COMMON/10_Config/AppReg/vscode/{base,<语言>}.txt`——新装扩展未入档案时 ide.sh 会提示补录
 - GUI 类工具（trae/antigravity/qoder）走人工安装，脚本只登记
 - **装服务/软件/工具后**：按「装后四步」走——建档（apps/<name>.toml）+ `devenv cfg adopt <name> <路径>` 收编进 `$COMMON/10_Config/Services/`（版本化 + `devenv cfg apply` 落位 + doctor 巡检漂移）；Runtime 类工具另走 runtimes.tsv 登记 + `devenv runtime wire`

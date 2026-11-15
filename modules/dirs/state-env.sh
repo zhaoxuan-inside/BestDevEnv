@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# modules/dirs/state-env.sh — 每机器状态 env 生成器（① $DEV/docs/state/{anchors,network}.env）
+# modules/dirs/state-env.sh — 每机器状态 env 生成器（① $DEV/80_Records/20_Snapshots/{anchors,network}.env）
 # 数据源：L0 存储档案 storage.toml + 网络档案 network.toml（③，机器段覆盖默认段）
 # 消费方：env.sh 自动 source 两文件（机器差异不再写死在共享的 env.sh 里）
 # 再生命令：devenv state-env（M2 自动执行；改档案后手动重跑 + 重开 shell 生效）
@@ -10,7 +10,7 @@ source "$BDE_ROOT/lib/common.sh"
 source "$BDE_ROOT/lib/ensure.sh"
 source "$BDE_ROOT/lib/network.sh"
 
-STATE_DIR="$DEV/docs/state"
+STATE_DIR="$DEV/80_Records/20_Snapshots"
 ensure_dir "$STATE_DIR" || { bde_fail "状态目录不可建：$STATE_DIR"; exit 1; }
 
 # ── anchors.env：三档锚点正本（存储解析层发射，机器差异的唯一出口）──
@@ -36,7 +36,7 @@ else
 fi
 
 # ── chezmoi.toml：模板数据正本（① 每机器状态；③ config 的 .tmpl 种子按此渲染）──
-# 双落位：chezmoi 配置查找随 XDG_CONFIG_HOME 漂移（env.sh 重定向 → $DEV/xdg/config），
+# 双落位：chezmoi 配置查找随 XDG_CONFIG_HOME 漂移（env.sh 重定向 → $DEV/85_XdgRoot/config），
 # 未 source env.sh 的上下文又回落 ~/.config/chezmoi——两处同写，任何上下文数据一致，
 # 行为不再由"调用方是否 source 过 env.sh"决定（差异屏蔽：上下文无关）。
 # config 种子里的锚点差异（XDG → ② Local 等）不再写字面量——换用户/换挂载点后

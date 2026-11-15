@@ -101,7 +101,7 @@ devenv app --all                              # 应用视图（安装/配置/数
 
 ## 编排进度（长任务跨会话可续建）
 
-编排可能耗时很长、甚至跨越多个会话——**每一步进度必须落盘**（`devenv orch` → `~/DevEnv/docs/progress/orch-*.md`），任何时刻中断都能无损续做：
+编排可能耗时很长、甚至跨越多个会话——**每一步进度必须落盘**（`devenv orch` → `~/DevEnv/80_Records/00_Progress/orch-*.md`），任何时刻中断都能无损续做：
 
 ```bash
 J="$(devenv orch new "<任务目标>")"            # 开工：创建编排日志（自动记录探环境快照）

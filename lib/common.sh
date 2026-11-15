@@ -75,7 +75,7 @@ bde_cfg_effective_src() {  # <src> <mech> → echo 路径（可能为空）
                 _t="$(mktemp "${TMPDIR:-/tmp}/bde-cfg-x.XXXXXX" 2>/dev/null)" || return 0
                 # 模板数据正本：state-env 双落位的 chezmoi.toml（缺它 .tmpl 键渲染失败——曾致 user-dirs 假漂移）
                 _czc=""
-                for _c in "$DEV/xdg/config/chezmoi/chezmoi.toml" \
+                for _c in "$DEV/85_XdgRoot/config/chezmoi/chezmoi.toml" \
                           "${XDG_CONFIG_HOME:-$HOME/.config}/chezmoi/chezmoi.toml" \
                           "$HOME/.config/chezmoi/chezmoi.toml"; do
                     [ -f "$_c" ] && { _czc="$_c"; break; }
@@ -269,15 +269,15 @@ bde_summary() {
 }
 
 # ===== 执行进度记录（可续建）=====
-# 状态文件：~/DevEnv/docs/progress/<机器名>.state，行格式：阶段|状态|时间|done=n,skip=n,pending=n,fail=n
+# 状态文件：~/DevEnv/80_Records/00_Progress/<机器名>.state，行格式：阶段|状态|时间|done=n,skip=n,pending=n,fail=n
 # 状态：done / failed；同阶段多次记录取最近一条
 bde_progress_file() {
-    printf "%s/%s.state" "${BDE_PROGRESS_DIR:-$DEV/docs/progress}" "${BDE_MACHINE:-$(hostname)}"
+    printf "%s/%s.state" "${BDE_PROGRESS_DIR:-$DEV/80_Records/00_Progress}" "${BDE_MACHINE:-$(hostname)}"
 }
 
 bde_phase_begin() {
     local p=$1
-    mkdir -p "${BDE_PROGRESS_DIR:-$DEV/docs/progress}" 2>/dev/null || true
+    mkdir -p "${BDE_PROGRESS_DIR:-$DEV/80_Records/00_Progress}" 2>/dev/null || true
     BDE_PHASE_BASE_FAIL=$BDE_FAIL;      BDE_PHASE_BASE_DONE=$BDE_DONE
     BDE_PHASE_BASE_SKIP=$BDE_SKIP;      BDE_PHASE_BASE_PENDING=$BDE_PENDING_N
     bde_info "▶ 阶段 $p 开始"

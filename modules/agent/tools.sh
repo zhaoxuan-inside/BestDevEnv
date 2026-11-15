@@ -29,9 +29,9 @@ _install_tool() {
             elif _have_npm && timeout 300 npm install -g @google/gemini-cli >/dev/null 2>&1; then bde_ok "gemini-cli 安装"
             else bde_pending "gemini-cli 安装失败（需 npm）"; fi ;;
         opencode)
-            # 契约位：实体 ① $DEV/apps/agent/.opencode/bin（env.sh PATH 预置 + OPENCODE_CONFIG_DIR 同指 ①）
+            # 契约位：实体 ① $DEV/10_Apps/agent/.opencode/bin（env.sh PATH 预置 + OPENCODE_CONFIG_DIR 同指 ①）
             # installer 默认落 ~/.opencode/bin——不在契约 PATH 时 command -v 永远失败（幂等判定失效）
-            local _oc="$DEV/apps/agent/.opencode/bin/opencode"
+            local _oc="$DEV/10_Apps/agent/.opencode/bin/opencode"
             if command -v opencode >/dev/null 2>&1 || [ -x "$_oc" ]; then
                 bde_skip "opencode 已装：$(timeout 15 opencode --version 2>/dev/null | head -1 || timeout 15 "$_oc" --version 2>/dev/null | head -1)"
             elif [ -x "$HOME/.opencode/bin/opencode" ]; then
@@ -42,7 +42,7 @@ _install_tool() {
             else
                 # curl|bash 管道退出码取 bash——截断脚本照样 exit 0（假成功，2026-11-12 实测）：
                 # 先落盘再执行，下载与执行 rc 全程真实；--no-modify-path 防 installer 写 chezmoi 托管的 shell rc
-                local _ins="$DEV/tmp/opencode-install.sh"
+                local _ins="$DEV/90_Scratch/opencode-install.sh"
                 ensure_dir "$(dirname "$_ins")"
                 if curl -fsSL --max-time 120 https://opencode.ai/install -o "$_ins" \
                    && bash "$_ins" --no-modify-path >/dev/null 2>&1; then

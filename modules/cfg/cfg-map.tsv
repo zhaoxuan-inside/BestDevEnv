@@ -21,10 +21,11 @@ docker-datadir-order|service|$COMMON/10_Config/Services/docker/10-datadir.conf|/
 fstab-hgfs|system|$COMMON/10_Config/Services/mount/hgfs.fstab|/etc/fstab|append|y|backend_common=hgfs&backend_host=hgfs|hgfs 挂载两行片段（仅 hgfs 后端机器生效；M2 写入，2026-11-08 收编）
 apt-ubuntu|system|$COMMON/10_Config/PkgSource/ubuntu.sources|/etc/apt/sources.list.d/ubuntu.sources|copy|y|os=ubuntu,debian,linuxmint|tuna noble 四组件（2026-11-08 修复后收编）
 user-dirs|dotfile|$COMMON/10_Config/dot_config/user-dirs.dirs.tmpl|$HOME/.config/user-dirs.dirs|chezmoi|n||XDG 用户目录 → ② Local 锚点（.tmpl 按本机数据渲染；chezmoi 再生；M2 不再直写）
-fcitx5-rime|dotfile|$COMMON/10_Config/dot_local/share/fcitx5/rime/default.custom.yaml|$HOME/DevEnv/xdg/local/fcitx5/rime/default.custom.yaml|copy|n||Fcitx5 actual XDG location
-fcitx5-autostart|dotfile|$COMMON/10_Config/dot_config/autostart/org.fcitx.Fcitx5.desktop|$HOME/DevEnv/xdg/config/autostart/org.fcitx.Fcitx5.desktop|copy|n||Fcitx5 actual XDG location
-classicui-fcitx5|dotfile|$COMMON/10_Config/dot_config/fcitx5/conf/classicui.conf|$HOME/DevEnv/xdg/config/fcitx5/conf/classicui.conf|copy|n||macOS12 皮肤：Theme=macos12-light/dark 手动切，UseDarkTheme=True 跟随系统亮暗（正本=fcitx5 原样——GUI 改设置后 adopt 收编）
-konsole-profile|dotfile|$COMMON/10_Config/dot_config/konsole/devspace.profile|$HOME/DevEnv/xdg/local/share/konsole/devspace.profile|copy|n|os=ubuntu,debian,linuxmint|Konsole 统一 profile（JetBrainsMono NF 12；默认指针归 terminal 能力 kwriteconfig5）
+fcitx5-rime|dotfile|$COMMON/10_Config/dot_local/share/fcitx5/rime/default.custom.yaml|$HOME/DevEnv/85_XdgRoot/local/fcitx5/rime/default.custom.yaml|copy|n||Fcitx5 actual XDG location
+fcitx5-autostart|dotfile|$COMMON/10_Config/dot_config/autostart/org.fcitx.Fcitx5.desktop|$HOME/DevEnv/85_XdgRoot/config/autostart/org.fcitx.Fcitx5.desktop|copy|n||Fcitx5 actual XDG location
+classicui-fcitx5|dotfile|$COMMON/10_Config/dot_config/fcitx5/conf/classicui.conf|$HOME/DevEnv/85_XdgRoot/config/fcitx5/conf/classicui.conf|copy|n||macOS12 皮肤：Theme=macos12-light/dark 手动切，UseDarkTheme=True 跟随系统亮暗（正本=fcitx5 原样——GUI 改设置后 adopt 收编）
+konsole-profile|dotfile|$COMMON/10_Config/dot_config/konsole/devspace.profile|$HOME/DevEnv/85_XdgRoot/local/share/konsole/devspace.profile|copy|n|os=ubuntu,debian,linuxmint|Konsole 统一 profile（JetBrainsMono NF 12；默认指针归 terminal 能力 kwriteconfig5）
+npmrc|dotfile|$COMMON/10_Config/dot_npmrc|$HOME/.npmrc|copy|n||npm 契约（cache→② 70_UserCache；prefix→① 40_Toolchain/NpmGlobal；store→③ 40_CachePool）
 condarc|dotfile|$COMMON/10_Config/dot_condarc|$HOME/.condarc|copy-expand|n||conda tuna 镜像 + envs/pkgs → ① deps/conda（ml-trainer；v0.19）
 gradle-properties|dotfile|$COMMON/10_Config/dot_gradle/gradle.properties|$LOCAL/10_Cache/gradle/gradle.properties|copy-expand|n||Gradle 全局性能/缓存（GRADLE_USER_HOME → ②；镜像属项目级，v0.19）
 profile|dotfile|$COMMON/10_Config/dot_profile|$HOME/.profile|chezmoi|n||登录 shell 环境契约兜底（非交互 bash -lc/cron/ssh；.bashrc 对非交互早退）

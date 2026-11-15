@@ -165,9 +165,9 @@ BestDevEnv/
 |---|---|---|---|
 | `node.sh` | mise（nvm 兼容期收编） | npmmirror | store/cache → `/Share/Common/cache/linux`；实体 → `DevEnv/deps` |
 | `python.sh` | uv | 阿里 pypi | venv → `DevEnv/virtualenvs`；cache → `Common/cache/linux` |
-| `rust.sh` | rustup | rsproxy.cn | `CARGO_HOME=$DEV/cargo`；target → `$LOCAL/build`（hardlink 基准校验） |
-| `go.sh` | 官方 tarball | goproxy.cn | `GOPATH=$DEV/go` |
-| `flutter.sh` | 沿用 `DevEnv/flutter` | flutter-io.cn | `PUB_CACHE=$DEV/pub-cache`；gradle → `$LOCAL/cache/gradle` |
+| `rust.sh` | rustup | rsproxy.cn | `CARGO_HOME=$DEV/40_Toolchain/CargoHome`；target → `$LOCAL/build`（hardlink 基准校验） |
+| `go.sh` | 官方 tarball | goproxy.cn | `GOPATH=$DEV/40_Toolchain/Golang` |
+| `flutter.sh` | 沿用 `DevEnv/flutter` | flutter-io.cn | `PUB_CACHE=$DEV/40_Toolchain/PubCache`；gradle → `$LOCAL/cache/gradle` |
 | `java.sh` | mise temurin | aliyun maven | `GRADLE_USER_HOME=$LOCAL/cache/gradle` |
 | `ai.sh` | hf/modelscope CLI | hf-mirror | 权重 → `/Share/Common/data/models`（`HF_HOME`） |
 
@@ -207,7 +207,7 @@ claude-code  codex  gemini-cli  opencode  zcode  trae/trae-cn  antigravity  qode
 | 会话 | 工具私有（注册表登记） | 只调查不迁移；跨工具续做走 `devenv orch` | `devenv runtime sessions` |
 
 - **注册表**：`modules/agent/runtimes.tsv` 是唯一事实源（新 runtime = 加一行）；接线器只按注册表干活
-- **统一入口**：`vibe <tool> [args]`（`$DEV/bin/vibe`）——任何 runtime 都拿到同一份 env.sh 契约
+- **统一入口**：`vibe <tool> [args]`（`$DEV/00_Exec/vibe`）——任何 runtime 都拿到同一份 env.sh 契约
 - **绝不覆盖工具真实配置**：已有真实文件 → 备份 + pending 人工合并；工具自有状态只受控合并
 - doctor「Runtime 统一接线」项验收三正本 + 枢纽兜底；「正本 gen 指纹」项验收正本与模板同代
 
@@ -221,17 +221,17 @@ claude-code  codex  gemini-cli  opencode  zcode  trae/trae-cn  antigravity  qode
 正本落 `~/.config/devspace/agents/skill/<name>/`，工具侧接线由 `runtime.sh` 按注册表执行。
 改模板后重跑生成器即再生，勿手改正本。
 主 Skill 对多步长任务用 `devenv orch`（`modules/orch/orch.sh`）把编排进度落盘
-`$DEV/docs/progress/orch-*.md`（机器/OS/doctor 快照 + 计划清单 + 续做指针），跨会话可续做。
+`$DEV/80_Records/00_Progress/orch-*.md`（机器/OS/doctor 快照 + 计划清单 + 续做指针），跨会话可续做。
 
 ### M5 环境描述文档构建（需求 6）
 
 **数据/视图三层**（宪法 §19.5）：`lib/probe.sh` 是唯一采集器（L1），产出 schema 化 JSON 快照
-（`$DEV/docs/state/probe.json`，schema `bde.probe/2`：含存储后端/持久化/期望对账与共享盘能力探测）；
+（`$DEV/80_Records/20_Snapshots/probe.json`，schema `bde.probe/2`：含存储后端/持久化/期望对账与共享盘能力探测）；
 doctor / report / AGENTS+SKILL / map 全部是
 L3 纯视图，只消费快照与登记数据（L2），绝不自行采集。视图可随时删除重建，数据永远在家。
 
 ```text
-probe.sh ──→ $DEV/docs/state/probe.json ──→ doctor.sh（校验视图，--json 出 bde.doctor/1）
+probe.sh ──→ $DEV/80_Records/20_Snapshots/probe.json ──→ doctor.sh（校验视图，--json 出 bde.doctor/1）
                                         ──→ report.sh（报告视图 → Common/docs/env/）
                                         ──→ agents-md.sh（指令视图 → AGENTS/SKILL 家族）
 ```
@@ -273,8 +273,8 @@ EOF（Ctrl+D）一律不开工。**Skill 层硬协议**：会话内由 AI 执行
 
 构建过程**逐阶段落盘**，中断后可继续执行：
 
-- **状态文件**：`~/DevEnv/docs/progress/<机器名>.state`（本机；行格式 `阶段|状态|时间|计数`，同阶段取最近一条）
-- **运行日志**：`~/DevEnv/docs/progress/init-<时间戳>.log`（全量输出留痕，`--no-log` 关闭）
+- **状态文件**：`~/DevEnv/80_Records/00_Progress/<机器名>.state`（本机；行格式 `阶段|状态|时间|计数`，同阶段取最近一条）
+- **运行日志**：`~/DevEnv/80_Records/00_Progress/init-<时间戳>.log`（全量输出留痕，`--no-log` 关闭）
 - **命令**：
   - `./init.sh --status` 查看各阶段进度
   - `./init.sh --resume` **续建**：跳过 done 阶段，只执行未完成/失败阶段

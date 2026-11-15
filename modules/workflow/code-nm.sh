@@ -14,7 +14,7 @@ DIR="$COMMON/code/$REPO"
 [ -d "$DIR" ] || { bde_fail "仓库不存在: $DIR"; exit 1; }
 [ -f "$DIR/package.json" ] || { bde_fail "$REPO 不是 JS/TS 项目（无 package.json）"; exit 1; }
 
-REAL="$DEV/deps/$REPO/node_modules"
+REAL="$DEV/20_Deps/$REPO/node_modules"
 MP="$DIR/node_modules"
 LIST="${BDE_BINDMOUNTS:-$DEV/docs/bindmounts.list}"
 ROOT="$(bde_root)"
@@ -23,7 +23,7 @@ mkdir -p "$REAL" || { bde_fail "无法创建实体目录 $REAL"; exit 1; }
 
 # ── 能力事实：先读 probe 快照（M2/主调度采集），快照过期/缺失时现场复测兜底 ──
 _cap_link=0
-_pj="${BDE_PROBE_STATE_DIR:-$DEV/docs/state}/probe.json"   # 尊循 probe.sh 状态目录契约（可注入测试）
+_pj="${BDE_PROBE_STATE_DIR:-$DEV/80_Records/20_Snapshots}/probe.json"   # 尊循 probe.sh 状态目录契约（可注入测试）
 if [ -f "$_pj" ] && command -v python3 >/dev/null 2>&1; then
     _cap_link="$(BDE_PROBE_JSON="$_pj" python3 -c 'import json,os;print(json.load(open(os.environ["BDE_PROBE_JSON"])).get("share_caps",{}).get("symlink",0))' 2>/dev/null || echo 0)"
 fi
