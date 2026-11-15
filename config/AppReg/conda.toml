@@ -6,7 +6,7 @@ summary = "conda 发行版（envs/pkgs → ① Deps/conda）"
 
 [install]
 scope = "user"
-at = "user:50_Services/miniconda3"
+at = "user:services/miniconda3"
 via = "installer"
 verify = "conda --version"
 
@@ -15,7 +15,7 @@ via = "待收编"
 
 [data]
 scope = "user"
-at = "user:50_Services/miniconda3"
+at = "user:services/miniconda3"
 dump = ""
 
 [logs]

@@ -6,7 +6,7 @@ summary = "AI CLI（契约位 ① apps/agent/.opencode/bin）"
 
 [install]
 scope = "user"
-at = "user:10_Apps/agent/.opencode"
+at = "user:apps/agent/.opencode"
 via = "installer"
 verify = "opencode --version"
 

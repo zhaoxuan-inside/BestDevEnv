@@ -6,7 +6,7 @@ summary = "AI CLI（未装·按需——用户点名才装；公网可装 npm:@g
 
 [install]
 scope = "user"
-at = "user:10_Apps/agent/.gemini"
+at = "user:apps/agent/.gemini"
 via = "installer"
 verify = "gemini --version"
 

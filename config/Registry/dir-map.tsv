@@ -44,25 +44,29 @@ host|Public||XDG 公共|XDG|豁免：协议固定名
 host|Templates||XDG 模板|XDG|豁免：协议固定名
 host|Videos||XDG 视频|XDG|豁免：协议固定名
 # —— user ①（用户独占；锚点由用户指定）——
-user|bin|00_Exec|命令入口（devenv/code-* 等）|入口|主干
-user|apps|10_Apps|应用实体（agent/ide）|应用|主干
+user|00_Exec||命令入口（devenv/code-* 等）|入口|主干
+user|10_Apps||应用实体（agent/ide）|应用|主干
+user|40_Toolchain||语言工具链（九项聚合：CargoHome/Rustup/Golang/NodeJS/Flutter/PubCache/AndroidSDK/AndroidUser/NpmGlobal）|工具链|主干
+user|apps||待清——活动会话旧契约重建（.codex 等；会话收尾后删除并确认）|豁免|2026-11-15 改名重建，非登记实体
+user|cache||npm 旧缓存日志（_logs；npmrc 契约已改 70_UserCache，下次运行不再写入）|豁免|2026-11-15 改名重建
+user|xdg||活动会话 XDG 写入（本会话进程持有旧路径；新会话走 85_XdgRoot）|豁免|2026-11-15 改名重建
 user|ide||IDE 工具（待并入 Apps/Ide）|应用|存量待并入：迁移时处置
-user|deps|20_Deps|依赖实体（node_modules 等，bind 接回）|依赖|主干
-user|virtualenvs|30_Venv|Python 虚拟环境|依赖|主干
-user|cargo|40_Tool/Cargo|Cargo 工具链（CARGO_HOME）|工具链|聚合入 40_Tool
-user|rustup|40_Tool/Rust|Rust 工具链（RUSTUP_HOME）|工具链|聚合入 40_Tool
-user|go|40_Tool/Golang|Go 工具链（GOPATH）|工具链|聚合入 40_Tool
-user|nvm|40_Tool/Node|Node 版本管理（NVM_DIR）|工具链|聚合入 40_Tool
-user|npm-global|40_Tool/Npm|npm 全局安装（npm prefix）|工具链|聚合入 40_Tool
-user|flutter|40_Tool/Flut|Flutter SDK|工具链|聚合入 40_Tool
-user|pub-cache|40_Tool/Dart|Dart/Flutter 包缓存（PUB_CACHE）|工具链|聚合入 40_Tool
-user|android-sdk|40_Tool/Droid|Android SDK|工具链|聚合入 40_Tool
-user|android-user|40_Tool/Droid|Android 用户数据|工具链|聚合入 40_Tool
+user|20_Deps||依赖实体（node_modules 等，bind 接回）|依赖|主干
+user|30_VirtualEnv||Python 虚拟环境|依赖|主干
+user|40_Toolchain/CargoHome||Cargo 工具链（CARGO_HOME）|工具链|聚合入 40_Tool
+user|40_Toolchain/Rustup||Rust 工具链（RUSTUP_HOME）|工具链|聚合入 40_Tool
+user|40_Toolchain/Golang||Go 工具链（GOPATH）|工具链|聚合入 40_Tool
+user|40_Toolchain/NodeJS||Node 版本管理（NVM_DIR）|工具链|聚合入 40_Tool
+user|40_Toolchain/NpmGlobal||npm 全局安装（npm prefix）|工具链|聚合入 40_Tool
+user|40_Toolchain/Flutter||Flutter SDK|工具链|聚合入 40_Tool
+user|40_Toolchain/PubCache||Dart/Flutter 包缓存（PUB_CACHE）|工具链|聚合入 40_Tool
+user|40_Toolchain/AndroidSDK||Android SDK|工具链|聚合入 40_Tool
+user|40_Toolchain/AndroidUser||Android 用户数据|工具链|聚合入 40_Tool
 user|codex||codex 工具数据|工具|存量待归类：migrate 处置
 user|history||历史记录|文档|存量待归类：migrate 处置
-user|services|50_Serv|服务安装体与数据（docker 等）|服务|主干
-user|data|60_Data|机器数据|数据|主干
-user|cache|70_Cache|用户级缓存|缓存|主干
-user|docs|80_Docs|账本与留痕|文档|主干
-user|xdg|85_Home|私有家目录扩展（XDG 重定向根）|框架|主干
-user|tmp|90_Temp|会话级临时|临时|主干
+user|50_Services||服务安装体与数据（docker 等）|服务|主干
+user|60_LocalData||机器数据|数据|主干
+user|70_UserCache||用户级缓存|缓存|主干
+user|80_Records||账本与留痕|文档|主干
+user|85_XdgRoot||私有家目录扩展（XDG 重定向根）|框架|主干
+user|90_Scratch||会话级临时|临时|主干

@@ -1,5 +1,5 @@
 # network.toml — 网络画像档案（宪法 §20 同构：站点差异只存在于本文件）
-# 内容：镜像清单 + 代理出口。生成：devenv state-env → ① $DEV/80_Records/20_Snapshots/network.env（env.sh 自动 source）
+# 内容：镜像清单 + 代理出口。生成：devenv state-env → ① $DEV/docs/state/network.env（env.sh 自动 source）
 # 解析顺序：机器段（<hostname>，小写）覆盖 [default] 段；python3 ≥3.11（tomllib）
 # 解析失败 → env.sh 内置兜底（bootstrap 免疫），doctor/state-env 会响亮提示
 # 语义：https_proxy 留空 = 直连（不导出代理变量）；镜像键留空 = 不导出该变量
