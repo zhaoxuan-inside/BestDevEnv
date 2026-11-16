@@ -54,7 +54,6 @@ export VSCODE_EXTENSIONS="$DEV/10_Apps/ide/vscode/home/extensions"  # VS Code �
 export VSCODE_AGENT_FOLDER="$DEV/10_Apps/ide/vscode/server"         # 远程服务端安装位
 export CLAUDE_CONFIG_DIR="$DEV/10_Apps/agent/.claude"    # 实体 ①（.claude.json 随迁已实测；~/.claude 链接保留供交叉工具）
 export CODEX_HOME="$DEV/10_Apps/agent/.codex"            # 实体 ①
-export ZCODE_CONFIG_DIR="$DEV/10_Apps/agent/.zcode"      # zcode（JS 内 41 处引用，实测支持）
 export OPENCODE_CONFIG_DIR="$DEV/10_Apps/agent/.opencode"  # opencode 根（含 bin/）
 export HISTFILE="$DEV/history/bash"                   # bash 历史 → ①（用户活状态）
 
