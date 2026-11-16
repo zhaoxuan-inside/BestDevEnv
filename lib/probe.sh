@@ -123,6 +123,11 @@ bde_probe_collect() {
     P_CONFIG_OK=0; { [ -f "$COMMON/10_Config/.chezmoiignore" ] || [ -f "$HOME/.config/devspace/env.sh" ]; } && P_CONFIG_OK=1
     P_ENV_SH=0; [ -f "$HOME/.config/devspace/env.sh" ] && P_ENV_SH=1
     P_XDG_DOC=""; grep -m1 'XDG_DOCUMENTS_DIR' "$HOME/.config/user-dirs.dirs" 2>/dev/null | grep -q 'Share/Local' && P_XDG_DOC="重定向"
+    P_KEYRINGS_OK=0
+    if [ -d "$DEV/85_XdgRoot/local/keyrings" ] && [ -L "$HOME/.local/share/keyrings" ] \
+       && [ "$(readlink -f "$HOME/.local/share/keyrings")" = "$(readlink -f "$DEV/85_XdgRoot/local/keyrings")" ]; then
+        P_KEYRINGS_OK=1
+    fi
     P_AGENTS_MD=0; [ -f "$HOME/.config/devspace/agents/AGENTS.md" ] && P_AGENTS_MD=1
     P_SKELETON=0; [ -d "$COMMON/30_DataSpace/Models" ] && [ -d "$LOCAL/20_Build" ] && P_SKELETON=1
     P_IDE_OK=0; { [ -f "$HOME/.config/Code/User/settings.json" ] && [ -f "$COMMON/10_Config/AppReg/vscode/base.txt" ] \
@@ -447,6 +452,7 @@ doc = {
         "agents_canon": i("P_AGENTS_CANON"),
         "ide_ready": i("P_IDE_OK"),
         "xdg_redirect": 1 if p.get("XDG_DOC") else 0,
+        "keyrings_ok": i("P_KEYRINGS_OK"),
         "inotify_ok": i("P_INOTIFY_OK"),
         "sysctl_ok": i("P_SYSCTL_OK"),
         "fstrim_ok": i("P_FSTRIM_OK"),

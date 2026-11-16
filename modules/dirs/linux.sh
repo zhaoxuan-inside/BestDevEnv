@@ -117,6 +117,11 @@ cat > "$DEV/00_Exec/devenv" <<EOF
 #!/usr/bin/env bash
 # devenv — 开发环境入口（由 BestDevEnv 生成于 $(date +%F)）
 BDE_ROOT="$BDE_ROOT"
+if [ ! -d "\$BDE_ROOT" ]; then
+    for _cand in "/Share/Common/40_CodeSpace/BestDevEnv" "/Share/Common/code/BestDevEnv" "\$HOME/Share/Common/40_CodeSpace/BestDevEnv"; do
+        if [ -d "\$_cand" ]; then BDE_ROOT="\$_cand"; break; fi
+    done
+fi
 case "\${1:-}" in
     doctor) shift; exec bash "\$BDE_ROOT/verify/doctor.sh" "\$@" ;;
     report) shift; exec bash "\$BDE_ROOT/modules/doc/report.sh" "\$@" ;;
@@ -139,11 +144,30 @@ esac
 EOF
 chmod +x "$DEV/00_Exec/devenv"
 for _w in code-open code-close code-nm code-out; do
-    printf "#!/usr/bin/env bash\nexec bash \"%s/modules/workflow/%s.sh\" \"\$@\"\n" "$BDE_ROOT" "$_w" > "$DEV/00_Exec/$_w"
+    cat > "$DEV/00_Exec/$_w" <<EOF
+#!/usr/bin/env bash
+BDE_ROOT="$BDE_ROOT"
+if [ ! -d "\$BDE_ROOT" ]; then
+    for _cand in "/Share/Common/40_CodeSpace/BestDevEnv" "/Share/Common/code/BestDevEnv" "\$HOME/Share/Common/40_CodeSpace/BestDevEnv"; do
+        if [ -d "\$_cand" ]; then BDE_ROOT="\$_cand"; break; fi
+    done
+fi
+exec bash "\$BDE_ROOT/modules/workflow/$_w.sh" "\$@"
+EOF
     chmod +x "$DEV/00_Exec/$_w"
 done
 # vibe — Runtime 统一入口：source env.sh 后 exec 工具/子命令（等同 devenv runtime ...）
-printf "#!/usr/bin/env bash\n. \"\$HOME/.config/devspace/env.sh\" 2>/dev/null\nexec bash \"%s/modules/agent/runtime.sh\" \"\$@\"\n" "$BDE_ROOT" > "$DEV/00_Exec/vibe"
+cat > "$DEV/00_Exec/vibe" <<EOF
+#!/usr/bin/env bash
+. "\$HOME/.config/devspace/env.sh" 2>/dev/null
+BDE_ROOT="$BDE_ROOT"
+if [ ! -d "\$BDE_ROOT" ]; then
+    for _cand in "/Share/Common/40_CodeSpace/BestDevEnv" "/Share/Common/code/BestDevEnv" "\$HOME/Share/Common/40_CodeSpace/BestDevEnv"; do
+        if [ -d "\$_cand" ]; then BDE_ROOT="\$_cand"; break; fi
+    done
+fi
+exec bash "\$BDE_ROOT/modules/agent/runtime.sh" "\$@"
+EOF
 chmod +x "$DEV/00_Exec/vibe"
 rm -f "$DEV/00_Exec/env"   # 旧分发器除名（曾遮蔽 coreutils env——命名规范 §20.4）
 bde_ok "分发 code-open/close/nm/out + devenv（doctor/report/tidy/map/orch/runtime/cfg/app/svc/gen/state-env/migrate-finish）+ vibe；旧 env 已除名"
@@ -170,6 +194,15 @@ if [ "$XDG" = "y" ]; then
             ensure_symlink "$_src" "$_tgt"
         done
         shopt -u dotglob nullglob
+        # 6.5) 系统密钥环兼容链路（GNOME Keyring / Secret Service 支撑）
+        # XDG_DATA_HOME 重定向至 85_XdgRoot/local，gnome-keyring-daemon 与 PAM/Secret Service
+        # 依赖 ~/.local/share/keyrings 兼容链路与 85_XdgRoot/local/keyrings 双向对齐
+        ensure_dir "$DEV/85_XdgRoot/local/keyrings"
+        ensure_dir "$HOME/.local/share"
+        ensure_symlink "$HOME/.local/share/keyrings" "$DEV/85_XdgRoot/local/keyrings"
+        if [ -d "$DEV/xdg/local" ]; then
+            ensure_symlink "$DEV/xdg/local/keyrings" "$DEV/85_XdgRoot/local/keyrings"
+        fi
     else
         bde_pending "Local 不可写，跳过 XDG 重定向"
     fi

@@ -63,6 +63,7 @@ if is_linux:
         (f"存储已持久化（② {st['backend_host']}）",    st["persisted_host"] == 1),
         ("IDE 就绪（code + settings + 语言档案）", f["ide_ready"] == 1),
         ("XDG 用户目录已重定向",                f["xdg_redirect"] == 1),
+        ("系统密钥环兼容链路就绪（~/.local/share/keyrings）", f.get("keyrings_ok", 0) == 1),
         ("inotify 上限已调高",                  f["inotify_ok"] == 1),
         ("vm.swappiness ≤ 10（换页保守，现值见 probe）", f["sysctl_ok"] == 1),
         ("fstrim.timer 已启用（SSD 周期 TRIM）",  f["fstrim_ok"] == 1),

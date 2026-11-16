@@ -216,7 +216,7 @@ bde_cfgval() {
 bde_hosts_fragment() {  # [toml 路径] → stdout（片段行，默认 $BDE_ROOT/hosts.toml）；失败响亮退非零
     command -v python3 >/dev/null 2>&1 || { echo "python3 缺失" >&2; return 1; }
     python3 -c 'import tomllib' 2>/dev/null || { echo "python3 缺少 tomllib（需 ≥3.11）" >&2; return 1; }
-    python3 - "${1:-${BDE_ROOT:-/Share/Common/code/BestDevEnv}/hosts.toml}" <<'PY'
+    python3 - "${1:-${BDE_ROOT:-/Share/Common/40_CodeSpace/BestDevEnv}/hosts.toml}" <<'PY'
 import os, sys, tomllib
 try:
     with open(sys.argv[1], "rb") as fh:
