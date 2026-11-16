@@ -1,0 +1,11 @@
+[Desktop Entry]
+X-SnapInstanceName=antigravity
+Name=Antigravity
+Comment=Google Antigravity — Build the new way
+X-SnapAppName=antigravity
+Exec=/snap/bin/antigravity --ozone-platform=x11 %U
+Icon=/snap/antigravity/current/share/icons/hicolor/256x256/apps/antigravity.png
+Terminal=false
+Type=Application
+Categories=Development;
+StartupWMClass=Antigravity

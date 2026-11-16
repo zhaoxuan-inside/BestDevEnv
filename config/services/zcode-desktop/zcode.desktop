@@ -5,6 +5,6 @@ Terminal=false
 Type=Application
 Icon=zcode
 StartupWMClass=ZCode
-Comment=ZCode Desktop App
+Comment=ZCode Desktop App (Fcitx5 XWayland)
 MimeType=x-scheme-handler/zcode;
 Categories=Development;
