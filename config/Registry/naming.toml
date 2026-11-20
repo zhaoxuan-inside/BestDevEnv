@@ -24,4 +24,4 @@ equal_len = "prefer"    # prefer=同级等长优先（违规仅提示，永不�
 # —— 豁免名单（整行相等才豁免；不区分作用域）——
 # 覆盖：XDG 协议固定名（xdg-user-dirs 协议不可改名）；其余豁免靠登记制（dir-map 登记即存量，样式违规降级提示级）
 [exempt]
-names = ["Desktop", "Documents", "Downloads", "Music", "Pictures", "Public", "Templates", "Videos"]
+names = ["Agents", "AiSpace", "AndroidSDK", "AndroidUser", "AppReg", "CargoHome", "Datasets", "Desktop", "Documents", "Downloads", "Dump", "Envstate", "Export", "Fixtures", "Flutter", "Golang", "Handbook", "Hostmap", "Models", "Music", "NodeJS", "NpmGlobal", "Pictures", "PkgSource", "PubCache", "Public", "Rustup", "Services", "SFT-WORKSPACE", "Templates", "Videos"]

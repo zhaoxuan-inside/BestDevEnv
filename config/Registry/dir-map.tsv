@@ -5,7 +5,6 @@
 # - 深层目录（第 3 层及以下）执行迁移时同规则递归登记；分类供 devenv index 聚合
 # —— shared ③（跨主机共享；锚点由用户指定，见 storage.toml）——
 shared|40_CodeSpace||代码仓库（单份平铺；仓库目录名随上游，豁免）|代码|2026-11-20 与实态对齐：仓库已住 40_CodeSpace，空 code 目录已清；消费方统一 $CODE_ROOT
-shared|docs||文档产出（Envstate/Handbook/Hostmap）|文档|存量名：随 20_DocSpace 收编（需用户授权）
 shared|Data||npm 缓存遗留 140M（可再生）|缓存|存量名：tidy/迁移处置（需用户授权）
 shared|10_Config||配置正本仓库（git 版本化）|配置|主干
 shared|10_Config/Services||服务配置正本|配置|深层登记
@@ -14,9 +13,9 @@ shared|10_Config/AppReg||应用档案与 IDE 配置|配置|深层登记
 shared|10_Config/Agents||vibecoding 工具配置（skill/MCP 正本）|配置|深层登记
 shared|10_Config/data||治理数据表（dir-map/naming/home-map）|配置|深层登记
 shared|20_DocSpace||文档|文档|主干
-shared|docs/Handbook||规范手册/宪法|文档|深层登记
-shared|docs/Hostmap||机器数据表|文档|深层登记
-shared|docs/Envstate||环境实况报告|文档|深层登记
+shared|20_DocSpace/Handbook||规范手册/宪法|文档|深层登记
+shared|20_DocSpace/Hostmap||机器数据表|文档|深层登记
+shared|20_DocSpace/Envstate||环境实况报告|文档|深层登记
 shared|30_DataSpace||共享数据|数据|主干（大小写已合规，补 NN_ 前缀）
 shared|30_DataSpace/Models||模型文件（gguf/huggingface/modelscope）|数据|深层登记
 shared|30_DataSpace/Datasets||数据集|数据|深层登记

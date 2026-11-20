@@ -128,7 +128,7 @@ devenv orch status                              # 查进度与续做指引
 
 - 完成后必跑 `devenv doctor` 复查，向用户报告 ✓/✗ 清单
 - 动过 `$COMMON/10_Config` 就提醒 commit + push；动过系统参数提醒需重启生效项
-- 需要留痕时 `devenv report`（→ `$COMMON/docs/Envstate/`）
+- 需要留痕时 `devenv report`（→ `$COMMON/20_DocSpace/Envstate/`）
 
 ## 子 Skill 维护（改模板 → 重新生成）
 

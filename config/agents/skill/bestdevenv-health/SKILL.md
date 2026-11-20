@@ -19,7 +19,7 @@ devenv doctor      # 逐项自检：存储（后端/持久化/档案对账）/�
 devenv lint        # 文档锚点校验：Skill/AGENTS 正本里写死的路径是否仍存在（失效 → 列文件:行）
 devenv map         # 隐藏目录注册表 + 未登记/失踪检测（--sizes 附体量与最近使用，较慢）
 devenv tidy        # 清可再生缓存（SAFE 清单，~10G 级）
-devenv report      # markdown 报告 → $COMMON/docs/Envstate/<机器名>-<时间>.md
+devenv report      # markdown 报告 → $COMMON/20_DocSpace/Envstate/<机器名>-<时间>.md
 devenv namecheck   # 目录命名规范（硬=未登记；存量=已登记样式；--migrate 逐项授权）
 devenv cfg         # 配置治理：清单/漂移/apply/adopt（详见 bestdevenv-config）
 ```
