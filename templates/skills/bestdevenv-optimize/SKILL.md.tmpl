@@ -56,4 +56,4 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 - GNOME Wayland 下 Mutter 只认 IBus：不走 GTK/Qt IM 模块的客户端（`--ozone-platform=wayland` 的 Chromium/Electron、GNOME Shell 自身界面）用不了 fcitx5；需要中文输入时让该客户端走 XWayland（`--ozone-platform=x11`），或整体改用 IBus
 - 改内核参数只改 ③ 正本再 `devenv cfg apply`（落位即自动生效）——绝不手改应用层
 - **建议集（不自动，需人工确认）**：仅剩 DNS（systemd-resolved 改写）与静态 IP/netplan——网络行为相关，盲改是生产事故源；需要时经 cfg 治理通道收编后手动 apply
-- **桩测试**：`verify/test-cap.sh`（84 断言，五家族语义验证，CI 可跑）；真机验收清单 `verify/ACCEPTANCE.md`——fedora/arch/suse/darwin 从"代码就绪"升级"生产实装"的唯一通道
+- **桩测试**：`verify/test-cap.sh`（100+ 断言（五家族语义验证），CI 可跑）；真机验收清单 `verify/ACCEPTANCE.md`——fedora/arch/suse/darwin 从"代码就绪"升级"生产实装"的唯一通道

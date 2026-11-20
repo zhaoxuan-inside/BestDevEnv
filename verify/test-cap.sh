@@ -139,9 +139,9 @@ EOF
 run_family() {  # <family>
     local fam=$1
     printf "\n━━ 家族 %s ━━\n" "$fam"
-    mkdir -p "$SBX/common/config/Services/zram" "$SBX/common/config/Services/systemd"
-    printf 'ALGO=zstd\n' > "$SBX/common/config/Services/zram/zramswap"
-    printf '[zram0]\n' > "$SBX/common/config/Services/systemd/zram-generator.conf"
+    mkdir -p "$SBX/common/10_Config/Services/zram" "$SBX/common/10_Config/Services/systemd"
+    printf 'ALGO=zstd\n' > "$SBX/common/10_Config/Services/zram/zramswap"
+    printf '[zram0]\n' > "$SBX/common/10_Config/Services/systemd/zram-generator.conf"
     # ⚠ 单行拼接：多行 _env 会让 env -i 在换行处截断——赋值被打印、bash 以真实环境直跑（桩旁路 → 碰真系统）。
     #   本次事故即测试块以真 sudo 覆盖了 /etc/sysctl.d（2026-11-12，已修复+加固此处）
     local _env="PATH=$STUB:\$PATH BDE_OS_FAMILY=$fam BDE_ROOT=$BDE_ROOT COMMON=$SBX/common BDE_CAP_SYSCTL_CONF=$SBX/sysctl.conf BDE_CAP_JOURNAL_CONF=$SBX/journal.conf BDE_CAP_LIMITS_CONF=$SBX/limits.conf BDE_CAP_ZRAMSWAP_CONF=$SBX/zramswap BDE_CAP_ZRAM_CONF=$SBX/zram-generator.conf BDE_BACKUP_DIR=$SBX/backup TEST_PKG_INSTALLED=0 TEST_SVC_ACTIVE=0 TEST_SVC_ENABLED=0 TEST_TZ=UTC TEST_LANG_CUR=POSIX"
