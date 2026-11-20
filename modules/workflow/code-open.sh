@@ -5,9 +5,9 @@ source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"
 
 REPO="${1:?用法: code-open <repo>}"
-DIR="$COMMON/code/$REPO"
+DIR="$CODE_ROOT/$REPO"
 [ -d "$DIR" ] || { bde_fail "仓库不存在: $DIR"; exit 1; }
-LIST="${BDE_BINDMOUNTS:-$DEV/docs/bindmounts.list}"
+LIST="${BDE_BINDMOUNTS:-$DEV/80_Records/bindmounts.list}"
 MACHINE="${BDE_MACHINE:-$(hostname)}"
 ROOT="$(bde_root)"
 

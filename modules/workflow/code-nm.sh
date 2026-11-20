@@ -10,13 +10,13 @@ source "$BDE_ROOT/lib/common.sh"
 
 REPO="${1:?用法: code-nm <repo>}"
 bde_require_linux || exit 1
-DIR="$COMMON/code/$REPO"
+DIR="$CODE_ROOT/$REPO"
 [ -d "$DIR" ] || { bde_fail "仓库不存在: $DIR"; exit 1; }
 [ -f "$DIR/package.json" ] || { bde_fail "$REPO 不是 JS/TS 项目（无 package.json）"; exit 1; }
 
 REAL="$DEV/20_Deps/$REPO/node_modules"
 MP="$DIR/node_modules"
-LIST="${BDE_BINDMOUNTS:-$DEV/docs/bindmounts.list}"
+LIST="${BDE_BINDMOUNTS:-$DEV/80_Records/bindmounts.list}"
 ROOT="$(bde_root)"
 
 mkdir -p "$REAL" || { bde_fail "无法创建实体目录 $REAL"; exit 1; }

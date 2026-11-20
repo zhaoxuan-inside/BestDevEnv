@@ -1,12 +1,14 @@
 ---
 name: bestdevenv-dev
-version: 0.1.0
+version: 0.2.0
 description: BestDevEnv 部署开发环境——按开发者角色（profiles.tsv：java-web/python/go/cpp/ml-trainer/fullstack）或语言栈（node/python/rust/go/java/flutter/ai/cpp：安装+国内镜像+缓存重定向）、vibecoding 工具（claude-code/codex/gemini/opencode/zcode/arkcli）、VS Code 离线安装与语言扩展档案、JetBrains 需求推导时使用。触发：装语言、装 agent 工具、装 IDE、按角色配环境、扩展档案。
 ---
 
 # 部署开发环境（M3 语言栈 + M4 工具 + M6 IDE）
 
 单一职责：装语言/工具/IDE 并落镜像与重定向。每个脚本幂等，内部分四步：安装 → 镜像 → 重定向 → 校验。
+
+**反触发**：只调系统基线 → `bestdevenv-optimize`；只做配置收编/漂移 → `bestdevenv-config`；只查不装 → `bestdevenv-health`。
 
 ## 先确认再装（硬协议）
 
@@ -25,8 +27,8 @@ init.sh 全量管道（自带交互询问与校验）、用户在本次会话已
 
 1. **安装位置→受管根**：实体只落 系统包管理器 / ① DevEnv（Apps/Deps/Tool）/ ② Local——**禁止家目录散装与 ③ 共享盘实体**（inventory 渠道审计判违规）；版本管理器工具链（mise/nvm/cargo…）优先
 2. **配置位置→③**：配置正本收编 `$COMMON/10_Config`（`devenv cfg adopt`），严禁默认配置散落家目录
-3. **日志位置→②**：运行/构建日志约定落 `② $LOCAL/Logs/<名称>/`
-4. **数据缓存/产出**：数据与缓存按作用域落 ②③（锁敏感→②，可共享→③）；打包产出交付 `③ Relay/<名称>/`
+3. **日志位置→②**：运行/构建日志约定落 `② $LOCAL/30_Logs/<名称>/`
+4. **数据缓存/产出**：数据与缓存按作用域落 ②③（锁敏感→②，可共享→③）；打包产出交付 `③ 50_Exchange/<名称>/`
 
 ## 装后四步（验收前逐项过）
 
@@ -39,20 +41,20 @@ init.sh 全量管道（自带交互询问与校验）、用户在本次会话已
 
 ```bash
 source "$HOME/.config/devspace/env.sh"
-BDE="$COMMON/code/BestDevEnv"
+BDE="${BDE_ROOT:?先 source ~/.config/devspace/env.sh（提供 BDE_ROOT 工程根）}"
 bash "$BDE/modules/lang/node.sh"      # 或 python/rust/go/java/flutter/ai.sh
 ```
 
 | 语言 | 版本管理器 | 缓存/依赖落点 |
 |---|---|---|
-| node | mise（nvm 兼容期） | store/cache → Common/cache/linux；实体 → DevEnv/deps |
-| python | uv | venv → DevEnv/virtualenvs；cache → Common/cache/linux |
-| rust | rustup（rsproxy） | CARGO_HOME=DevEnv/cargo；target → Local/build |
-| go | 官方 tarball（goproxy.cn） | GOPATH=DevEnv/go |
-| java | 语义包 java-21（适配器别名，apt=openjdk-21-jdk） | GRADLE_USER_HOME=Local/cache/gradle + gradle-properties 正本 |
+| node | mise（nvm 兼容期） | store/cache → Common/cache/linux；实体 → DevEnv/20_Deps |
+| python | uv | venv → DevEnv/30_VirtualEnv；cache → Common/cache/linux |
+| rust | rustup（rsproxy） | CARGO_HOME=DevEnv/40_Toolchain/CargoHome；target → Local/20_Build |
+| go | 官方 tarball（goproxy.cn） | GOPATH=DevEnv/40_Toolchain/Golang |
+| java | 语义包 java-21（适配器别名，apt=openjdk-21-jdk） | GRADLE_USER_HOME=Local/10_Cache/gradle + gradle-properties 正本 |
 | flutter | DevEnv/flutter（flutter-io.cn） | PUB_CACHE=DevEnv/pub-cache |
-| cpp | 语义包 build-base + cmake/ninja/gdb/ccache/clangd | CCACHE_DIR=Local/cache/ccache |
-| ai | Miniconda（tuna → DevEnv/services/miniconda3；.condarc 正本：envs/pkgs → DevEnv/deps/conda）+ CUDA 体检 | HF_HOME/MODELSCOPE_CACHE → Common/data/models |
+| cpp | 语义包 build-base + cmake/ninja/gdb/ccache/clangd | CCACHE_DIR=Local/10_Cache/ccache |
+| ai | Miniconda（tuna → DevEnv/50_Services/miniconda3；.condarc 正本：envs/pkgs → DevEnv/20_Deps/conda）+ CUDA 体检 | HF_HOME/MODELSCOPE_CACHE → Common/30_DataSpace/Models |
 
 ## vibecoding 工具与 IDE
 

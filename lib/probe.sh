@@ -238,10 +238,11 @@ bde_probe_collect() {
     [ -f "$_stf" ] && grep -qs "^\[${BDE_MACHINE,,}\." "$_stf" && P_ANCHOR_REG=1
 
     # 目录登记制 + 命名规范（单实现委托 namecheck：静默扫描三锚点一级 + dir-map，harvest 计数）
-    # 校验器异常时不堵塞 doctor（计数归 0 通过——③ 档案缺失会先红在更基础的巡检项上）
+    # 判定失败（有硬违规）时 namecheck 退 1——但索引已落盘：不能把退出码当"无数据"，
+    # 否则未登记目录永远数不出来（2026-11-20 实测：硬 7 项而 doctor 全绿）
     P_DIR_UNREG=0; P_NAME_LEGACY=0
-    if BDE_NAMECHECK_QUIET=1 bash "$BDE_ROOT/modules/doc/namecheck.sh" >/dev/null 2>&1 \
-       && [ -f "$DEV/80_Records/20_Snapshots/namecheck.json" ]; then
+    BDE_NAMECHECK_QUIET=1 bash "$BDE_ROOT/modules/doc/namecheck.sh" >/dev/null 2>&1 || true
+    if [ -f "$DEV/80_Records/20_Snapshots/namecheck.json" ]; then
         eval "$(python3 - "$DEV/80_Records/20_Snapshots/namecheck.json" <<'PY'
 import json, sys, os, shlex
 try:
@@ -252,6 +253,14 @@ except Exception:
     pass
 PY
 )" || true
+    fi
+
+    # 锚点可解析性（Skill/AGENTS 正本里写死的路径是否存在——文档腐坏的唯一看门人）
+    # 与 devenv lint 同一实现（单实现委托，不做第二套判定）
+    P_ANCHOR_STALE=0
+    if [ -x "$BDE_ROOT/modules/doc/anchorlint.sh" ]; then
+        _al="$(bash "$BDE_ROOT/modules/doc/anchorlint.sh" --count 2>/dev/null | tr -dc '0-9')"
+        P_ANCHOR_STALE="${_al:-0}"
     fi
 
     # 应用档案覆盖缺口（已管集合 apps-classify ∪ home-map 所属应用 ∪ inventory 软件名 vs 档案数）
@@ -428,6 +437,7 @@ doc = {
         "share": os.environ.get("SHARE", ""),
         "common": os.environ.get("COMMON", ""),
         "local": os.environ.get("LOCAL", ""),
+        "repo": os.environ.get("BDE_ROOT", ""),
         "state": p.get("SHARE_STATE", "unknown"),
     },
     "facts": {
@@ -464,6 +474,7 @@ doc = {
         "anchor_reg": i("P_ANCHOR_REG"),
         "dir_unreg": i("P_DIR_UNREG"),
         "name_legacy": i("P_NAME_LEGACY"),
+        "anchor_stale": i("P_ANCHOR_STALE"),
         "app_noarch": i("P_APP_NOARCH"),
         "docker_root_bind": i("P_DOCKER_ROOT_BIND"),
     },

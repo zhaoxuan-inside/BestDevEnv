@@ -16,7 +16,11 @@ ensure_dir "$STATE_DIR" || { bde_fail "状态目录不可建：$STATE_DIR"; exit
 # ── anchors.env：三档锚点正本（存储解析层发射，机器差异的唯一出口）──
 _a="$STATE_DIR/anchors.env"
 if bde_storage_anchors_emit > "$_a.tmp" && [ -s "$_a.tmp" ]; then
-    mv "$_a.tmp" "$_a" && bde_ok "锚点正本 → ${_a/#$HOME/~}（③=$COMMON ②=$LOCAL ①=$DEV）"
+    # 工程根锚点（④ 入口层）：文档/脚本统一用 $BDE_ROOT 指工程，禁止再写死 code/<repo> 路径
+    # （2026-11-20 实测：改名后 7 个 Skill 首步 127——锚点必须由机器状态发射，不由文本记忆）
+    printf 'export BDE_ROOT=%q\n' "$BDE_ROOT" >> "$_a.tmp"
+    printf 'export CODE_ROOT=%q\n' "$CODE_ROOT" >> "$_a.tmp"
+    mv "$_a.tmp" "$_a" && bde_ok "锚点正本 → ${_a/#$HOME/~}（③=$COMMON ②=$LOCAL ①=$DEV ｜ 工程=$BDE_ROOT）"
 else
     rm -f "$_a.tmp"; bde_fail "锚点发射失败（storage.sh 异常）"; exit 1
 fi

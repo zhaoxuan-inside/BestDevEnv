@@ -10,12 +10,12 @@ source "$BDE_ROOT/lib/common.sh"
 REPO="${1:?用法: code-out <repo> [subdir=target|build|dist]}"
 bde_require_linux || exit 1
 SUB="${2:-target}"
-DIR="$COMMON/code/$REPO"
+DIR="$CODE_ROOT/$REPO"
 [ -d "$DIR" ] || { bde_fail "仓库不存在: $DIR"; exit 1; }
 
 REAL="$LOCAL/20_Build/$REPO/$SUB"
 MP="$DIR/$SUB"
-LIST="${BDE_BINDMOUNTS:-$DEV/docs/bindmounts.list}"
+LIST="${BDE_BINDMOUNTS:-$DEV/80_Records/bindmounts.list}"
 ROOT="$(bde_root)"
 
 mkdir -p "$REAL" || { bde_fail "无法创建 $REAL"; exit 1; }

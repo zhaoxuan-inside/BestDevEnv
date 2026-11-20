@@ -1,12 +1,14 @@
 ---
 name: bestdevenv-runtime
-version: 0.0.3
+version: 0.1.0
 description: BestDevEnv runtime 统一管理层——所有 vibecoding 工具视为可替换 Runtime，统一接线记忆（AGENTS.md 正本）、Skill（正本分发）、MCP（mcp.json 正本投影）、会话治理（登记+orch 续做）。当任务涉及：新增/接线 runtime、切换工具的环境不适、MCP server 增删同步、skills 分发、会话库调查治理时使用。
 ---
 
 # Runtime 统一管理（记忆 / Skill / MCP / 会话）
 
 单一职责：让任何 vibecoding 工具接上**同一份记忆、同一套 Skill、同一组 MCP、同一个任务续做协议**——工具只是运行时，环境由 BestDevEnv 承载。
+
+**反触发**：装工具本体 → `bestdevenv-dev`；MCP/Skill 的**内容设计**归对应业务 Skill，本 Skill 只管接线与投影。
 
 ## 四域正本与落点
 
@@ -23,7 +25,7 @@ description: BestDevEnv runtime 统一管理层——所有 vibecoding 工具视
 
 ```bash
 source "$HOME/.config/devspace/env.sh"
-BDE="$COMMON/code/BestDevEnv"
+BDE="${BDE_ROOT:?先 source ~/.config/devspace/env.sh（提供 BDE_ROOT 工程根）}"
 bash "$BDE/modules/agent/runtime.sh" list        # 全 runtime 接线现状视图
 bash "$BDE/modules/agent/runtime.sh" wire        # 幂等接线（memory + skills + mcp）
 bash "$BDE/modules/agent/runtime.sh" skill adopt <name> <路径>   # 枢纽真实技能目录收编进 ③ 正本

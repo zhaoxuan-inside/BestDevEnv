@@ -49,7 +49,7 @@ fi
 
 # 3) 骨架目录（Common 八区 / Local / DevEnv / 业务热区）
 _bde_dirs=(
-    "$COMMON/code" "$COMMON/10_Config" "$COMMON/10_Config/Services"
+    "$COMMON/40_CodeSpace" "$COMMON/10_Config" "$COMMON/10_Config/Services"
     "$COMMON/60_Installers/iso" "$COMMON/60_Installers/win" "$COMMON/60_Installers/linux" "$COMMON/60_Installers/fonts"
     "$COMMON/cache/linux/npm" "$COMMON/cache/linux/pnpm-store" "$COMMON/cache/linux/pip" "$COMMON/cache/linux/uv"
     "$COMMON/cache/windows"
@@ -59,10 +59,10 @@ _bde_dirs=(
     "$COMMON/70_Templates" "$COMMON/90_Archive"
     "$LOCAL/20_Build" "$LOCAL/10_Cache/gradle" "$LOCAL/10_Cache/m2"
     "$LOCAL/40_IdeRun" "$LOCAL/30_Logs"
-    "$LOCAL/00_Data/Dump" "$LOCAL/00_Data/Export" "$LOCAL/docs"
+    "$LOCAL/00_Data/Dump" "$LOCAL/00_Data/Export"
     "$LOCAL/Desktop" "$LOCAL/Documents" "$LOCAL/Downloads" "$LOCAL/Music"
     "$LOCAL/Pictures" "$LOCAL/Public" "$LOCAL/Templates" "$LOCAL/Videos"
-    "$DEV/20_Deps" "$DEV/data" "$DEV/00_Exec" "$DEV/80_Records" "$DEV/90_Scratch" "$DEV/40_Toolchain/PubCache"
+    "$DEV/20_Deps" "$DEV/30_VirtualEnv" "$DEV/00_Exec" "$DEV/80_Records" "$DEV/90_Scratch" "$DEV/40_Toolchain/PubCache"
     "$DEV/50_Services" "$DEV/ide" "$DEV/10_Apps/agent" "$DEV/10_Apps/ide"
     "$HOME/Code"
 )
@@ -111,66 +111,13 @@ else
     bde_skip "config 已存在（以共享盘为准，种子不参与）"
 fi
 
-# 5) env 分发器（~/DevEnv/bin/devenv → doctor / report / tidy / orch / runtime / migrate-finish）
-# 每次重跑都再生（生成物；防升级漂移——旧版仅首次创建，模板加子命令后旧机不更新）
-cat > "$DEV/00_Exec/devenv" <<EOF
-#!/usr/bin/env bash
-# devenv — 开发环境入口（由 BestDevEnv 生成于 $(date +%F)）
-BDE_ROOT="$BDE_ROOT"
-if [ ! -d "\$BDE_ROOT" ]; then
-    for _cand in "/Share/Common/40_CodeSpace/BestDevEnv" "/Share/Common/code/BestDevEnv" "\$HOME/Share/Common/40_CodeSpace/BestDevEnv"; do
-        if [ -d "\$_cand" ]; then BDE_ROOT="\$_cand"; break; fi
-    done
+# 5) 命令入口再生（devenv / code-* 四件套 / vibe；实现住 modules/dirs/exec-gen.sh）
+# M2 只负责"该有入口"，入口内容由生成器统一维护（独立执行 exec-gen.sh 可单独刷新，不动目录/挂载）
+if bash "$BDE_ROOT/modules/dirs/exec-gen.sh"; then
+    : # 生成器内部已报 ok
+else
+    bde_pending "命令入口再生失败（见上）"
 fi
-case "\${1:-}" in
-    doctor) shift; exec bash "\$BDE_ROOT/verify/doctor.sh" "\$@" ;;
-    report) shift; exec bash "\$BDE_ROOT/modules/doc/report.sh" "\$@" ;;
-    tidy) shift; exec bash "\$BDE_ROOT/modules/tidy.sh" "\$@" ;;
-    map) exec bash "\$BDE_ROOT/modules/home-map.sh" "\$@" ;;
-    orch) shift; exec bash "\$BDE_ROOT/modules/orch/orch.sh" "\$@" ;;
-    runtime) shift; exec bash "\$BDE_ROOT/modules/agent/runtime.sh" "\$@" ;;
-    cfg) shift; exec bash "\$BDE_ROOT/modules/cfg/cfg.sh" "\$@" ;;
-    cap) shift; exec bash "\$BDE_ROOT/lib/cap.sh" "\$@" ;;
-    inventory) shift; exec bash "\$BDE_ROOT/modules/doc/inventory.sh" "\$@" ;;
-    app) shift; exec bash "\$BDE_ROOT/modules/app/app.sh" "\$@" ;;
-    index) shift; exec bash "\$BDE_ROOT/modules/doc/dirindex.sh" "\$@" ;;
-    namecheck) shift; exec bash "\$BDE_ROOT/modules/doc/namecheck.sh" "\$@" ;;
-    svc) shift; exec bash "\$BDE_ROOT/modules/cfg/cfg.sh" --svc "\$@" ;;
-    gen) shift; exec bash "\$BDE_ROOT/modules/agent/agents-md.sh" "\$@" ;;
-    state-env) shift; exec bash "\$BDE_ROOT/modules/dirs/state-env.sh" "\$@" ;;
-    migrate-finish) shift; exec bash "\$BDE_ROOT/modules/dirs/migrate-finish.sh" "\$@" ;;
-    *) echo "用法: devenv doctor|report|tidy|map|inventory|index|namecheck|orch|runtime|cfg|cap|app|svc|gen|state-env|migrate-finish"; exit 1 ;;
-esac
-EOF
-chmod +x "$DEV/00_Exec/devenv"
-for _w in code-open code-close code-nm code-out; do
-    cat > "$DEV/00_Exec/$_w" <<EOF
-#!/usr/bin/env bash
-BDE_ROOT="$BDE_ROOT"
-if [ ! -d "\$BDE_ROOT" ]; then
-    for _cand in "/Share/Common/40_CodeSpace/BestDevEnv" "/Share/Common/code/BestDevEnv" "\$HOME/Share/Common/40_CodeSpace/BestDevEnv"; do
-        if [ -d "\$_cand" ]; then BDE_ROOT="\$_cand"; break; fi
-    done
-fi
-exec bash "\$BDE_ROOT/modules/workflow/$_w.sh" "\$@"
-EOF
-    chmod +x "$DEV/00_Exec/$_w"
-done
-# vibe — Runtime 统一入口：source env.sh 后 exec 工具/子命令（等同 devenv runtime ...）
-cat > "$DEV/00_Exec/vibe" <<EOF
-#!/usr/bin/env bash
-. "\$HOME/.config/devspace/env.sh" 2>/dev/null
-BDE_ROOT="$BDE_ROOT"
-if [ ! -d "\$BDE_ROOT" ]; then
-    for _cand in "/Share/Common/40_CodeSpace/BestDevEnv" "/Share/Common/code/BestDevEnv" "\$HOME/Share/Common/40_CodeSpace/BestDevEnv"; do
-        if [ -d "\$_cand" ]; then BDE_ROOT="\$_cand"; break; fi
-    done
-fi
-exec bash "\$BDE_ROOT/modules/agent/runtime.sh" "\$@"
-EOF
-chmod +x "$DEV/00_Exec/vibe"
-rm -f "$DEV/00_Exec/env"   # 旧分发器除名（曾遮蔽 coreutils env——命名规范 §20.4）
-bde_ok "分发 code-open/close/nm/out + devenv（doctor/report/tidy/map/orch/runtime/cfg/app/svc/gen/state-env/migrate-finish）+ vibe；旧 env 已除名"
 
 # 6) XDG 用户目录重定向 + home 兼容 symlink
 # user-dirs.dirs 正本已收编进 config 事实源（dot_config/user-dirs.dirs，chezmoi 再生；cfg-map 登记）——

@@ -23,7 +23,7 @@
 3. **生成器**——生成 `AGENTS.md`（AI 协作统一指令）与**环境描述文档**（机器现状报告）。
 
 **边界**：只管环境，不碰业务仓库内容（宪法原则 7——环境与业务代码分离）。
-本仓库自身住 `$COMMON/code/BestDevEnv`（逻辑锚点；实际挂载点由 ③ `storage.toml` 档案决定，跨机器/跨用户零写死）。
+本仓库自身住 `$CODE_ROOT/BestDevEnv`（逻辑锚点；实际挂载点由 ③ `storage.toml` 档案决定，跨机器/跨用户零写死）。
 
 ## 2. 设计哲学（需求 1：环境的搭建设计哲学）
 
@@ -46,7 +46,7 @@
 另有一条**物理边界**（来自实测，写进每个模块的守卫）：
 
 > HGFS 共享盘：无 symlink、不区分大小写、权限恒 777 root——依赖实体类内容（node_modules/venv）
-> 一律落 VM 盘（`DevEnv/deps`），bind mount 接回共享盘项目；涉及 symlink 的写操作禁止指向共享盘。
+> 一律落 VM 盘（`DevEnv/20_Deps`），bind mount 接回共享盘项目；涉及 symlink 的写操作禁止指向共享盘。
 > 且**单文件名/深层路径长度超 HGFS 上限**（实测 gradle/flutter 构建缓存放不进）——此类缓存留本机盘或删重建；挂载选项只用 `allow_other`（vmhgfs-fuse 拒绝 defaults）。
 
 ## 3. 总体架构：执行模型与工程结构
@@ -99,7 +99,11 @@ BestDevEnv/
 │   ├── home-map.sh                  隐藏目录注册表视图（devenv map，看门人）
 │   ├── orch/                        编排进度日志（devenv orch：主 Skill 长任务落盘续做）
 │   └── doc/                         M5 环境描述文档（需求 6）
-│       └── report.sh
+│       ├── report.sh                 环境报告（markdown 留痕）
+│       ├── brief.sh                  会话速览（一次采集；主 Skill 探环境首选）
+│       ├── anchorlint.sh             文档锚点校验（devenv lint：正本里写死的路径必须存在）
+│       ├── inventory.sh              系统环境索引（软件/家目录/服务）
+│       └── namecheck.sh              目录命名规范校验（登记制看门人）
 ├── config/                          chezmoi 源种子（= ③ 正本快照，`devenv cfg snapshot` 再生）
 │   ├── .chezmoi.toml.tmpl  .chezmoiignore  hosts.toml
 │   ├── dot_gitconfig  dot_zshrc  dot_npmrc  dot_m2
@@ -133,7 +137,7 @@ BestDevEnv/
 | 3. 目录架构方案+创建脚本（交互） | M2 `modules/dirs/` | `/Share` 锚点+骨架+XDG 重定向+fstab | doctor 挂载检查 ✓ |
 | 4. 语言开发环境方案+脚本 | M3 `modules/lang/` | 各语言工具链+镜像+重定向生效 | 各语言 `--version` 且缓存路径 ✓ |
 | 5. vibecoding 工具 + AGENTS.md 统一构建 | M4 `modules/agent/` | 工具装好 + `~/AGENTS.md`（及 CLAUDE.md/GEMINI.md 别名） | 各工具 `--version`；AGENTS.md 含环境地图 |
-| 6. 环境描述文档构建脚本 | M5 `modules/doc/` | `devenv report` markdown → `/Share/Common/docs/env/` | 报告生成且 doctor 无 error |
+| 6. 环境描述文档构建脚本 | M5 `modules/doc/` | `devenv report` markdown → `/Share/Common/docs/Envstate/` | 报告生成且 doctor 无 error |
 | 7. IDE 统一（VS Code/Antigravity/JetBrains） | M6 `modules/ide/` | 离线 deb 安装 + 语言扩展档案（base+7 语言）+ settings 收编 | doctor「IDE 就绪」✓ |
 | 8. 隐藏目录治理 | `modules/home-map.sh` | 注册表（35 项）+ `devenv map` 看门人 + `devenv tidy` SAFE 清单 | `devenv map` 全登记 ✓ |
 
@@ -163,13 +167,13 @@ BestDevEnv/
 
 | 脚本 | 安装 | 镜像 | 重定向 |
 |---|---|---|---|
-| `node.sh` | mise（nvm 兼容期收编） | npmmirror | store/cache → `/Share/Common/cache/linux`；实体 → `DevEnv/deps` |
-| `python.sh` | uv | 阿里 pypi | venv → `DevEnv/virtualenvs`；cache → `Common/cache/linux` |
+| `node.sh` | mise（nvm 兼容期收编） | npmmirror | store/cache → `/Share/Common/cache/linux`；实体 → `DevEnv/20_Deps` |
+| `python.sh` | uv | 阿里 pypi | venv → `DevEnv/30_VirtualEnv`；cache → `Common/cache/linux` |
 | `rust.sh` | rustup | rsproxy.cn | `CARGO_HOME=$DEV/40_Toolchain/CargoHome`；target → `$LOCAL/build`（hardlink 基准校验） |
 | `go.sh` | 官方 tarball | goproxy.cn | `GOPATH=$DEV/40_Toolchain/Golang` |
 | `flutter.sh` | 沿用 `DevEnv/flutter` | flutter-io.cn | `PUB_CACHE=$DEV/40_Toolchain/PubCache`；gradle → `$LOCAL/cache/gradle` |
 | `java.sh` | mise temurin | aliyun maven | `GRADLE_USER_HOME=$LOCAL/cache/gradle` |
-| `ai.sh` | hf/modelscope CLI | hf-mirror | 权重 → `/Share/Common/data/models`（`HF_HOME`） |
+| `ai.sh` | hf/modelscope CLI | hf-mirror | 权重 → `/Share/Common/30_DataSpace/Models`（`HF_HOME`） |
 
 脚本自动适配 apt/pacman（检测包管理器），交互选中的语言才执行；Windows 侧对应 `windows/*.ps1`。
 
@@ -232,7 +236,7 @@ L3 纯视图，只消费快照与登记数据（L2），绝不自行采集。视
 
 ```text
 probe.sh ──→ $DEV/80_Records/20_Snapshots/probe.json ──→ doctor.sh（校验视图，--json 出 bde.doctor/1）
-                                        ──→ report.sh（报告视图 → Common/docs/env/）
+                                        ──→ report.sh（报告视图 → Common/docs/Envstate/）
                                         ──→ agents-md.sh（指令视图 → AGENTS/SKILL 家族）
 ```
 
@@ -306,7 +310,7 @@ EOF（Ctrl+D）一律不开工。**Skill 层硬协议**：会话内由 AI 执行
 - [x] 5. M4 工具安装 + `agents-md.sh`（本机验证：~/AGENTS.md 生成）
 - [x] 10. **Runtime 统一管理层** `agent/runtime.sh` + `runtimes.tsv` + `mcp.seed.json`（记忆/Skill/MCP/会话四域正本+接线；doctor「Runtime 统一接线」项）
 - [x] 11. **统一配置治理** `cfg/cfg.sh` + `cfg-map.tsv`（正本落位/漂移巡检/收编；宪法 §19.3 服务三分离；doctor 第 15/16 项；存量 5 项收编）
-- [x] 6. M5 `report.sh` + `verify/doctor.sh`（本机验证：doctor 20 项全绿、报告落 Common/docs/env/）
+- [x] 6. M5 `report.sh` + `verify/doctor.sh`（本机验证：doctor 20 项全绿、报告落 Common/docs/Envstate/）
 - [x] 8. M6 `ide/ide.sh`（语言档案 + JetBrains 需求推导：本机实装 PyCharm Pro 2026.3）
 - [x] 9. 工作流四件套 `workflow/{code-open,code-close,code-nm,code-out}.sh` + Maven settings.xml（端到端验证：产物物理分离）
 - [ ] 7. P2/P3 推广：arch / win11（arch.sh 与 windows.ps1 为占位）

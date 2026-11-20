@@ -14,7 +14,7 @@ description: BestDevEnv 环境健康——devenv doctor 环境自检、devenv re
 
 ```bash
 source "$HOME/.config/devspace/env.sh"
-devenv brief       # 会话速览（一次采集：锚点/后端/能力/根盘/待处置/编排指针，~6s）——先看这条
+devenv brief       # 会话速览（一次采集：锚点/后端/能力/根盘/待处置/编排指针）——先看这条
 devenv doctor      # 逐项自检：存储（后端/持久化/档案对账）/共享盘能力/分发器/正本 gen 指纹/锚点可解析/机器登记/env.sh/骨架/AGENTS.md/Runtime 接线/cfg 漂移/config 仓库干净/备份通道/IDE/XDG/inotify（Linux 项）/叠层/根盘水位；--json 出 bde.doctor/1
 devenv lint        # 文档锚点校验：Skill/AGENTS 正本里写死的路径是否仍存在（失效 → 列文件:行）
 devenv map         # 隐藏目录注册表 + 未登记/失踪检测（--sizes 附体量与最近使用，较慢）

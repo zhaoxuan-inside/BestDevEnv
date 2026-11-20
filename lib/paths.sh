@@ -12,6 +12,17 @@ DEV="${DEV:-$BDE_SCOPE_USER_ROOT}"            # ① 用户级（本机本用户�
 COMMON="${COMMON:-$BDE_SCOPE_SHARED_ROOT}"    # ③ 跨主机级（多机多用户）
 LOCAL="${LOCAL:-$BDE_SCOPE_HOST_ROOT}"        # ② 主机级（同机多用户）
 
+# 代码根：③ 下仓库平铺目录（单一出处——改名/换介质只改这里；code-* 与文档统一消费）
+# 候选序即迁移序：40_CodeSpace（NN_ 规范名）→ code（旧名，迁移期兼容）→ 兜底规范名
+if [ -z "${CODE_ROOT:-}" ] || [ ! -d "${CODE_ROOT:-}" ]; then
+    CODE_ROOT=""
+    for _cr in "$COMMON/40_CodeSpace" "$COMMON/code"; do
+        [ -d "$_cr" ] && { CODE_ROOT="$_cr"; break; }
+    done
+    [ -n "$CODE_ROOT" ] || CODE_ROOT="$COMMON/40_CodeSpace"
+fi
+export CODE_ROOT
+
 # SHARE 兼容别名：两根同父则取父目录，否则取 COMMON
 if [ "$(dirname "$COMMON")" = "$(dirname "$LOCAL")" ]; then
     SHARE="$(dirname "$COMMON")"

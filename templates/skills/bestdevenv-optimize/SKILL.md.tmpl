@@ -1,6 +1,6 @@
 ---
 name: bestdevenv-optimize
-version: 0.0.1
+version: 0.1.0
 description: BestDevEnv 系统基线与参数优化——经能力总线（lib/cap.sh）落地的系统优化默认集（inotify/swappiness/journald 上限/nofile/fstrim）、docker 三件套、apt 源检测、默认终端 konsole/shell zsh、fcitx5、starship、Nerd Font 的落地与幂等重放时使用。触发：优化系统参数、内核参数、swappiness、日志上限、文件句柄、docker 配置、镜像源、终端、输入法、字体。
 ---
 
@@ -8,13 +8,15 @@ description: BestDevEnv 系统基线与参数优化——经能力总线（lib/c
 
 单一职责：OS 层基线与参数。目录/挂载归 `bestdevenv-dirs`，用户配置文件归 `bestdevenv-config`。
 
+**反触发**：只装语言/工具/IDE → `bestdevenv-dev`；只改某份配置文件 → `bestdevenv-config`；目录与挂载 → `bestdevenv-dirs`。
+
 **优化即配置（硬协议）**：一切优化动作的产物 = 受管配置正本（进 `③ 10_Config/` + cfg-map 登记 + 漂移巡检）——镜像源、缓存重定向、服务参数、日志轮转无一例外。**不另立优化文档/清单**；未落正本的优化 = 漂移（doctor 必报）。逐软件优化落点查应用档案 `devenv app <name>`（config.manifest 列）。
 
 ## 执行（幂等；L3 编排平台无关——平台差异全部在 adapters/<family>.sh）
 
 ```bash
 source "$HOME/.config/devspace/env.sh"
-BDE="$COMMON/code/BestDevEnv"
+BDE="${BDE_ROOT:?先 source ~/.config/devspace/env.sh（提供 BDE_ROOT 工程根）}"
 bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器（debian/fedora/arch/suse/darwin）
 ```
 
@@ -36,7 +38,7 @@ bash "$BDE/modules/os/baseline.sh"   # 内部 cap_load 按本机加载适配器�
 | 开发者字体 | JetBrainsMono Nerd Font 用户级（③ install/fonts 本地投放优先 → ② 缓存网络兜底 → fonts 能力落位） | `fc-list \| grep -c JetBrains` |
 | inotify 上限 | 同内核参数行（watches=524288 / instances=1024） | `sysctl fs.inotify.max_user_watches` |
 | docker 配置 | cfg-map 收编：正本 ③ `config/Services/docker/daemon.json` → `/etc/docker/daemon.json`（`devenv cfg apply`） | `devenv cfg diff` ｜ `docker info` |
-| docker 数据根 | ① `DevEnv/services/docker`，经 `var-lib-docker.mount` bind 成 `/var/lib/docker` 给 dockerd（数据仍在 ①；挂载点必须在 `$HOME` 外，否则容器的 rootfs/overlayfs/\<id\> 会被 gvfs 当可卸载假卷） | `findmnt /var/lib/docker` ｜ `docker info` Docker Root Dir=`/var/lib/docker` ｜ `docker system df` |
+| docker 数据根 | ① `DevEnv/50_Services/docker`，经 `var-lib-docker.mount` bind 成 `/var/lib/docker` 给 dockerd（数据仍在 ①；挂载点必须在 `$HOME` 外，否则容器的 rootfs/overlayfs/\<id\> 会被 gvfs 当可卸载假卷） | `findmnt /var/lib/docker` ｜ `docker info` Docker Root Dir=`/var/lib/docker` ｜ `docker system df` |
 | docker 安装体 | 语义包 `docker-engine`（适配器别名：apt=docker.io）+ svc ensure + group ensure | `systemctl is-active docker` |
 | apt 源 | 只检测报告，不自动切（人工切阿里/清华） | 执行输出 pending 项 |
 | 默认终端/shell | konsole + Ctrl+Alt+T；zsh；`.bashrc` 接 env.sh | `echo $SHELL` |

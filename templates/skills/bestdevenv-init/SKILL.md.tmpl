@@ -1,6 +1,6 @@
 ---
 name: bestdevenv-init
-version: 0.1.0
+version: 0.2.0
 description: BestDevEnv 新机初始化——装完 OS 后从空白到 devenv doctor 全绿的一条命令构建；交互确认、进度落盘可续建、全量幂等。当任务涉及：新机器、装完系统初始化、init.sh、构建进度与续建时使用。
 ---
 
@@ -8,11 +8,13 @@ description: BestDevEnv 新机初始化——装完 OS 后从空白到 devenv do
 
 单一职责：把一台空白 VM 构建到 `devenv doctor` 全绿。日常局部改动不属于本 Skill（回主 Skill 路由）。
 
+**反触发**：日常局部改动（装一个语言、修一个挂载、清缓存）不回本 Skill——交主 Skill 路由到对应子域；本 Skill 只负责「空机 → doctor 全绿」这一条完整链路。
+
 ## 执行
 
 ```bash
 source "$HOME/.config/devspace/env.sh"
-BDE="$COMMON/code/BestDevEnv"
+BDE="${BDE_ROOT:?先 source ~/.config/devspace/env.sh（提供 BDE_ROOT 工程根）}"
 cd "$BDE" && ./init.sh          # 交互询问：开发者角色（回车=跳过）→ vibecoding 工具（回车=不装——装什么开发者显式决定，可多选 claude-code/codex/zcode/arkcli/gemini-cli/opencode/copilot）→ 语言栈（回车=node,python）；非交互 bootstrap 取兜底集并在构建计划明示；会话内执行先与用户确认清单，经 --profile/--langs/--tools 显式传入
 ./init.sh --profile ml-trainer  # 按角色装配（java-web/python/go/cpp/ml-trainer/fullstack；展开为栈并集）
 ```
@@ -22,7 +24,7 @@ cd "$BDE" && ./init.sh          # 交互询问：开发者角色（回车=跳过
 - **锚点首问（用户指定制）**：三作用域目录——③ 跨主机共享 / ② 主机内共享 / ① 用户独占——**由用户指定**，不得静默采用默认路径。构建前先向用户展示 `storage.toml` 机器节现状并征询确认/修改（默认段给推荐值）；确认结果写入 `③ 10_Config/Registry/storage.toml` 的 `<机器名>.<作用域>` 节并 commit。doctor 硬项「作用域锚点已按机器指定」巡检此项
 
 - 共享盘未挂载先按 ③ `storage.toml` 档案手动挂一次（hgfs 后端示例：`sudo mkdir -p /Share/Common /Share/Local && sudo vmhgfs-fuse .host:/Common /Share/Common -o allow_other`；local/passthrough 后端无需挂载，直接构建即可）
-- 仓库缺失时先 clone：`git clone git@github.com:zhaoxuan-inside/BestDevEnv.git "$COMMON/code/BestDevEnv"`
+- 仓库缺失时先 clone：`git clone git@github.com:zhaoxuan-inside/BestDevEnv.git "$COMMON/40_CodeSpace/BestDevEnv"`
 
 ## 进度管理
 

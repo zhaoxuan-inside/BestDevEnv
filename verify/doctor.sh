@@ -49,6 +49,7 @@ CHECKS = [
     ("agents 正本已入 ③ 10_Config 仓库（Skill/MCP 版本化）", f["agents_canon"] == 1),
     ("分发器就绪（devenv 在位，旧 env 已除名）", f["dispatcher_ok"] == 1),
     ("Skill/AGENTS 正本与模板同代（gen 指纹）",  f["gen_fresh"] == 1),
+    ("Skill/AGENTS 锚点全部可解析（devenv lint）", f.get("anchor_stale", 0) == 0),
     ("本机已登记 hosts.toml（机器数据表）",      f["host_registered"] == 1),
     (f"根盘余量 > 15G（现余 {free_mb/1024:.1f}G）", free_mb > 15 * 1024),
 ]

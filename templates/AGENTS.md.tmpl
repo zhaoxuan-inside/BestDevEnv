@@ -8,28 +8,28 @@
 
 放置口诀：
 > 公货 `@COMMON@`，私货 `@LOCAL@`，工具链和活状态 `@DEV@`；
-> 代码单份 @COMMON@/code，包仓库共享 @COMMON@/40_CachePool；实体住 @DEV@，bind mount 接回去；
+> 代码单份 @COMMON@/40_CodeSpace，包仓库共享 @COMMON@/cache/linux；实体住 @DEV@，bind mount 接回去；
 > 用户目录住 @LOCAL@；配置永远改仓库（`$COMMON/10_Config`）；备份永远靠 push。
 
-## 用户语境（正本 `@COMMON@/10_Config/agents/user-context.toml`——确认卡确认即写回；勿手改渲染产物）
+## 用户语境（正本 `@COMMON@/10_Config/Agents/user-context.toml`——确认卡确认即写回；勿手改渲染产物）
 
 @USERCTX@
 
 ## 放置规则（写文件前先判断）
 
-1. 代码/文档/大文件要跨机 → `@COMMON@/`（code=仓库平铺、docs=文档、exchange=临时交换）
-2. 只属于本机 → `@LOCAL@/`（build=编译产物、cache=锁敏感缓存、data=冷份）
-3. 依赖实体（node_modules/venv）→ `@DEV@/deps|virtualenvs`（本机盘，symlink 需要）
-4. 会话级/临时 → `@DEV@/tmp` 或 `@COMMON@/exchange`
+1. 代码/文档/大文件要跨机 → `@COMMON@/`（`40_CodeSpace`=仓库平铺、`20_DocSpace`=文档、`50_Exchange`=交付/交换）
+2. 只属于本机 → `@LOCAL@/`（`20_Build`=编译产物、`10_Cache`=锁敏感缓存、`00_Data`=冷份）
+3. 依赖实体（node_modules/venv）→ `@DEV@/20_Deps` 依赖实体 / `@DEV@/30_VirtualEnv` 虚拟环境（本机盘，symlink 需要）
+4. 会话级/临时 → `@DEV@/90_Scratch` 或 `@COMMON@/50_Exchange`
 5. 配置改动 → 改 `@COMMON@/10_Config` 仓库并 push，绝不手改应用层了事
-6. 构建产物与代码分离：依赖实体 `code-nm <repo>`、产物目录 `code-out <repo> <target|build|dist>`（写入即落本机专享盘），跨机成品走 exchange
+6. 构建产物与代码分离：依赖实体 `code-nm <repo>`、产物目录 `code-out <repo> <target|build|dist>`（写入即落本机专享盘），跨机成品走 `50_Exchange`
 
 ### 分离法则（宪法 v10.3）
 
 - **用户空间优先**：可再生内容一律落 ①②③；系统目录只留 OS 必需——重装系统后凭 ①②③ + config 仓库完整重建
 - **锚点是逻辑目录**：Common/Local 可以是本机盘、宿主机盘或云盘（NFS/SMB/Syncthing）；路径恒定，后端差异收敛在挂载适配器
-- **服务三分离**：安装体 → ① DevEnv/services（可再生）；配置 → ③ Common/10_Config/Services（版本化）；数据 → ② Local/00_Data/services（共享数据 → ③ Common/data）；恢复 = 重装 + 应用配置 + 回灌数据
-- **构建十分离**：IDE 工具① / IDE 配置③ / IDE 运行数据② / 代码③ / 代码输出② / 代码日志② / 打包工具① / 打包配置③ / 缓存包③ / 打包结果③ exchange——清理只落 ② 与缓存/结果目录，代码与配置永不清理
+- **服务三分离**：安装体 → ① DevEnv/50_Services（可再生）；配置 → ③ Common/10_Config/Services（版本化）；数据 → ② Local/00_Data/services（共享数据 → ③ Common/30_DataSpace）；恢复 = 重装 + 应用配置 + 回灌数据
+- **构建十分离**：IDE 工具① / IDE 配置③ / IDE 运行数据② / 代码③ / 代码输出② / 代码日志② / 打包工具① / 打包配置③ / 缓存包③ / 打包结果③ 50_Exchange——清理只落 ② 与缓存/结果目录，代码与配置永不清理
 
 ## 物理边界（probe 能力探测自动生成——换后端自动重测，勿手改）
 
@@ -40,8 +40,10 @@
 | 命令 | 用途 |
 |---|---|
 | `code-open <repo>` / `code-close` | 占用/释放共享盘上的仓库 |
-| `devenv doctor` | 环境自检（挂载/配置漂移/重定向/磁盘） |
-| `devenv report` | 生成环境描述文档 → Common/docs/env/ |
+| `devenv brief` | 会话速览（一次采集：锚点/后端/能力/盘位/待处置/编排指针）|
+| `devenv doctor` | 环境自检（挂载/配置漂移/重定向/磁盘/锚点可解析） |
+| `devenv lint` | 文档锚点校验（Skill/AGENTS 里写死的路径是否仍存在）|
+| `devenv report` | 生成环境描述文档 → Common/docs/Envstate/ |
 | `devenv tidy` | 清理可再生缓存（gradle/npm/pnpm/go-build/Trash/日志）|
 | `devenv map` | 隐藏目录注册表视图（未登记项检测）|
 | `devenv index` | 系统内容索引：①②③ 每目录"是什么、放什么"一览（dir-map/home-map/apps/inventory 四层聚合；--json 机器输出）|
