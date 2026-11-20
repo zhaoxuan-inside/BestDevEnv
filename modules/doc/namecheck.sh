@@ -19,6 +19,7 @@ _naming_load() {
     local prof="${BDE_NAMING_PROFILE:-$COMMON/10_Config/Registry/naming.toml}"
     [ -f "$prof" ] || prof="$BDE_ROOT/config/data/naming.toml"
     [ -f "$prof" ] || { bde_fail "命名档案缺失：naming.toml"; return 1; }
+    NAMING_FILE="$prof"
     eval "$(BDE_NAMING_PROFILE_FILE="$prof" python3 <<'PY'
 import os, tomllib, shlex
 d = tomllib.load(open(os.environ["BDE_NAMING_PROFILE_FILE"], "rb"))
@@ -38,6 +39,41 @@ _naming_get() {  # <scope> <key> → 作用域覆写优先，缺省回 default
     eval "v=\"\${BDE_NAMING_SCOPE_${1^^}_${2^^}:-}\""
     if [ -n "$v" ]; then printf '%s' "$v"; return; fi
     eval "printf '%s' \"\${BDE_NAMING_${2^^}:-}\""
+}
+
+# 豁免登记：把目录主体名写进 naming.toml [exempt].names（幂等、排序、单行重写）
+# 动机：--migrate 的 e) 曾只写 dir-map 行，而判定只认 naming.toml 豁免名单 → 豁免是空操作
+#       （2026-11-20 实测：选"豁免"后重扫仍报存量违规）
+_naming_exempt_add() {  # <naming.toml> <basename> → 0=已豁免/新增 1=失败
+    local f="$1" n="$2"
+    [ -f "$f" ] || { bde_fail "命名档案不可写：$f"; return 1; }
+    NAMING_FILE="$f" EXEMPT_NAME="$n" python3 - <<'PY'
+import os, re, sys
+p, n = os.environ["NAMING_FILE"], os.environ["EXEMPT_NAME"]
+lines = open(p, encoding="utf-8").read().splitlines(True)
+try:
+    start = next(i for i, l in enumerate(lines) if l.strip() == "[exempt]")
+except StopIteration:
+    text = "".join(lines).rstrip("\n") + '\n\n[exempt]\nnames = ["' + n + '"]\n'
+    open(p, "w", encoding="utf-8").write(text)
+    sys.exit(0)
+end = start + 1
+while end < len(lines) and not re.match(r"^\[", lines[end]):
+    end += 1
+seg = "".join(lines[start + 1:end])
+m = re.search(r"(?m)^names\s*=\s*\[(.*?)\]\s*$", seg)
+cur = [x.strip().strip('"\'') for x in m.group(1).split(",") if x.strip()] if m else []
+if n in cur:
+    sys.exit(0)
+cur = sorted(set(cur + [n]), key=str.lower)
+line = "names = [" + ", ".join('"' + x + '"' for x in cur) + "]"
+if m:
+    seg = seg[:m.start()] + line + "\n" + seg[m.end():].lstrip("\n")
+else:
+    seg = seg.rstrip("\n") + "\n" + line + "\n"
+lines[start + 1:end] = [seg]
+open(p, "w", encoding="utf-8").write("".join(lines))
+PY
 }
 
 # ── L1 扫描：锚点一级目录 + dir-map 深层登记项 → TSV: scope<TAB>rel<TAB>reg(1|0|target) ──
@@ -175,7 +211,8 @@ if [ "$DO_MIGRATE" = "1" ]; then
                    ensure_line "$DIR_MAP" "$scope|$rel||$_desc|补录|$(date '+%F') namecheck 补登记" \
                        && _changed=1 && echo "  [✓] 已登记 $scope|$rel" ;;
                 e) ensure_line "$DIR_MAP" "$scope|$rel||豁免（namecheck 确认）|豁免|$(date '+%F') 豁免" \
-                       && _changed=1 && echo "  [✓] 已豁免登记 $rel" ;;
+                       && _naming_exempt_add "$NAMING_FILE" "$(basename "$rel")" \
+                       && _changed=1 && echo "  [✓] 已豁免 $rel（naming.toml exempt.names）" ;;
                 *) echo "  跳过 $rel" ;;
             esac
             continue
@@ -187,8 +224,8 @@ if [ "$DO_MIGRATE" = "1" ]; then
         case "$act" in
             m) [ -n "$tgt" ] || { echo "  无建议目标，跳过"; continue; }; newname="$tgt" ;;
             n) read -r -p "  新路径（锚点下相对）: " newname; [ -n "$newname" ] || continue ;;
-            e) ensure_line "$DIR_MAP" "$scope|$rel||豁免（namecheck 确认）|豁免|$(date '+%F') 豁免" \
-                   && _changed=1 && echo "  [✓] 已豁免登记 $rel"; continue ;;
+            e) _naming_exempt_add "$NAMING_FILE" "$(basename "$rel")" \
+                   && _changed=1 && echo "  [✓] 已豁免 $(basename "$rel")（naming.toml exempt.names）"; continue ;;
             *) echo "  跳过 $rel"; continue ;;
         esac
         if [ -e "$root/$newname" ]; then echo "  [!] 目标已存在：$newname——跳过"; continue; fi

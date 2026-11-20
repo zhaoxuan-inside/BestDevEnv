@@ -55,7 +55,7 @@ _bde_dirs=(
     "$COMMON/cache/windows"
     "$COMMON/30_DataSpace/Models/gguf" "$COMMON/30_DataSpace/Models/huggingface" "$COMMON/30_DataSpace/Models/modelscope"
     "$COMMON/30_DataSpace/Datasets" "$COMMON/30_DataSpace/Fixtures"
-    "$COMMON/50_Exchange" "$COMMON/docs/Handbook" "$COMMON/docs/Hostmap" "$COMMON/docs/Envstate"
+    "$COMMON/50_Exchange" "$COMMON/20_DocSpace/Handbook" "$COMMON/20_DocSpace/Hostmap" "$COMMON/20_DocSpace/Envstate"
     "$COMMON/70_Templates" "$COMMON/90_Archive"
     "$LOCAL/20_Build" "$LOCAL/10_Cache/gradle" "$LOCAL/10_Cache/m2"
     "$LOCAL/40_IdeRun" "$LOCAL/30_Logs"

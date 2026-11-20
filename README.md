@@ -8,7 +8,7 @@
 |---|---|
 | 版本 | **v0.19（能力总线架构：先抽象能力，再按平台实现——L2 `lib/cap.sh` 能力总线（pkg/svc/kernel/limits/logs/trim/timesync/hostname/fonts/shell/im/terminal/group 13 契约 + 优雅降级） + `_linux-systemd` 基座 + debian/fedora/arch/suse/darwin 适配器族（ubuntu.sh/arch.sh 单体退役，L3 编排零平台字面量）；系统优化默认集（swappiness=10/vfs_cache_pressure=50/file-max/journald 上限/nofile 65535/fstrim.timer）经 cfg 治理自动生效；cfg-map 新增 hosts 动态机制（hosts.toml→/etc/hosts 标记片段）与 `os_family` 条件键；漂移判定同源化（bde_cfg_diff_one 唯一出处，probe/cfg 共用）；存储后端 +nfs/smb/rclone（NAS/云盘，options 键携带 credentials）；开发者角色 profiles.tsv（java-web/python/go/cpp/ml-trainer/fullstack）+ `init --profile` 按需装配；新增 cpp 栈；ai 栈充实（Miniconda tuna + condarc 正本 + CUDA 体检）；字体统一（JetBrainsMono Nerd Font）；doctor 扩至 30 项；rclone systemd 用户单元持久化；hosts 自身 127.0.1.1 行；konsole 统一 profile（JetBrainsMono NF）；适配器桩测试套件 verify/test-cap.sh（84 断言·五家族）+ 实机验收清单 verify/ACCEPTANCE.md）** |
 | 日期 | 2026-11-12 |
-| 上游宪法 | devspace-design.md **v10.3**（位于 `/Share/Common/docs/Handbook/design.md`）；MCP/会话/Skill 统一为 §10.9 延伸、配置治理落实 §19.3，提请宪法增补 |
+| 上游宪法 | devspace-design.md **v10.3**（位于 `/Share/Common/20_DocSpace/Handbook/design.md`）；MCP/会话/Skill 统一为 §10.9 延伸、配置治理落实 §19.3，提请宪法增补 |
 | 适用范围 | **跨系统：Linux（Ubuntu/Arch）/ macOS / Windows 为目标**；Common/Local 为逻辑目录（本机盘/宿主机盘/云盘皆可为后端）。**当前生产实装 = Ubuntu 系**（adapters/debian.sh）；fedora/arch/suse 适配器代码就绪（未实机验证），darwin 最小实装（brew），windows 走 init.ps1 占位（P2/P3 里程碑，实机验证后才算数） |
 | 远端 | `git@github.com:zhaoxuan-inside/BestDevEnv.git` |
 
@@ -137,7 +137,7 @@ BestDevEnv/
 | 3. 目录架构方案+创建脚本（交互） | M2 `modules/dirs/` | `/Share` 锚点+骨架+XDG 重定向+fstab | doctor 挂载检查 ✓ |
 | 4. 语言开发环境方案+脚本 | M3 `modules/lang/` | 各语言工具链+镜像+重定向生效 | 各语言 `--version` 且缓存路径 ✓ |
 | 5. vibecoding 工具 + AGENTS.md 统一构建 | M4 `modules/agent/` | 工具装好 + `~/AGENTS.md`（及 CLAUDE.md/GEMINI.md 别名） | 各工具 `--version`；AGENTS.md 含环境地图 |
-| 6. 环境描述文档构建脚本 | M5 `modules/doc/` | `devenv report` markdown → `/Share/Common/docs/Envstate/` | 报告生成且 doctor 无 error |
+| 6. 环境描述文档构建脚本 | M5 `modules/doc/` | `devenv report` markdown → `/Share/Common/20_DocSpace/Envstate/` | 报告生成且 doctor 无 error |
 | 7. IDE 统一（VS Code/Antigravity/JetBrains） | M6 `modules/ide/` | 离线 deb 安装 + 语言扩展档案（base+7 语言）+ settings 收编 | doctor「IDE 就绪」✓ |
 | 8. 隐藏目录治理 | `modules/home-map.sh` | 注册表（35 项）+ `devenv map` 看门人 + `devenv tidy` SAFE 清单 | `devenv map` 全登记 ✓ |
 
@@ -236,7 +236,7 @@ L3 纯视图，只消费快照与登记数据（L2），绝不自行采集。视
 
 ```text
 probe.sh ──→ $DEV/80_Records/20_Snapshots/probe.json ──→ doctor.sh（校验视图，--json 出 bde.doctor/1）
-                                        ──→ report.sh（报告视图 → Common/docs/Envstate/）
+                                        ──→ report.sh（报告视图 → Common/20_DocSpace/Envstate/）
                                         ──→ agents-md.sh（指令视图 → AGENTS/SKILL 家族）
 ```
 
@@ -310,7 +310,7 @@ EOF（Ctrl+D）一律不开工。**Skill 层硬协议**：会话内由 AI 执行
 - [x] 5. M4 工具安装 + `agents-md.sh`（本机验证：~/AGENTS.md 生成）
 - [x] 10. **Runtime 统一管理层** `agent/runtime.sh` + `runtimes.tsv` + `mcp.seed.json`（记忆/Skill/MCP/会话四域正本+接线；doctor「Runtime 统一接线」项）
 - [x] 11. **统一配置治理** `cfg/cfg.sh` + `cfg-map.tsv`（正本落位/漂移巡检/收编；宪法 §19.3 服务三分离；doctor 第 15/16 项；存量 5 项收编）
-- [x] 6. M5 `report.sh` + `verify/doctor.sh`（本机验证：doctor 20 项全绿、报告落 Common/docs/Envstate/）
+- [x] 6. M5 `report.sh` + `verify/doctor.sh`（本机验证：doctor 20 项全绿、报告落 Common/20_DocSpace/Envstate/）
 - [x] 8. M6 `ide/ide.sh`（语言档案 + JetBrains 需求推导：本机实装 PyCharm Pro 2026.3）
 - [x] 9. 工作流四件套 `workflow/{code-open,code-close,code-nm,code-out}.sh` + Maven settings.xml（端到端验证：产物物理分离）
 - [ ] 7. P2/P3 推广：arch / win11（arch.sh 与 windows.ps1 为占位）
