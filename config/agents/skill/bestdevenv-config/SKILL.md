@@ -1,12 +1,14 @@
 ---
 name: bestdevenv-config
-version: 0.0.1
+version: 0.1.0
 description: BestDevEnv 配置规范与漂移治理——改用户配置（zshrc/env.sh/gitconfig/npmrc/starship）、chezmoi apply、系统/服务配置（devenv cfg）、配置漂移排查与收编、config 仓库 commit/push 时使用。触发：改配置、chezmoi、配置漂移、config 仓库、装服务/软件后的配置纳管。
 ---
 
 # 配置规范与漂移治理（M1.5 chezmoi + M1.6 统一配置治理 + config 仓库）
 
 单一职责：配置的规范变更与漂移回收。唯一事实源：**`$COMMON/10_Config`**（git 仓库。宪法：配置永远改仓库，备份永远靠 push）。
+
+**反触发**：装软件本身 → `bestdevenv-dev`；系统参数取值 → `bestdevenv-optimize`；只想看漂移/体检 → `bestdevenv-health`。
 
 ## 标准变更流（chezmoi 管的应用层 dotfile）
 
@@ -19,7 +21,7 @@ chezmoi apply -S "$CFG" --destination "$HOME" --force   # 应用到本机（改�
 ```
 
 或直接跑工程封装（含 hosts.toml 同步）：
-`bash "$COMMON/code/BestDevEnv/modules/os/apply-config.sh"`
+`bash "$BDE_ROOT/modules/os/apply-config.sh"`
 
 ## 统一配置治理（M1.6：系统/服务配置，宪法 §19.3）
 
@@ -47,7 +49,7 @@ config 正本（③）跨机同步靠共享盘；**异地备份 = `devenv cfg sn
 「config 备份通道」项巡检 seed 在册且工程仓库有 remote。
 
 **回退/重建 = `devenv cfg restore`**（snapshot 的逆通道）：seed → ③ 正本回灌。回任意历史时点：
-`git -C "$COMMON/code/BestDevEnv" checkout <commit> -- config` 后再 restore。回灌不动应用层——
+`git -C "$BDE_ROOT" checkout <commit> -- config` 后再 restore。回灌不动应用层——
 生效走 `devenv cfg apply`、核对走 `devenv cfg diff`。单项回退 `restore <name>`，整树回退/灾后重建
 `restore`（③ 正本整体缺失时即重建通道，新机器可凭工程仓库 seed 直接拉起 ③ config）。
 

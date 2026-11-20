@@ -4,7 +4,9 @@
 # - 目标名 = 授权整改树（本文件即迁移目标正本）：devenv namecheck --migrate 逐项授权后改名并回写本行
 # - 深层目录（第 3 层及以下）执行迁移时同规则递归登记；分类供 devenv index 聚合
 # —— shared ③（跨主机共享；锚点由用户指定，见 storage.toml）——
-shared|code||代码仓库（单份平铺；仓库目录名随上游，豁免）|代码|暂缓：用户指定不改名（2026-11-15）
+shared|40_CodeSpace||代码仓库（单份平铺；仓库目录名随上游，豁免）|代码|2026-11-20 与实态对齐：仓库已住 40_CodeSpace，空 code 目录已清；消费方统一 $CODE_ROOT
+shared|docs||文档产出（Envstate/Handbook/Hostmap）|文档|存量名：随 20_DocSpace 收编（需用户授权）
+shared|Data||npm 缓存遗留 140M（可再生）|缓存|存量名：tidy/迁移处置（需用户授权）
 shared|10_Config||配置正本仓库（git 版本化）|配置|主干
 shared|10_Config/Services||服务配置正本|配置|深层登记
 shared|10_Config/PkgSource||软件源/包配置|配置|深层登记
@@ -16,9 +18,9 @@ shared|docs/Handbook||规范手册/宪法|文档|深层登记
 shared|docs/Hostmap||机器数据表|文档|深层登记
 shared|docs/Envstate||环境实况报告|文档|深层登记
 shared|30_DataSpace||共享数据|数据|主干（大小写已合规，补 NN_ 前缀）
-shared|data/Models||模型文件（gguf/huggingface/modelscope）|数据|深层登记
-shared|data/Datasets||数据集|数据|深层登记
-shared|data/Fixtures||测试夹具|数据|深层登记
+shared|30_DataSpace/Models||模型文件（gguf/huggingface/modelscope）|数据|深层登记
+shared|30_DataSpace/Datasets||数据集|数据|深层登记
+shared|30_DataSpace/Fixtures||测试夹具|数据|深层登记
 shared|cache||包缓存（npm/pip/uv/windows）|缓存|暂缓：hgfs rename 阻塞（大缓存树）——tidy 清空后补改 40_CachePool
 shared|50_Exchange||跨机交换交付（打包结果）|交付|主干
 shared|60_Installers||安装介质（iso/win/linux/fonts）|介质|主干
@@ -47,6 +49,7 @@ host|Videos||XDG 视频|XDG|豁免：协议固定名
 user|00_Exec||命令入口（devenv/code-* 等）|入口|主干
 user|10_Apps||应用实体（agent/ide）|应用|主干
 user|40_Toolchain||语言工具链（九项聚合：CargoHome/Rustup/Golang/NodeJS/Flutter/PubCache/AndroidSDK/AndroidUser/NpmGlobal）|工具链|主干
+user|tmp||会话级临时区（与 90_Scratch 并行）|临时|存量名：迁移待授权
 user|apps||待清——活动会话旧契约重建（.codex 等；会话收尾后删除并确认）|豁免|2026-11-15 改名重建，非登记实体
 user|cache||npm 旧缓存日志（_logs；npmrc 契约已改 70_UserCache，下次运行不再写入）|豁免|2026-11-15 改名重建
 user|xdg||活动会话 XDG 写入（本会话进程持有旧路径；新会话走 85_XdgRoot）|豁免|2026-11-15 改名重建

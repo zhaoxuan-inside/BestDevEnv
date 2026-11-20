@@ -19,6 +19,29 @@ else
     COMMON="$SHARE/Common"; LOCAL="$SHARE/Local"
 fi
 export DEV SHARE COMMON LOCAL
+
+# ── 工程根锚点（④ 入口层）─────────────────────────────────
+# 由 devenv state-env 写入 anchors.env（随机器再生）；缺失时按候选探测（新机 bootstrap 兜底）
+# 文档/脚本统一用 $BDE_ROOT 指工程——改名/搬家后一处再生，全局生效（不写死 code/<repo>）
+if [ -z "${BDE_ROOT:-}" ] || [ ! -d "${BDE_ROOT}/lib" ]; then
+    BDE_ROOT=""
+    for _bde_cand in "$COMMON/40_CodeSpace/BestDevEnv" "$COMMON/code/BestDevEnv" "$SHARE/Common/40_CodeSpace/BestDevEnv"; do
+        if [ -d "$_bde_cand/lib" ]; then BDE_ROOT="$_bde_cand"; break; fi
+    done
+    unset _bde_cand
+fi
+[ -n "${BDE_ROOT:-}" ] && export BDE_ROOT
+
+# ── 代码根（③ 仓库平铺目录）────────────────────────────────
+# 与 lib/paths.sh 同一候选序（40_CodeSpace → code 旧名兼容）；code-* 与文档统一消费
+if [ -z "${CODE_ROOT:-}" ] || [ ! -d "${CODE_ROOT:-}" ]; then
+    CODE_ROOT=""
+    for _bde_cand in "$COMMON/40_CodeSpace" "$COMMON/code"; do
+        [ -d "$_bde_cand" ] && { CODE_ROOT="$_bde_cand"; break; }
+    done
+    unset _bde_cand
+fi
+[ -n "${CODE_ROOT:-}" ] && export CODE_ROOT
 export XDG_CONFIG_HOME="$DEV/85_XdgRoot/config"
 export XDG_DATA_HOME="$DEV/85_XdgRoot/local"
 export XDG_STATE_HOME="$DEV/85_XdgRoot/local/state"
@@ -42,8 +65,8 @@ export MAVEN_OPTS="${MAVEN_OPTS:+$MAVEN_OPTS }-Dmaven.repo.local=$LOCAL/10_Cache
 # ── 下载缓存与模型（③，linux 域三机共享）─────────────────
 export PIP_CACHE_DIR="$COMMON/cache/linux/pip"
 export UV_CACHE_DIR="$COMMON/cache/linux/uv"
-export HF_HOME="$COMMON/data/models/huggingface"
-export MODELSCOPE_CACHE="$COMMON/data/models/modelscope"
+export HF_HOME="$COMMON/30_DataSpace/Models/huggingface"
+export MODELSCOPE_CACHE="$COMMON/30_DataSpace/Models/modelscope"
 
 # ── 家目录收敛契约（宪法 §20.5：支持原生重定向的工具，入口一律迁出家目录）──
 export IPYTHONDIR="$DEV/10_Apps/dev/.ipython"            # 实体 ①（家目录 .ipython 链接退役）

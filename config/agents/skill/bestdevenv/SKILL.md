@@ -1,7 +1,7 @@
 ---
 name: bestdevenv
-version: 0.2.3
-description: BestDevEnv 开发环境总调度——用户提出环境类需求但不属于单一子域、或需要先探明本机现状再编排多步工作时使用：探环境（devenv doctor）→拆需求→按依赖顺序调度 bestdevenv-* 子 Skill→devenv doctor 验收。单一明确子域（如仅清缓存）直接用对应子 Skill，不经本 Skill。
+version: 0.3.0
+description: BestDevEnv 开发环境总调度——用户提出环境类需求但不属于单一子域、或需要先探明本机现状再编排多步工作时使用：探环境（devenv brief/doctor）→拆需求→按依赖顺序调度 bestdevenv-* 子 Skill→devenv doctor 验收。单一明确子域（如仅清缓存）直接用对应子 Skill，不经本 Skill。
 ---
 
 # BestDevEnv 环境总调度（主 Skill）
@@ -19,27 +19,27 @@ description: BestDevEnv 开发环境总调度——用户提出环境类需求�
 | ③ Common | shared 跨主机级（多机多用户） | `/Share/Common` |
 
 > 公货 `/Share/Common`，私货 `/Share/Local`，工具链和活状态 `/home/hardstone/DevEnv`；
-> 实体住 `/home/hardstone/DevEnv/apps/<分类>/`（vibecoding 工具 → `apps/agent/`；家目录=入口层：链接 + 原生重定向，收敛路线见宪法 §20.5），bind mount 接回去；配置永远改仓库（`$COMMON/10_Config`）；备份永远靠 push。
+> 实体住 `/home/hardstone/DevEnv/10_Apps/<分类>/`（vibecoding 工具 → `10_Apps/agent/`；家目录=入口层：链接 + 原生重定向，收敛路线见宪法 §20.5），bind mount 接回去；配置永远改仓库（`$COMMON/10_Config`）；备份永远靠 push。
 > 物理红线（能力探测 2026-11-14 · 后端 hgfs）：无 symlink · 无 hardlink · 权限恒 777 · 文件名上限 255B——依赖实体与私钥绝不上去；文件/代码命名小写 kebab-case；①②③ 自建目录走 naming.toml 规范（NN_ 前缀/首字母大写/6-10 字符/禁中文/同级等长优先——devenv namecheck 校验）
 
 ### 分离法则（宪法 v10.3，调度时必须遵守）
 
 1. **用户空间优先**：可再生内容一律落 ①②③，系统目录只留 OS 必需（重装后凭 ①②③ + config 仓库重建）
 2. **存储介质与结构解耦**：只说作用域（shared 跨主机/host 主机/user 用户），介质差异收敛在 L0 存储抽象层（`lib/storage.sh` + `config/Registry/storage.toml` 档案制，跨系统 macOS/Linux/Windows 同一套原则）
-3. **服务三分离**：安装体→①（可再生）｜配置→③ 10_Config/services（版本化）｜数据→② Local/data（共享→③）；恢复=重装+应用配置+回灌数据
-4. **构建十分离**：IDE 工具①｜IDE 配置③｜IDE 运行数据②｜代码③｜代码输出②｜代码日志②｜打包工具①｜打包配置③｜缓存包③｜打包结果③exchange——清理只落 ② 与缓存/结果目录
+3. **服务三分离**：安装体→①（可再生）｜配置→③ 10_Config/Services（版本化）｜数据→② Local/00_Data（共享→③ 30_DataSpace）；恢复=重装+应用配置+回灌数据
+4. **构建十分离**：IDE 工具①｜IDE 配置③｜IDE 运行数据②｜代码③｜代码输出②｜代码日志②｜打包工具①｜打包配置③｜缓存包③｜打包结果③ 50_Exchange——清理只落 ② 与缓存/结果目录
 
 ## 第一步永远是探环境（只读，不改任何东西）
 
 ```bash
-source "$HOME/.config/devspace/env.sh"     # DEV/SHARE/COMMON/LOCAL 锚点变量
-BDE="$COMMON/code/BestDevEnv"
-bash "$BDE/lib/probe.sh" --json            # L1 环境事实快照（schema bde.probe/2：含存储后端/共享盘能力，机器可读）
-bash "$BDE/verify/doctor.sh"               # L3 校验视图（✓/✗ 全项；--json 出 bde.doctor/1）
-devenv cfg list / devenv cfg diff                # 配置治理视图（cfg-map 清单 + 漂移检测）
-devenv app --all                              # 应用视图（安装/配置/数据按应用聚合，§20.3）
-. /etc/os-release; echo "$ID"              # OS 变体（ubuntu 实装；arch/windows/mac 为适配器待建项）
+source "$HOME/.config/devspace/env.sh"     # 锚点契约：DEV/SHARE/COMMON/LOCAL + BDE_ROOT/CODE_ROOT
+devenv brief                               # 一次采集速览（锚点/后端/能力/根盘/待处置/编排指针，~6s）
+devenv doctor                              # 需要逐项 ✓/✗ 时（验收 / 症状含糊 / 刚动过系统）
 ```
+
+- 机器接口：`devenv brief` 与 `devenv doctor --json`（schema `bde.probe/2` / `bde.doctor/1`）；`devenv lint` 查文档锚点
+- **工程路径只认 `$BDE_ROOT`、仓库根只认 `$CODE_ROOT`**——两者由 `devenv state-env` 随机器再生，文档里不写死
+- 命令不存在 / 路径 127：先 `devenv root` 确认工程根，再 `devenv lint`（正本里失效的锚点会逐条列出）
 
 ## 需求 → 子 Skill 路由表
 
@@ -55,6 +55,7 @@ devenv app --all                              # 应用视图（安装/配置/数
 | 自检/报告/清缓存/看门/磁盘紧张 | `bestdevenv-health` |
 | 目录命名违规/要内容索引/软件未建档收编/目录未登记 | 直查类命令：`devenv namecheck [--migrate]`（存量改名逐项授权）/ `devenv index`（①②③ 内容索引）/ `devenv app --audit|--migrate`（建档收编逐项授权）|
 | 症状含糊（"环境好像坏了"） | 先 `bestdevenv-health` 诊断，按失败项再路由 |
+| 只想知道"现在怎么样" | 只读直查：`devenv brief`（速览）/ `devenv doctor`（逐项）/ `devenv lint`（文档锚点）/ `devenv cfg diff`（配置漂移）|
 
 ## 编排规则
 

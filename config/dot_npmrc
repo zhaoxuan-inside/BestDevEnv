@@ -1,5 +1,5 @@
 registry=https://registry.npmmirror.com
 cache=${DEV}/70_UserCache/npm   # cacache 依赖 hardlink（probe 实测共享盘不支持）→ 回落 ① 本机
-store-dir=${COMMON}/40_CachePool/linux/pnpm-store
+store-dir=${COMMON}/cache/linux/pnpm-store
 package-import-method=copy
 prefix=${DEV}/40_Toolchain/NpmGlobal
