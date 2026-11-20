@@ -9,10 +9,12 @@
 1. 装系统 → 手动挂载共享盘（按 storage.toml 档案）→ clone 工程仓库
 2. `./init.sh`（交互选角色/栈）→ 全阶段跑完
 3. `devenv cap` —— 对照本表"预期矩阵"核对
-4. `verify/test-cap.sh <family>` —— 桩测试全过
-5. `devenv doctor` —— 全绿
-6. 本平台专属项（见下）逐条人工确认
-7. 结果回写 README 适用范围行 + 本清单勾选
+4. `devenv brief` —— 会话速览无待处置项（锚点/后端/能力/盘位/编排）
+5. `verify/test-cap.sh <family>` —— 桩测试全过
+6. `devenv doctor` —— 全绿（含「Skill/AGENTS 锚点全部可解析」）
+7. `devenv lint` —— 正本零失效锚点
+8. 本平台专属项（见下）逐条人工确认
+9. 结果回写 README 适用范围行 + 本清单勾选
 
 ## arch（hosts.toml 已登记实验机）
 
