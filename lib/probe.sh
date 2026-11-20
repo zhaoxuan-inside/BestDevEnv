@@ -331,8 +331,10 @@ PY
     P_TZ_CUR="$(timedatectl show -p Timezone --value 2>/dev/null)"
     P_TZ_WANT="${BDE_TIMEZONE:-Asia/Shanghai}"
     P_TZ_OK=0; { [ -n "$P_TZ_CUR" ] && [ "$P_TZ_CUR" = "$P_TZ_WANT" ]; } && P_TZ_OK=1
-    # zram 压缩内存交换（swapon 视角；zramswap/zram-generator 两种机制统一按结果判定）
-    P_ZRAM_OK=0; swapon --show --noheadings 2>/dev/null | grep -q zram && P_ZRAM_OK=1
+    # zram 压缩内存交换（/proc/swaps + sysfs 判定：不依赖 PATH 里的 swapon——最小 PATH 的
+    # 非登录 shell 下 swapon 在 /usr/sbin，曾致 doctor 误红，2026-11-20 实测）
+    P_ZRAM_OK=0
+    if [ -e /sys/block/zram0 ] && grep -q zram /proc/swaps 2>/dev/null; then P_ZRAM_OK=1; fi
 
     # 工具链版本表（存在才列；15s 超时——网络劣化时 CLI 版本探测可能挂起）
     P_TOOL_ROWS=""
