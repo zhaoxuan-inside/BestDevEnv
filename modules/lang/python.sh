@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# M3: Python —— uv 为主，venv 重定向 DevEnv/virtualenvs
+# M3: Python —— uv 为主，venv 重定向 ① DevEnv/30_VirtualEnv
 [ -n "${BDE_ROOT:-}" ] || BDE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$BDE_ROOT/lib/paths.sh"
 source "$BDE_ROOT/lib/common.sh"

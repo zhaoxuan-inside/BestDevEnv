@@ -14,7 +14,7 @@ else
     bde_pending "cargo 未安装（rustup + rsproxy，见宪法 §11）"
 fi
 
-# 2) hardlink 基准（宪法 §15：决定 cargo target 是否外置 ② Local/build）
+# 2) hardlink 基准（宪法 §15：决定 cargo target 是否外置 ② Local/20_Build）
 # 介质中性：播报探测事实 + 后端名（取自 L0 解析层），不硬编码介质名词（换后端文案自动正确）
 ensure_dir "$LOCAL/20_Build" 2>/dev/null || true
 _t="$LOCAL/20_Build/.bde-hardlink-test"
